@@ -1,1 +1,1 @@
-export * from './Component';
+export const content = 'init';

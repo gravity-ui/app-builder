@@ -1,19 +1,13 @@
 {
-  "extends": "@gravity-ui/tsconfig/tsconfig",
+  "extends": "@gravity-ui/tsconfig",
   "compilerOptions": {
     "declaration": true,
     "resolveJsonModule": true,
-    "outDir": "dist",
-    "module": "esnext",
-    "jsx": "react"
+    "importsNotUsedAsValues": "error",
+    "noUncheckedIndexedAccess": true,
+    "experimentalDecorators": false,
+    "outDir": "dist"
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ],
-  "exclude": [
-    "**/__tests__",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/__tests__", "**/*.test.ts"]
 }
