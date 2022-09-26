@@ -6,6 +6,8 @@ import logger from './common/logger';
 import {getProjectConfig} from './common/config';
 import {isLibraryConfig, ProjectConfig} from './common/models';
 
+export type CliArgs = Awaited<ReturnType<typeof createCli>>;
+
 export function createCli(argv: string[]) {
     const cli = yargs(argv).parserConfiguration({
         'boolean-negation': false,
@@ -13,9 +15,21 @@ export function createCli(argv: string[]) {
 
     cli.scriptName('app-builder')
         .usage('Usage: $0 <command> [options]')
-        .env('UI_CORE')
+        .env('APP_BUILDER')
         .alias('h', 'help')
-        .alias('v', 'version')
+        .alias('v', 'version');
+
+    try {
+        cli.version(
+            'version',
+            'Show the version of the app-builder CLI package in the current project',
+            getVersionInfo(),
+        );
+    } catch (e) {
+        // ignore
+    }
+
+    return cli
         .option('verbose', {
             default: false,
             type: 'boolean',
@@ -70,19 +84,7 @@ export function createCli(argv: string[]) {
                     return values;
                 }, {} as Record<string, any>);
             },
-        });
-
-    try {
-        cli.version(
-            'version',
-            'Show the version of the app-builder CLI package in the current project',
-            getVersionInfo(),
-        );
-    } catch (e) {
-        // ignore
-    }
-
-    return cli
+        })
         .command({
             command: 'dev',
             describe:
@@ -90,7 +92,7 @@ export function createCli(argv: string[]) {
             builder: (_) =>
                 _.option('target', {
                     describe: 'Select compilation unit',
-                    choices: ['client', 'server'],
+                    choices: ['client', 'server'] as const,
                 })
                     .option('inspect', {
                         group: 'Server',
@@ -103,12 +105,11 @@ export function createCli(argv: string[]) {
                         describe:
                             'Opens a port for debugging. Will block until debugger is attached',
                     })
-                    .option('link', {describe: ''})
                     .option('entry-filter', {
                         group: 'Client',
+                        type: 'string',
                         describe:
                             'Filters entries from src/ui/entries/* included in webpack bundle',
-                        global: true,
                         array: true,
                     })
                     .option('disable-fork-ts-checker', {
@@ -135,11 +136,13 @@ export function createCli(argv: string[]) {
                     }
                     process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
-                    if (Object.prototype.hasOwnProperty.call(args, 'inspect')) {
-                        args.inspect = args.inspect || 9229;
-                    }
-                    if (Object.prototype.hasOwnProperty.call(args, 'inspect-brk')) {
-                        args.inspectBrk = args.inspectBrk || 9229;
+                    if (args.server) {
+                        if (args.server.inspect !== undefined) {
+                            args.server.inspect = args.server.inspect || 9229;
+                        }
+                        if (args.server.inspectBrk !== undefined) {
+                            args.server.inspectBrk = args.server.inspectBrk || 9229;
+                        }
                     }
 
                     cmd(args);
@@ -154,10 +157,11 @@ export function createCli(argv: string[]) {
             builder: (_) =>
                 _.option('target', {
                     describe: 'Select compilation unit',
-                    choices: ['client', 'server'],
+                    choices: ['client', 'server'] as const,
                 })
                     .option('entry-filter', {
                         group: 'Client',
+                        type: 'string',
                         describe:
                             'Filters entries from src/ui/entries/* included in webpack bundle',
                         array: true,
@@ -170,7 +174,7 @@ export function createCli(argv: string[]) {
                     .option('analyze-bundle', {
                         group: 'Client',
                         describe: 'Analyze bundle',
-                        choices: ['true', 'statoscope'],
+                        choices: ['true', 'statoscope'] as const,
                     })
                     .option('disable-fork-ts-checker', {
                         group: 'Client',
@@ -211,9 +215,9 @@ function getCommandHandler(
     command: string,
     handler?: (args: ProjectConfig, cmd: (args: ProjectConfig) => void) => void,
 ): (argv: yargs.Arguments) => void {
-    return async (argv: yargs.Arguments) => {
+    return async (argv) => {
         logger.setVerbose(Boolean(argv.verbose));
-        const config = await getProjectConfig(command, argv);
+        const config = await getProjectConfig(command, argv as CliArgs);
 
         const args = {...config, logger};
         const localCmd = resolveLocalCommand(command);

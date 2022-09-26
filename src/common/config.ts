@@ -6,10 +6,19 @@ import type {CosmiconfigResult} from 'cosmiconfig/dist/types';
 import {TypeScriptLoader as getTsLoader} from 'cosmiconfig-typescript-loader';
 import getPort from 'get-port';
 
-import type yargs from 'yargs';
-
-import type {ProjectConfig, NormalizedServiceConfig, ServiceConfig, LibraryConfig} from './models';
 import {isServiceConfig} from './models';
+
+import type {
+    ProjectConfig,
+    NormalizedServiceConfig,
+    ServiceConfig,
+    LibraryConfig,
+    ClientConfig,
+    ServerConfig,
+    NormalizedClientConfig,
+    NormalizedServerConfig,
+} from './models';
+import type {CliArgs} from '../create-cli';
 
 function splitPaths(paths: string | string[]) {
     return (Array.isArray(paths) ? paths : [paths]).flatMap((p) => p.split(','));
@@ -19,10 +28,11 @@ function remapPaths(paths: string | string[]) {
     return splitPaths(paths).map((p) => path.resolve(process.cwd(), p));
 }
 
-export async function getProjectConfig(
-    command: string,
-    {env, ...argv}: Partial<yargs.Arguments> = {},
-) {
+function omitUndefined<T extends object>(obj: T) {
+    return _.omitBy(obj, _.isUndefined);
+}
+
+export async function getProjectConfig(command: string, {env, ...argv}: Partial<CliArgs>) {
     function getLoader(loader: Loader): Loader {
         return async (pathname: string, content: string) => {
             const config = loader(pathname, content);
@@ -66,8 +76,33 @@ export async function getProjectConfig(
         cfg = explorer.search();
     }
 
-    const projectConfig: ProjectConfig = {...(await cfg?.config), ...argv};
-    projectConfig.newJsxTransform = projectConfig.newJsxTransform ?? false;
+    const client: ClientConfig = {
+        analyzeBundle: argv.analyzeBundle,
+        disableForkTsChecker: argv.disableForkTsChecker,
+        disableReactRefresh: argv.disableReactRefresh,
+        disableSourceMapGeneration: argv.disableSourceMapGeneration,
+        entryFilter: argv.entryFilter,
+        lazyCompilation: argv.lazyCompilation,
+        reactProfiling: argv.reactProfiling,
+    };
+    const server: ServerConfig = {
+        inspect: argv.inspect,
+        inspectBrk: argv.inspectBrk,
+    };
+
+    const config = {...(await cfg?.config)};
+    const projectConfig: ProjectConfig = {
+        ...config,
+        ...omitUndefined({target: argv.target, verbose: argv.verbose}),
+        client: {
+            ...config.client,
+            ...omitUndefined(client),
+        },
+        server: {
+            ...config.server,
+            ...omitUndefined(server),
+        },
+    };
 
     return normalizeConfig(projectConfig, command);
 }
@@ -85,56 +120,70 @@ export function normalizeConfig(
 export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 'build' | string) {
     if (isServiceConfig(userConfig)) {
         const config = _.cloneDeep(userConfig);
-        config.publicPathPrefix = config.publicPathPrefix || '';
-        config.modules = config.modules && remapPaths(config.modules);
-        config.includes = config.includes && remapPaths(config.includes);
-        config.images = config.images && remapPaths(config.images);
-        config.serverWatch = config.serverWatch && remapPaths(config.serverWatch);
-        config.hiddenSourceMap = config.hiddenSourceMap ?? true;
-        config.svgr = config.svgr ?? {};
-        config.entryFilter = config.entryFilter && splitPaths(config.entryFilter);
+        const client = typeof config.client === 'object' ? config.client : (config.client = {});
+        await normalizeClientConfig(client, mode);
+        (client as NormalizedClientConfig).verbose = userConfig.verbose;
+
+        const server = typeof config.server === 'object' ? config.server : (config.server = {});
+        server.watch = server.watch && remapPaths(server.watch);
+        (server as NormalizedServerConfig).verbose = userConfig.verbose;
 
         if (mode === 'dev') {
-            if (config.lazyCompilation) {
-                if (config.lazyCompilation === true) {
-                    config.lazyCompilation = {
-                        port: await getPort({port: 6000}),
-                    };
-                } else if (!config.lazyCompilation.port) {
-                    config.lazyCompilation.port = await getPort({port: 6000});
-                }
+            if (server.port === true) {
+                server.port = await getPort({port: 3000});
             }
-
-            const devServer = config.devServer?.port
-                ? {
-                      port:
-                          config.devServer.port === true
-                              ? await getPort({port: 8000})
-                              : config.devServer.port,
-                      ipc: undefined,
-                  }
-                : {port: undefined, ipc: config.devServer?.ipc};
-
-            const {type, options, ...other} = config.devServer ?? {};
-            (config as NormalizedServiceConfig).devServer = {
-                ...other,
-                ...devServer,
-                server: {
-                    type,
-                    options,
-                },
-            };
-
-            if (config.serverPort === true) {
-                config.serverPort = await getPort({port: 3000});
-            }
-        } else {
-            delete config.devServer;
-            delete config.lazyCompilation;
         }
 
         return config as NormalizedServiceConfig;
     }
 
-    return userConfig;
+    const config = _.cloneDeep(userConfig);
+    config.newJsxTransform = config.newJsxTransform ?? true;
+    return config;
+}
+
+async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build' | string) {
+    client.newJsxTransform = client.newJsxTransform ?? true;
+    client.publicPathPrefix = client.publicPathPrefix || '';
+    client.modules = client.modules && remapPaths(client.modules);
+    client.includes = client.includes && remapPaths(client.includes);
+    client.images = client.images && remapPaths(client.images);
+    client.hiddenSourceMap = client.hiddenSourceMap ?? true;
+    client.svgr = client.svgr ?? {};
+    client.entryFilter = client.entryFilter && splitPaths(client.entryFilter);
+
+    if (mode === 'dev') {
+        if (client.lazyCompilation) {
+            if (client.lazyCompilation === true) {
+                client.lazyCompilation = {
+                    port: await getPort({port: 6000}),
+                };
+            } else if (!client.lazyCompilation.port) {
+                client.lazyCompilation.port = await getPort({port: 6000});
+            }
+        }
+
+        const devServer = client.devServer?.port
+            ? {
+                  port:
+                      client.devServer.port === true
+                          ? await getPort({port: 8000})
+                          : client.devServer.port,
+                  ipc: undefined,
+              }
+            : {port: undefined, ipc: client.devServer?.ipc};
+
+        const {type, options, ...other} = client.devServer ?? {};
+        (client as NormalizedClientConfig).devServer = {
+            ...other,
+            ...devServer,
+            server: {
+                type,
+                options,
+            },
+        };
+    } else {
+        delete client.devServer;
+        delete client.lazyCompilation;
+    }
 }

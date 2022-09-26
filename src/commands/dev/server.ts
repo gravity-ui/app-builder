@@ -31,7 +31,9 @@ export function watchServerCompilation(config: NormalizedServiceConfig) {
                 onAfterFilesEmitted: () => {
                     process.send({type: 'Emitted'});
                 },
-                enableSourceMap: ${config.inspect || config.inspectBrk ? 'true' : 'false'}
+                enableSourceMap: ${
+                    config.server.inspect || config.server.inspectBrk ? 'true' : 'false'
+                }
             }
         );
         `,

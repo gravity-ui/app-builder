@@ -18,7 +18,7 @@ import CircularDependencyPlugin from 'circular-dependency-plugin';
 import paths from '../paths';
 import tempData from '../tempData';
 import {babelPreset} from '../babel';
-import type {NormalizedServiceConfig, LinkedPackage} from '../models';
+import type {LinkedPackage, NormalizedClientConfig} from '../models';
 import type {Logger} from '../logger';
 import {ProgressPlugin} from './progress-plugin';
 import {resolveTsconfigPathsToAlias} from './utils';
@@ -27,7 +27,7 @@ const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
 
 export interface HelperOptions {
-    config: NormalizedServiceConfig;
+    config: NormalizedClientConfig;
     logger?: Logger;
     isEnvDevelopment: boolean;
     isEnvProduction: boolean;
@@ -45,7 +45,7 @@ export const enum WebpackMode {
 
 export function webpackConfigFactory(
     webpackMode: WebpackMode,
-    config: NormalizedServiceConfig,
+    config: NormalizedClientConfig,
     {logger}: {logger?: Logger} = {},
 ): webpack.Configuration {
     const isEnvDevelopment = webpackMode === WebpackMode.Dev;
@@ -62,9 +62,6 @@ export function webpackConfigFactory(
         tsLinkedPackages,
     };
 
-    const externals = config.externals;
-    const node = config.node;
-
     return {
         mode: webpackMode,
         context: paths.app,
@@ -78,8 +75,9 @@ export function webpackConfigFactory(
         },
         plugins: configurePlugins(helperOptions),
         optimization: configureOptimization(helperOptions),
-        externals,
-        node,
+        externals: config.externals,
+        node: config.node,
+        watchOptions: config.watchOptions,
         ignoreWarnings: [/Failed to parse source map/],
         infrastructureLogging: config.verbose
             ? {
@@ -185,7 +183,7 @@ export function configureResolve({
 }: HelperOptions): webpack.ResolveOptions {
     let alias: Record<string, string> = config.alias || {};
 
-    alias = Object.entries(alias).reduce((result: Record<string, string>, [key, value]) => {
+    alias = Object.entries(alias).reduce<Record<string, string>>((result, [key, value]) => {
         result[key] = path.resolve(paths.app, value);
         return result;
     }, {});
@@ -556,9 +554,9 @@ function createFallbackRules({isEnvProduction}: HelperOptions) {
     return rules;
 }
 
-function createMomentTimezoneDataPlugin(options: NormalizedServiceConfig['momentTz'] = {}) {
+function createMomentTimezoneDataPlugin(options: NormalizedClientConfig['momentTz'] = {}) {
     const currentYear = new Date().getFullYear();
-    // По умолчанию ставим текущий год в обе части диапазона, чтобы не приезжало лишних 900 кб
+    // By default get data for current year only
     // https://momentjs.com/timezone/docs/#/use-it/webpack/
     const startYear = options.startYear ?? currentYear;
     const endYear = options.endYear ?? currentYear;

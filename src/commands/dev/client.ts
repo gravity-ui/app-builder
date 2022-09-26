@@ -25,17 +25,17 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
     const logger = new Logger('webpack', config.verbose);
 
     const {
-        webSocketPath = path.normalize(`/${config.publicPathPrefix}/build/sockjs-node`),
+        webSocketPath = path.normalize(`/${config.client.publicPathPrefix}/build/sockjs-node`),
         ...devServer
-    } = config.devServer || {};
+    } = config.client.devServer || {};
 
-    const normalizedConfig = {...config, devServer: {...devServer, webSocketPath}};
+    const normalizedConfig = {...config.client, devServer: {...devServer, webSocketPath}};
     const webpackConfig = webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger});
 
     const options: Configuration = {
         static: path.resolve(paths.appDist, 'public'),
         devMiddleware: {
-            publicPath: path.normalize(config.publicPathPrefix + '/build/'),
+            publicPath: path.normalize(config.client.publicPathPrefix + '/build/'),
             stats: 'errors-warnings',
         },
         liveReload: false,
@@ -68,21 +68,21 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
         options.ipc = listenOn;
     }
 
-    if (config.lazyCompilation) {
+    if (config.client.lazyCompilation) {
         options.proxy = {
             ...options.proxy,
             '/build/lazy': {
-                target: `http://localhost:${config.lazyCompilation.port}`,
+                target: `http://localhost:${config.client.lazyCompilation.port}`,
                 pathRewrite: {'^/build/lazy': ''},
             },
         };
     }
 
-    if (config.serverPort) {
+    if (config.server.port) {
         options.proxy = {
             ...options.proxy,
             '/': {
-                target: `http://localhost:${config.serverPort}`,
+                target: `http://localhost:${config.server.port}`,
                 bypass: (req) => {
                     if (req.method !== 'GET' && req.method !== 'HEAD') {
                         return null;

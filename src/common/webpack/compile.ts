@@ -1,11 +1,11 @@
 import webpack from 'webpack';
 
-import type {NormalizedServiceConfig} from '../models';
+import type {NormalizedClientConfig} from '../models';
 import {Logger} from '../logger';
 import {WebpackMode, webpackConfigFactory} from './config';
 import {webpackCompilerHandlerFactory} from './utils';
 
-export function webpackCompile(config: NormalizedServiceConfig): Promise<void> {
+export function webpackCompile(config: NormalizedClientConfig): Promise<void> {
     const logger = new Logger('webpack', config.verbose);
     return new Promise((resolve) => {
         const webpackConfig = webpackConfigFactory(WebpackMode.Prod, config, {logger});

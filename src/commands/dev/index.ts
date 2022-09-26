@@ -21,18 +21,18 @@ export default async function (config: NormalizedServiceConfig) {
     let needToStartNodemon = shouldCompileServer;
 
     const serverPath = path.resolve(paths.appDist, 'server');
-    const {inspect, inspectBrk} = config;
+    const {inspect, inspectBrk} = config.server;
 
     const startNodemon = () => {
         if (needToStartNodemon && serverCompiled && clientCompiled) {
             logger.message('Starting application at', serverPath);
 
-            const serverWatch = config.serverWatch ?? [];
-            const delay = config.serverWatchThrottle;
+            const serverWatch = config.server.watch ?? [];
+            const delay = config.server.watchThrottle;
             const nodemonInstance = nodemon({
                 ext: 'js json',
                 script: `${serverPath}/index.js`,
-                args: ['--dev', config.serverPort ? `--port=${config.serverPort}` : ''],
+                args: ['--dev', config.server.port ? `--port=${config.server.port}` : ''],
                 nodeArgs:
                     inspect || inspectBrk
                         ? [`--${inspect ? 'inspect' : 'inspect-brk'}=:::${inspect || inspectBrk}`]

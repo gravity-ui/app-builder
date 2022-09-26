@@ -44,12 +44,7 @@ export interface LibraryConfig {
     verbose?: boolean;
 }
 
-export interface WebpackConfig {
-    /**
-     * добавляет импорт шорт-каты для указанных папок, в примере выше если в `ui/libs/` лежит
-     *     модуль `my-awesome-local-lib`, его можно добавлять через `import tools from my-awesome-local-lib`. Для
-     *     поддержки typescript необходимо этот шорткат также добавить в поле paths tsconfig.json.
-     */
+export interface ClientConfig {
     modules?: string[];
     /**
      * Resolve [alias](https://webpack.js.org/configuration/resolve/#resolvealias)
@@ -83,15 +78,15 @@ export interface WebpackConfig {
         customLanguages?: IFeatureDefinition[];
     };
     /**
-     * если выставить в false - для продовых сборок будут генерироваться полноценные сорс-мапы,
+     * if false - source maps will be generated for prod builds,
      */
     hiddenSourceMap?: boolean;
     /**
-     * дополнить список библиотек, которые попадут в чанк
+     * additional libraries for vendor chunk
      */
     vendors?: string[];
     /**
-     * опциональные [настройки](https://www.npmjs.com/package/moment-timezone-data-webpack-plugin) для исторических данных moment-timezone (по умолчанию данные обрезаются)
+     * [settings](https://www.npmjs.com/package/moment-timezone-data-webpack-plugin) for moment-timezone (by default data is truncated)
      */
     momentTz?: MomentTzOptions;
     /**
@@ -107,7 +102,7 @@ export interface WebpackConfig {
      */
     fallback?: ResolveOptions['fallback'];
     /**
-     * Follow symbolic links while looking for a file. [Описание опции](https://webpack.js.org/configuration/resolve/#resolvesymlinks)
+     * Follow symbolic links while looking for a file. [more](https://webpack.js.org/configuration/resolve/#resolvesymlinks)
      */
     symlinks?: boolean;
     /**
@@ -146,41 +141,47 @@ export interface WebpackConfig {
     };
     // Add additional options to DefinePlugin
     definitions?: DefinePlugin['definitions'];
+    watchOptions?: Configuration['watchOptions'];
 }
 
-export interface ServiceConfig extends WebpackConfig {
-    /**
-     * паттерны для отслеживания файлов, при изменении которых сервер перезапустится
-     */
-    serverWatch?: string[];
-    /**
-     * перезапускать сервер не чаще, чем через указанное количество миллисекунд
-     */
-    serverWatchThrottle?: number;
-    /**
-     * Specify a port number to listen to for server requests
-     */
-    serverPort?: number | true;
+export interface ServerConfig {
+    port?: number | true;
+    watch?: string[];
+    watchThrottle?: number;
     inspect?: number;
     inspectBrk?: number;
-    link?: string;
+}
+export interface ServiceConfig {
     target?: 'client' | 'server';
+    client?: ClientConfig;
+    server?: ServerConfig;
+    link?: string;
     verbose?: boolean;
 }
 
-export type NormalizedServiceConfig = Omit<
-    ServiceConfig,
-    'publicPathPrefix' | 'hiddenSourceMap' | 'svgr' | 'lazyCompilation' | 'devServer' | 'serverPort'
+export type NormalizedClientConfig = Omit<
+    ClientConfig,
+    'publicPathPrefix' | 'hiddenSourceMap' | 'svgr' | 'lazyCompilation' | 'devServer'
 > & {
     publicPathPrefix: string;
     hiddenSourceMap: boolean;
-    svgr: NonNullable<ServiceConfig['svgr']>;
+    svgr: NonNullable<ClientConfig['svgr']>;
     lazyCompilation?: {port: number};
     devServer: Omit<DevServerConfig, 'port' | 'type' | 'options'> & {
         port?: number;
         server: ServerConfiguration;
     };
+    verbose?: boolean;
+};
+
+export type NormalizedServerConfig = Omit<ServerConfig, 'serverPort'> & {
     serverPort?: number;
+    verbose?: boolean;
+};
+
+export type NormalizedServiceConfig = Omit<ServiceConfig, 'client' | 'server'> & {
+    client: NormalizedClientConfig;
+    server: NormalizedServerConfig;
 };
 
 export type ProjectConfig = {

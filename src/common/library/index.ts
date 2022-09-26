@@ -291,7 +291,7 @@ export function buildLibrary(config: LibraryConfig) {
                 typingsStream.on('data', copyToCjs);
             } else {
                 logger.error('Errors during library typechecking. Aborting...');
-                process.abort();
+                process.exit(1);
             }
         },
     );

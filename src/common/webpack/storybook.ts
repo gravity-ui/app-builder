@@ -4,7 +4,7 @@ import MiniCSSExtractPlugin from 'mini-css-extract-plugin';
 import OptimizeCSSAssetsPlugin from 'css-minimizer-webpack-plugin';
 
 import {configureModuleRules, configureResolve, HelperOptions, WebpackMode} from './config';
-import type {WebpackConfig} from '../models';
+import type {ClientConfig} from '../models';
 import type * as Webpack from 'webpack';
 import {getProjectConfig, normalizeConfig} from '../config';
 import {isServiceConfig} from '../models';
@@ -22,7 +22,7 @@ export async function configureServiceWebpackConfig(
         );
     }
 
-    const webpackConfig = await configureWebpackConfigForStorybook(mode, serviceConfig);
+    const webpackConfig = await configureWebpackConfigForStorybook(mode, serviceConfig.client);
 
     return {
         ...storybookConfig,
@@ -50,19 +50,24 @@ export async function configureServiceWebpackConfig(
     };
 }
 
-export async function configureWebpackConfigForStorybook(mode: Mode, userConfig: WebpackConfig) {
+export async function configureWebpackConfigForStorybook(
+    mode: Mode,
+    userConfig: ClientConfig = {},
+) {
     const isEnvDevelopment = mode === WebpackMode.Dev;
     const isEnvProduction = mode === WebpackMode.Prod;
 
     const config = await normalizeConfig({
-        ...userConfig,
-        includes: (userConfig.includes ?? []).concat(['.storybook']),
+        client: {
+            ...userConfig,
+            includes: (userConfig.includes ?? []).concat(['.storybook']),
+        },
     });
 
     const helperOptions = {
         isEnvDevelopment,
         isEnvProduction,
-        config,
+        config: config.client,
     };
 
     return {

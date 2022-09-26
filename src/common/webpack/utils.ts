@@ -46,10 +46,14 @@ export function resolveTsconfigPathsToAlias(tsConfigPath: string) {
         return undefined;
     }
 
-    const {paths = {}, baseUrl = '.'} = readJsonConfig(tsConfigPath).compilerOptions || {};
+    const {paths = {}, baseUrl} = readJsonConfig(tsConfigPath).compilerOptions || {};
+
+    if (!baseUrl) {
+        return undefined;
+    }
 
     const basePath = path.resolve(path.dirname(tsConfigPath), baseUrl);
-    const aliases: Record<string, string> = {};
+    const aliases: Record<string, string[]> = {};
     const modules: string[] = [];
     for (const [key, value] of Object.entries(paths)) {
         if (!Array.isArray(value) || value.length === 0) {
@@ -63,7 +67,7 @@ export function resolveTsconfigPathsToAlias(tsConfigPath: string) {
             continue;
         }
 
-        aliases[name] = path.resolve(basePath, `${value[0]}`.replace(endStarRe, ''));
+        aliases[name] = value.map((v) => path.resolve(basePath, `${v}`.replace(endStarRe, '')));
     }
 
     return {aliases, modules};
