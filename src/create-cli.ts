@@ -154,6 +154,8 @@ export function createCli(argv: string[]) {
             ),
         })
         .command({
+            command: 'build',
+            describe: 'Make production build',
             builder: (_) =>
                 _.option('target', {
                     describe: 'Select compilation unit',
@@ -185,9 +187,12 @@ export function createCli(argv: string[]) {
                         group: 'Client',
                         describe: 'Disable source map generation',
                         type: 'boolean',
+                    })
+                    .option('cdn', {
+                        group: 'Client',
+                        describe: 'Disable upload files to CDN',
+                        choices: ['false'] as const,
                     }),
-            command: 'build',
-            describe: 'Make production build',
             handler: handlerP(getCommandHandler('build')),
         })
         .wrap(cli.terminalWidth())

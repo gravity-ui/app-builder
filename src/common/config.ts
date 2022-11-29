@@ -97,6 +97,7 @@ export async function getProjectConfig(command: string, {env, ...argv}: Partial<
         client: {
             ...config.client,
             ...omitUndefined(client),
+            ...(argv.cdn === 'false' ? {cdn: undefined} : undefined),
         },
         server: {
             ...config.server,
@@ -182,6 +183,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
                 options,
             },
         };
+        delete client.cdn;
     } else {
         delete client.devServer;
         delete client.lazyCompilation;

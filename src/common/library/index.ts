@@ -10,11 +10,12 @@ import sass from 'sass';
 import postcss from 'postcss';
 import postcssPresetEnv from 'postcss-preset-env';
 import {transform} from '@svgr/core';
-import type {PresetDefault} from 'svgo';
 
 import paths from '../../common/paths';
 import logger from '../../common/logger';
 import {babelPreset} from '../babel';
+
+import type {PluginConfig} from 'svgo';
 import type {TransformOptions} from '@babel/core';
 import type {LibraryConfig} from '../models';
 
@@ -187,7 +188,7 @@ function compileStyles(
     });
 }
 
-const svgoPreset: PresetDefault = {
+const svgoPreset: PluginConfig = {
     name: 'preset-default',
     params: {overrides: {removeViewBox: false}},
 };

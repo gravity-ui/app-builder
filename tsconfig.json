@@ -1,6 +1,7 @@
 {
   "extends": "@gravity-ui/tsconfig",
   "compilerOptions": {
+    "noErrorTruncation": true,
     "declaration": true,
     "resolveJsonModule": true,
     "importsNotUsedAsValues": "error",

@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 import path, {resolve} from 'path';
 import fs from 'fs';
 import * as webpack from 'webpack';
@@ -22,6 +23,7 @@ import type {LinkedPackage, NormalizedClientConfig} from '../models';
 import type {Logger} from '../logger';
 import {ProgressPlugin} from './progress-plugin';
 import {resolveTsconfigPathsToAlias} from './utils';
+import {S3UploadPlugin} from '../s3-upload';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -720,6 +722,31 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
                   },
         ),
     );
+
+    if (config.cdn) {
+        let credentials;
+        if (process.env.FRONTEND_S3_ACCESS_KEY_ID && process.env.FRONTEND_S3_SECRET_ACCESS_KEY) {
+            credentials = {
+                accessKeyId: process.env.FRONTEND_S3_ACCESS_KEY_ID,
+                secretAccessKey: process.env.FRONTEND_S3_SECRET_ACCESS_KEY,
+            };
+        }
+        plugins.push(
+            new S3UploadPlugin({
+                exclude: config.hiddenSourceMap ? /\.map$/ : undefined,
+                compress: config.cdn.compress,
+                s3ClientOptions: {
+                    region: config.cdn.region,
+                    endpoint: config.cdn.endpoint,
+                    credentials,
+                },
+                s3UploadOptions: {
+                    bucket: config.cdn.bucket,
+                    targetPath: config.cdn.prefix,
+                },
+            }),
+        );
+    }
 
     return plugins;
 }
