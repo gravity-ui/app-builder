@@ -190,8 +190,8 @@ export function createCli(argv: string[]) {
                     })
                     .option('cdn', {
                         group: 'Client',
-                        describe: 'Disable upload files to CDN',
-                        choices: ['false'] as const,
+                        describe: 'Disable upload files to CDN [false]',
+                        type: 'string',
                     }),
             handler: handlerP(getCommandHandler('build')),
         })
