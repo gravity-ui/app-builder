@@ -160,13 +160,12 @@ function compileStyles(
                 });
 
                 if (sassTransformed?.css) {
-                    const postcssTransformed = await postcss([postcssPresetEnv()]).process(
-                        sassTransformed.css,
-                        {
-                            to: cssFile.split('/').pop(),
-                            map: {prev: sassTransformed.map?.toString(), inline: false},
-                        },
-                    );
+                    const postcssTransformed = await postcss([
+                        postcssPresetEnv({enableClientSidePolyfills: false}),
+                    ]).process(sassTransformed.css, {
+                        to: cssFile.split('/').pop(),
+                        map: {prev: sassTransformed.map?.toString(), inline: false},
+                    });
                     fs.writeFileSync(cssFile, postcssTransformed.css);
 
                     if (postcssTransformed.map) {

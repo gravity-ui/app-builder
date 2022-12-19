@@ -101,6 +101,21 @@ declare module 'postcss-preset-env' {
              * CSS, JS, and JSON files, functions, and directly passed objects.
              */
             exportTo?: string | any[] | undefined;
+
+            /**
+             * The enableClientSidePolyfills enables any feature that would need
+             * an extra browser library to be loaded into the page for it to work.
+             *
+             * Defaults to true.
+             */
+            enableClientSidePolyfills?: boolean;
+
+            /**
+             * The debug option enables debugging messages to stdout which should
+             * be useful to help you debug which features have been enabled/disabled
+             * and why.
+             */
+            debug?: boolean;
         }
 
         namespace Options {

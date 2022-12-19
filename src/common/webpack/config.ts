@@ -381,7 +381,7 @@ function createStylesRule({
             sourceMap: !config.disableSourceMapGeneration,
             postcssOptions: {
                 config: false,
-                plugins: [postcssPresetEnv()],
+                plugins: [postcssPresetEnv({enableClientSidePolyfills: false})],
             },
         },
     });
