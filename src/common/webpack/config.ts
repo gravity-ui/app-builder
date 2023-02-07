@@ -601,7 +601,15 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         new webpack.ContextReplacementPlugin(
             /moment[\\/]locale$/,
             // eslint-disable-next-line security/detect-non-literal-regexp
-            new RegExp(`^\\./(${(contextReplacement.moment || ['ru']).join('|')})$`),
+            new RegExp(`^\\./(${(contextReplacement.locale || ['ru']).join('|')})$`),
+        ),
+    );
+
+    plugins.push(
+        new webpack.ContextReplacementPlugin(
+            /dayjs[\\/]locale$/,
+            // eslint-disable-next-line security/detect-non-literal-regexp
+            new RegExp(`^\\./(${(contextReplacement.locale || ['ru']).join('|')})$`),
         ),
     );
 
