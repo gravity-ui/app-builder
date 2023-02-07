@@ -30,7 +30,12 @@ interface DevServerConfig {
 
 interface ContextReplacement {
     'highlight.js'?: string[];
-    moment?: string[];
+    /**
+     * Used to limit loading of "moment" and "dayjs" locales
+     *
+     * @default ['ru']
+     */
+    locale?: string[];
 }
 
 export interface LibraryConfig {
