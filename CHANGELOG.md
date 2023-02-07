@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.0](https://github.com/gravity-ui/app-builder/compare/v0.0.2...v0.1.0) (2023-02-07)
+
+
+### Features
+
+* limit load of dayjs locales ([#3](https://github.com/gravity-ui/app-builder/issues/3)) ([a7ff218](https://github.com/gravity-ui/app-builder/commit/a7ff2189ad99473e51f7470bc7e9ee32c490b64c))
+
 ## [0.0.2](https://github.com/gravity-ui/app-builder/compare/v0.0.1...v0.0.2) (2022-12-19)
 
 
