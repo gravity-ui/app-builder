@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/gravity-ui/app-builder/compare/v0.1.0...v0.1.1) (2023-03-10)
+
+
+### Bug Fixes
+
+* correctly load dayjs locales ([#6](https://github.com/gravity-ui/app-builder/issues/6)) ([412dfd6](https://github.com/gravity-ui/app-builder/commit/412dfd6d89dccbda9652a96baa36491db2e6b4dc))
+
 ## [0.1.0](https://github.com/gravity-ui/app-builder/compare/v0.0.2...v0.1.0) (2023-02-07)
 
 
