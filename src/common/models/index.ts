@@ -147,13 +147,15 @@ export interface ClientConfig {
     // Add additional options to DefinePlugin
     definitions?: DefinePlugin['definitions'];
     watchOptions?: Configuration['watchOptions'];
-    cdn?: {
-        bucket: string;
-        prefix?: string;
-        region?: string;
-        endpoint?: string;
-        compress?: boolean;
-    };
+    cdn?: CdnUploadConfig | CdnUploadConfig[];
+}
+
+interface CdnUploadConfig {
+    bucket: string;
+    prefix?: string;
+    region?: string;
+    endpoint?: string;
+    compress?: boolean;
 }
 
 export interface ServerConfig {

@@ -733,28 +733,44 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
     );
 
     if (config.cdn) {
-        let credentials;
+        let credentialsGlobal;
         if (process.env.FRONTEND_S3_ACCESS_KEY_ID && process.env.FRONTEND_S3_SECRET_ACCESS_KEY) {
-            credentials = {
+            credentialsGlobal = {
                 accessKeyId: process.env.FRONTEND_S3_ACCESS_KEY_ID,
                 secretAccessKey: process.env.FRONTEND_S3_SECRET_ACCESS_KEY,
             };
         }
-        plugins.push(
-            new S3UploadPlugin({
-                exclude: config.hiddenSourceMap ? /\.map$/ : undefined,
-                compress: config.cdn.compress,
-                s3ClientOptions: {
-                    region: config.cdn.region,
-                    endpoint: config.cdn.endpoint,
-                    credentials,
-                },
-                s3UploadOptions: {
-                    bucket: config.cdn.bucket,
-                    targetPath: config.cdn.prefix,
-                },
-            }),
-        );
+        const cdns = Array.isArray(config.cdn) ? config.cdn : [config.cdn];
+        for (let index = 0; index < cdns.length; index++) {
+            const cdn = cdns[index];
+            if (!cdn) {
+                continue;
+            }
+            let credentials = credentialsGlobal;
+            const accessKeyId = process.env[`FRONTEND_S3_ACCESS_KEY_ID_${index}`];
+            const secretAccessKey = process.env[`FRONTEND_S3_SECRET_ACCESS_KEY_${index}`];
+            if (accessKeyId && secretAccessKey) {
+                credentials = {
+                    accessKeyId,
+                    secretAccessKey,
+                };
+            }
+            plugins.push(
+                new S3UploadPlugin({
+                    exclude: config.hiddenSourceMap ? /\.map$/ : undefined,
+                    compress: cdn.compress,
+                    s3ClientOptions: {
+                        region: cdn.region,
+                        endpoint: cdn.endpoint,
+                        credentials,
+                    },
+                    s3UploadOptions: {
+                        bucket: cdn.bucket,
+                        targetPath: cdn.prefix,
+                    },
+                }),
+            );
+        }
     }
 
     return plugins;
