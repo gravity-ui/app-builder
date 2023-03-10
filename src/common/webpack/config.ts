@@ -572,6 +572,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
 
     const plugins: webpack.Configuration['plugins'] = [
         new CleanWebpackPlugin({
+            verbose: config.verbose,
             cleanOnceBeforeBuildPatterns: [
                 '**/*',
                 ...(isEnvDevelopment ? ['!manifest.json'] : []),
