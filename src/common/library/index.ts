@@ -74,7 +74,10 @@ function compileToCjs(
         finalCode,
         {
             filename: sourceFile,
-            plugins: ['@babel/plugin-transform-modules-commonjs', 'dynamic-import-node'],
+            plugins: [
+                '@babel/plugin-transform-modules-commonjs',
+                '@babel/plugin-proposal-dynamic-import',
+            ],
             sourceMaps: true,
             inputSourceMap,
         },
