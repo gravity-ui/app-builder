@@ -609,7 +609,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         new webpack.ContextReplacementPlugin(
             /dayjs[\\/]locale$/,
             // eslint-disable-next-line security/detect-non-literal-regexp
-            new RegExp(`^\\./(${(contextReplacement.locale || ['ru']).join('|')})$`),
+            new RegExp(`^\\./(${(contextReplacement.locale || ['ru']).join('|')})\\.js$`),
         ),
     );
 
