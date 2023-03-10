@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/gravity-ui/app-builder/compare/v0.1.1...v0.2.0) (2023-03-10)
+
+
+### Features
+
+* allow upload to many s3 destinations ([#7](https://github.com/gravity-ui/app-builder/issues/7)) ([406c4b2](https://github.com/gravity-ui/app-builder/commit/406c4b2362793528f85384ec3247f49ce8cbda16))
+* enable verbose mode in `CleanWebpackPlugin` ([#5](https://github.com/gravity-ui/app-builder/issues/5)) ([945f28a](https://github.com/gravity-ui/app-builder/commit/945f28a0875312256af143ca5e98c42fe414691f))
+
 ## [0.1.1](https://github.com/gravity-ui/app-builder/compare/v0.1.0...v0.1.1) (2023-03-10)
 
 
