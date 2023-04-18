@@ -98,12 +98,14 @@ export function createCli(argv: string[]) {
                         group: 'Server',
                         type: 'number',
                         describe: 'Opens a port for debugging',
+                        coerce: (arg) => (arg === undefined ? null : arg),
                     })
                     .option('inspect-brk', {
                         group: 'Server',
                         type: 'number',
                         describe:
                             'Opens a port for debugging. Will block until debugger is attached',
+                        coerce: (arg) => (arg === undefined ? null : arg),
                     })
                     .option('entry-filter', {
                         group: 'Client',
