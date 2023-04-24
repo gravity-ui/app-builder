@@ -27,7 +27,12 @@ export function watch(
 
     const host = ts.createWatchCompilerHost(
         configPath,
-        {noEmitOnError: false, inlineSourceMap: enableSourceMap, inlineSources: enableSourceMap},
+        {
+            noEmitOnError: false,
+            inlineSourceMap: enableSourceMap,
+            inlineSources: enableSourceMap,
+            ...(enableSourceMap ? {sourceMap: undefined} : {}),
+        },
         ts.sys,
         createProgram,
         reportDiagnostic,
