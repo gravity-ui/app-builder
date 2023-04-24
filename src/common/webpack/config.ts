@@ -637,7 +637,9 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
     }
 
     if (isEnvDevelopment && !config.disableReactRefresh) {
-        plugins.push(new ReactRefreshWebpackPlugin());
+        const {webSocketPath = path.normalize(`/${config.publicPathPrefix}/build/sockjs-node`)} =
+            config.devServer || {};
+        plugins.push(new ReactRefreshWebpackPlugin({overlay: {sockPath: webSocketPath}}));
     }
 
     if (config.detectCircularDependencies) {

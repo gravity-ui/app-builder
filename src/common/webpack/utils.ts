@@ -54,7 +54,7 @@ export function resolveTsconfigPathsToAlias(tsConfigPath: string) {
 
     const basePath = path.resolve(path.dirname(tsConfigPath), baseUrl);
     const aliases: Record<string, string[]> = {};
-    const modules: string[] = [];
+    const modules: string[] = [basePath];
     for (const [key, value] of Object.entries(paths)) {
         if (!Array.isArray(value) || value.length === 0) {
             continue;
