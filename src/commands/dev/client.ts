@@ -43,6 +43,7 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
         client: {
             webSocketURL: {pathname: webSocketPath},
             overlay: {
+                runtimeErrors: config.verbose,
                 warnings: config.verbose,
             },
         },
