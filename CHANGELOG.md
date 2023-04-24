@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/gravity-ui/app-builder/compare/v0.2.0...v0.2.1) (2023-04-24)
+
+
+### Bug Fixes
+
+* **cli:** correctly consider --inspect/--inspect-brk options without value ([#11](https://github.com/gravity-ui/app-builder/issues/11)) ([a5c74c3](https://github.com/gravity-ui/app-builder/commit/a5c74c39e64d6fc57bf10eb3e49596d96a9e8dcb))
+* sove fixes ([#13](https://github.com/gravity-ui/app-builder/issues/13)) ([e4f9e1a](https://github.com/gravity-ui/app-builder/commit/e4f9e1a14c9e71197e91586a9c254db880f8ac11))
+
 ## [0.2.0](https://github.com/gravity-ui/app-builder/compare/v0.1.1...v0.2.0) (2023-03-10)
 
 
