@@ -1,4 +1,5 @@
 import {WebpackError} from 'webpack';
+import fg from 'fast-glob';
 
 import {uploadFiles, UploadOptions} from './upload.js';
 
@@ -11,6 +12,7 @@ interface S3UploadPluginOptions {
     compress?: boolean;
     s3ClientOptions: S3ClientOptions;
     s3UploadOptions: Pick<UploadOptions, 'bucket' | 'targetPath' | 'existsBehavior'>;
+    additionalPattern?: string | string[];
 }
 export class S3UploadPlugin {
     private options: S3UploadPluginOptions;
@@ -25,6 +27,14 @@ export class S3UploadPlugin {
                 const fullPath = compilation.outputOptions.path + '/' + name;
                 return this.isIncludeAndNotExclude(fullPath);
             });
+
+            if (this.options.additionalPattern) {
+                const additionallFiles = fg.sync(this.options.additionalPattern, {
+                    cwd: compilation.outputOptions.path,
+                });
+                fileNames.push(...additionallFiles);
+            }
+
             try {
                 await uploadFiles(fileNames, {
                     s3: this.options.s3ClientOptions,
