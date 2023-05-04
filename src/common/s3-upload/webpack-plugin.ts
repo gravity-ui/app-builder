@@ -23,17 +23,19 @@ export class S3UploadPlugin {
 
     apply(compiler: Compiler) {
         compiler.hooks.done.tapPromise('S3UploadPlugin', async ({compilation}) => {
-            const fileNames = Object.keys(compilation.assets).filter((name) => {
-                const fullPath = compilation.outputOptions.path + '/' + name;
-                return this.isIncludeAndNotExclude(fullPath);
-            });
+            let fileNames = Object.keys(compilation.assets);
 
             if (this.options.additionalPattern) {
                 const additionallFiles = fg.sync(this.options.additionalPattern, {
                     cwd: compilation.outputOptions.path,
                 });
-                fileNames.push(...additionallFiles);
+                fileNames = fileNames.concat(additionallFiles);
             }
+
+            fileNames = fileNames.filter((name) => {
+                const fullPath = compilation.outputOptions.path + '/' + name;
+                return this.isIncludeAndNotExclude(fullPath);
+            });
 
             try {
                 await uploadFiles(fileNames, {
