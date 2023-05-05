@@ -156,6 +156,10 @@ interface CdnUploadConfig {
     region?: string;
     endpoint?: string;
     compress?: boolean;
+    /**
+     * pattern for additional files in build that need to be loaded to CDN
+     */
+    additionalPattern?: string | string[];
 }
 
 export interface ServerConfig {

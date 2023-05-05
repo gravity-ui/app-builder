@@ -770,6 +770,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
                         bucket: cdn.bucket,
                         targetPath: cdn.prefix,
                     },
+                    additionalPattern: cdn.additionalPattern,
                 }),
             );
         }
