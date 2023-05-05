@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/gravity-ui/app-builder/compare/v0.2.1...v0.2.2) (2023-05-05)
+
+
+### Features
+
+* allow upload of additional files to CDN ([#15](https://github.com/gravity-ui/app-builder/issues/15)) ([dcdf8e0](https://github.com/gravity-ui/app-builder/commit/dcdf8e06d4d19a50fce3f6bbc48f4cf9ac2c7926))
+
 ## [0.2.1](https://github.com/gravity-ui/app-builder/compare/v0.2.0...v0.2.1) (2023-04-24)
 
 
