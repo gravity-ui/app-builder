@@ -1,9 +1,10 @@
 import {WebpackError} from 'webpack';
 import fg from 'fast-glob';
 
-import {uploadFiles, UploadOptions} from './upload.js';
+import {uploadFiles} from './upload.js';
 
 import type {Compiler} from 'webpack';
+import type {UploadOptions} from './upload.js';
 import type {S3ClientOptions} from './s3-client.js';
 
 interface S3UploadPluginOptions {

@@ -1,5 +1,5 @@
 import fs from 'fs-extra';
-import rimraf from 'rimraf';
+import {rimraf} from 'rimraf';
 import path from 'path';
 
 import type {LinkedPackage} from '../models';

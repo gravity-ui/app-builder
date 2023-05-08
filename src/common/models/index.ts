@@ -5,6 +5,7 @@ import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plug
 import type {Configuration, ResolveOptions, DefinePlugin} from 'webpack';
 import type {ServerConfiguration} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
+import type {Config as SvgrConfig} from '@svgr/core';
 
 export interface Entities<T> {
     data: Record<string, T>;
@@ -60,7 +61,7 @@ export interface ClientConfig {
      */
     includes?: string[];
     /**
-     * Additional paths fro images
+     * Additional paths for images
      */
     images?: string[];
     /**
@@ -117,7 +118,7 @@ export interface ClientConfig {
     /**
      * svgr plugin options.
      */
-    svgr?: Object;
+    svgr?: SvgrConfig;
     entryFilter?: string[];
     excludeFromClean?: string[];
     analyzeBundle?: 'true' | 'statoscope';

@@ -1,5 +1,6 @@
 import type Typescript from 'typescript';
 import * as path from 'path';
+import * as semver from 'semver';
 
 export function createTransformPathsToLocalModules(ts: typeof Typescript) {
     function resolveModule(
@@ -38,7 +39,7 @@ export function createTransformPathsToLocalModules(ts: typeof Typescript) {
     function transformFile(
         sourceFile: Typescript.SourceFile,
         context: Typescript.TransformationContext,
-    ): Typescript.SourceFile {
+    ) {
         const options = context.getCompilerOptions();
         return ts.visitNode(sourceFile, visitor);
 
@@ -68,29 +69,14 @@ export function createTransformPathsToLocalModules(ts: typeof Typescript) {
                 const resolvedPath = resolveModule(modulePath, sourceFile.fileName, options);
                 if (resolvedPath) {
                     if (ts.isImportDeclaration(node)) {
-                        const newStatement = context.factory.updateImportDeclaration(
-                            node,
-                            node.decorators,
-                            node.modifiers,
-                            node.importClause,
-                            context.factory.createStringLiteral(resolvedPath),
-                            node.assertClause,
-                        );
-                        ts.setSourceMapRange(newStatement, ts.getSourceMapRange(node));
-                        return newStatement as unknown as T;
+                        const newNode = updateImportDeclaration(ts, node, context, resolvedPath);
+                        ts.setSourceMapRange(newNode, ts.getSourceMapRange(node));
+                        return newNode as unknown as T;
                     }
                     if (ts.isExportDeclaration(node)) {
-                        const newStatement = context.factory.updateExportDeclaration(
-                            node,
-                            node.decorators,
-                            node.modifiers,
-                            node.isTypeOnly,
-                            node.exportClause,
-                            context.factory.createStringLiteral(resolvedPath),
-                            node.assertClause,
-                        );
-                        ts.setSourceMapRange(newStatement, ts.getSourceMapRange(node));
-                        return newStatement as unknown as T;
+                        const newNode = updateExportDeclaration(ts, node, context, resolvedPath);
+                        ts.setSourceMapRange(newNode, ts.getSourceMapRange(node));
+                        return newNode as unknown as T;
                     }
                     if (isDynamicImport(node) || isRequire(node)) {
                         const newStatement = context.factory.updateCallExpression(
@@ -105,15 +91,7 @@ export function createTransformPathsToLocalModules(ts: typeof Typescript) {
                         return newStatement as unknown as T;
                     }
                     if (ts.isImportTypeNode(node)) {
-                        const newNode = context.factory.updateImportTypeNode(
-                            node,
-                            context.factory.createLiteralTypeNode(
-                                context.factory.createStringLiteral(resolvedPath),
-                            ),
-                            node.qualifier,
-                            node.typeArguments,
-                            node.isTypeOf,
-                        );
+                        const newNode = updateImportTypeNode(ts, node, context, resolvedPath);
                         ts.setSourceMapRange(newNode, ts.getSourceMapRange(node));
                         return newNode as unknown as T;
                     }
@@ -138,4 +116,92 @@ export function createTransformPathsToLocalModules(ts: typeof Typescript) {
             return sourceFileOrBundle;
         };
     };
+}
+
+function updateImportDeclaration(
+    ts: typeof Typescript,
+    node: Typescript.ImportDeclaration,
+    context: Typescript.TransformationContext,
+    resolvedPath: string,
+) {
+    if (semver.lt(ts.version, '5.0')) {
+        // for versions before 5.0
+        return context.factory.updateImportDeclaration(
+            node,
+            // @ts-expect-error
+            node.decorators,
+            node.modifiers,
+            node.importClause,
+            context.factory.createStringLiteral(resolvedPath),
+            // @ts-expect-error
+            node.assertClause,
+        );
+    }
+    return context.factory.updateImportDeclaration(
+        node,
+        node.modifiers,
+        node.importClause,
+        context.factory.createStringLiteral(resolvedPath),
+        node.assertClause,
+    );
+}
+
+function updateExportDeclaration(
+    ts: typeof Typescript,
+    node: Typescript.ExportDeclaration,
+    context: Typescript.TransformationContext,
+    resolvedPath: string,
+) {
+    if (semver.lt(ts.version, '5.0')) {
+        // for versions before 5.0
+        return context.factory.updateExportDeclaration(
+            node,
+            // @ts-expect-error
+            node.decorators,
+            node.modifiers,
+            node.isTypeOnly,
+            node.exportClause,
+            context.factory.createStringLiteral(resolvedPath),
+            // @ts-expect-error
+            node.assertClause,
+        );
+    }
+
+    return context.factory.updateExportDeclaration(
+        node,
+        node.modifiers,
+        node.isTypeOnly,
+        node.exportClause,
+        context.factory.createStringLiteral(resolvedPath),
+        node.assertClause,
+    );
+}
+
+function updateImportTypeNode(
+    ts: typeof Typescript,
+    node: Typescript.ImportTypeNode,
+    context: Typescript.TransformationContext,
+    resolvedPath: string,
+) {
+    if (semver.lt(ts.version, '5.0')) {
+        // for versions before 5.0
+        return context.factory.updateImportTypeNode(
+            node,
+            context.factory.createLiteralTypeNode(
+                context.factory.createStringLiteral(resolvedPath),
+            ),
+            // @ts-expect-error
+            node.qualifier,
+            node.typeArguments,
+            node.isTypeOf,
+        );
+    }
+    return context.factory.updateImportTypeNode(
+        node,
+        context.factory.createLiteralTypeNode(context.factory.createStringLiteral(resolvedPath)),
+        node.assertions,
+        node.qualifier,
+        node.typeArguments,
+        node.isTypeOf,
+    );
 }

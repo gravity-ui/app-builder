@@ -62,11 +62,9 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
         ...devServer,
     };
 
-    let listenOn = options.port || options.ipc;
-
+    const listenOn = options.port || options.ipc;
     if (!listenOn) {
-        listenOn = path.resolve(paths.appDist, 'run/client.sock');
-        options.ipc = listenOn;
+        options.ipc = path.resolve(paths.appDist, 'run/client.sock');
     }
 
     if (config.client.lazyCompilation) {

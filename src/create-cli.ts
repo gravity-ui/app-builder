@@ -4,7 +4,9 @@ import path from 'path';
 
 import logger from './common/logger';
 import {getProjectConfig} from './common/config';
-import {isLibraryConfig, ProjectConfig} from './common/models';
+import {isLibraryConfig} from './common/models';
+
+import type {ProjectConfig} from './common/models';
 
 export type CliArgs = Awaited<ReturnType<typeof createCli>>;
 

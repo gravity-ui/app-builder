@@ -2,8 +2,10 @@ import * as path from 'path';
 
 import PQueue from 'p-queue';
 
-import {getS3Client, S3ClientOptions, S3UploadFileOptions} from './s3-client.js';
+import {getS3Client} from './s3-client.js';
 import {brotli, gzip} from './compress.js';
+
+import type {S3ClientOptions, S3UploadFileOptions} from './s3-client.js';
 
 export interface UploadOptions {
     bucket: string;
