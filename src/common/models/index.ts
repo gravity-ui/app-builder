@@ -211,7 +211,10 @@ export type AppBuilderConfigPackage = (options?: unknown) => ProjectConfig;
 
 export type ProjectFileConfig =
     | ProjectConfig
-    | ((mode: 'dev' | 'build', env?: Record<string, any>) => ProjectConfig);
+    | ((
+          mode: 'dev' | 'build',
+          env?: Record<string, any>,
+      ) => ProjectConfig | Promise<ProjectConfig>);
 
 export function isServiceConfig(config: ProjectConfig): config is ServiceConfig {
     return !('lib' in config);
@@ -219,4 +222,8 @@ export function isServiceConfig(config: ProjectConfig): config is ServiceConfig 
 
 export function isLibraryConfig(config: ProjectConfig): config is LibraryConfig {
     return 'lib' in config;
+}
+
+export function defineConfig(config: ProjectFileConfig) {
+    return config;
 }

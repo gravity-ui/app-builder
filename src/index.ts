@@ -3,4 +3,5 @@ export {
     configureServiceWebpackConfig,
 } from './common/webpack/storybook';
 export {createTransformPathsToLocalModules} from './common/typescript/transformers';
-export type {ProjectConfig, ServiceConfig, LibraryConfig} from './common/models';
+export {defineConfig} from './common/models';
+export type {ProjectConfig, ServiceConfig, LibraryConfig, ProjectFileConfig} from './common/models';
