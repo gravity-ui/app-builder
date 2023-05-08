@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.3.0](https://github.com/gravity-ui/app-builder/compare/v0.2.2...v0.3.0) (2023-05-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **LibraryConfig:** move newJsxTransform option under lib property
+
+### Features
+
+* **config:** add defineConfig helper ([31daecc](https://github.com/gravity-ui/app-builder/commit/31daecccc33fc58bc14d85c217b990c1f4302218))
+* **server:** use APP_PORT env variable to pass port to server ([6b14651](https://github.com/gravity-ui/app-builder/commit/6b14651adae6cf18f0da7447636d2a8363979166))
+* **storybook:** use configureServiceWebpackConfig for libraries too ([4204cf9](https://github.com/gravity-ui/app-builder/commit/4204cf9e1e5e63e16e7631477beb251e496d2690))
+
+
+### Bug Fixes
+
+* **client:** use newJsxTransform in svgr options ([cd01f55](https://github.com/gravity-ui/app-builder/commit/cd01f552177c73b20de7e95ca65cf770e8b63dbc))
+* **LibraryConfig:** move newJsxTransform option under lib property ([847a38c](https://github.com/gravity-ui/app-builder/commit/847a38cc4138741559f053ba594bcdd997c44063))
+
+
+### docs
+
+* add documentation for services ([d78b63b](https://github.com/gravity-ui/app-builder/commit/d78b63beb03c0e446e060d977942787dc33eee2c))
+
 ## [0.2.2](https://github.com/gravity-ui/app-builder/compare/v0.2.1...v0.2.2) (2023-05-05)
 
 
