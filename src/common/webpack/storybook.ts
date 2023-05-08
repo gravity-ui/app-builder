@@ -3,11 +3,13 @@ import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import MiniCSSExtractPlugin from 'mini-css-extract-plugin';
 import OptimizeCSSAssetsPlugin from 'css-minimizer-webpack-plugin';
 
-import {configureModuleRules, configureResolve, HelperOptions, WebpackMode} from './config';
+import {configureModuleRules, configureResolve, WebpackMode} from './config';
+import {getProjectConfig, normalizeConfig} from '../config';
+import {isLibraryConfig} from '../models';
+
+import type {HelperOptions} from './config';
 import type {ClientConfig} from '../models';
 import type * as Webpack from 'webpack';
-import {getProjectConfig, normalizeConfig} from '../config';
-import {isServiceConfig} from '../models';
 
 type Mode = `${WebpackMode}`;
 
@@ -16,13 +18,17 @@ export async function configureServiceWebpackConfig(
     storybookConfig: Webpack.Configuration,
 ): Promise<Webpack.Configuration> {
     const serviceConfig = await getProjectConfig(mode === WebpackMode.Prod ? 'build' : 'dev', {});
-    if (!isServiceConfig(serviceConfig)) {
-        throw new Error(
-            'configureServiceWebpackConfig can be used only for services, but got the library config',
-        );
+    let options: ClientConfig = {};
+    if (isLibraryConfig(serviceConfig)) {
+        options = {
+            includes: ['src'],
+            newJsxTransform: serviceConfig.lib?.newJsxTransform,
+        };
+    } else {
+        options = serviceConfig.client;
     }
 
-    const webpackConfig = await configureWebpackConfigForStorybook(mode, serviceConfig.client);
+    const webpackConfig = await configureWebpackConfigForStorybook(mode, options);
 
     return {
         ...storybookConfig,
