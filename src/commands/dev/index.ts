@@ -33,6 +33,9 @@ export default async function (config: NormalizedServiceConfig) {
                 ext: 'js json',
                 script: `${serverPath}/index.js`,
                 args: ['--dev', config.server.port ? `--port=${config.server.port}` : ''],
+                env: {
+                    ...(config.server.port ? {APP_PORT: config.server.port} : undefined),
+                },
                 nodeArgs:
                     inspect || inspectBrk
                         ? [`--${inspect ? 'inspect' : 'inspect-brk'}=:::${inspect || inspectBrk}`]
