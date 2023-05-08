@@ -431,7 +431,12 @@ function createIconsRule(
                       jsLoader,
                       {
                           loader: require.resolve('@svgr/webpack'),
-                          options: {babel: false, dimensions: false, ...config.svgr},
+                          options: {
+                              babel: false,
+                              dimensions: false,
+                              jsxRuntime: config.newJsxTransform ? 'automatic' : 'classic',
+                              ...config.svgr,
+                          },
                       },
                   ],
               }
