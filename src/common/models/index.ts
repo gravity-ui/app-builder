@@ -39,13 +39,13 @@ interface ContextReplacement {
 }
 
 export interface LibraryConfig {
-    lib?: {
+    lib: {
         internalDirs?: string[];
+        /**
+         * Use new JSX Transform
+         */
+        newJsxTransform?: boolean;
     };
-    /**
-     * Use new JSX Transform
-     */
-    newJsxTransform?: boolean;
     verbose?: boolean;
 }
 
@@ -173,7 +173,7 @@ export interface ServiceConfig {
     target?: 'client' | 'server';
     client?: ClientConfig;
     server?: ServerConfig;
-    link?: string;
+    lib?: never;
     verbose?: boolean;
 }
 

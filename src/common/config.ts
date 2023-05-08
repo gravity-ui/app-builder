@@ -1,12 +1,14 @@
 import path from 'path';
 import _ from 'lodash';
 
-import {cosmiconfigSync, Loader} from 'cosmiconfig';
-import type {CosmiconfigResult} from 'cosmiconfig/dist/types';
+import {cosmiconfigSync} from 'cosmiconfig';
 import {TypeScriptLoader as getTsLoader} from 'cosmiconfig-typescript-loader';
 import getPort from 'get-port';
 
-import {isServiceConfig} from './models';
+import {isLibraryConfig, isServiceConfig} from './models';
+
+import type {Loader} from 'cosmiconfig';
+import type {CosmiconfigResult} from 'cosmiconfig/dist/types';
 
 import type {
     ProjectConfig,
@@ -91,7 +93,14 @@ export async function getProjectConfig(command: string, {env, ...argv}: Partial<
     };
 
     const config = {...(await cfg?.config)};
-    const projectConfig: ProjectConfig = {
+    if (isLibraryConfig(config)) {
+        return normalizeConfig({
+            ...config,
+            ...omitUndefined({verbose: argv.verbose}),
+        });
+    }
+
+    const projectConfig: ServiceConfig = {
         ...config,
         ...omitUndefined({target: argv.target, verbose: argv.verbose}),
         client: {
@@ -139,7 +148,7 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
     }
 
     const config = _.cloneDeep(userConfig);
-    config.newJsxTransform = config.newJsxTransform ?? true;
+    config.lib.newJsxTransform = config.lib.newJsxTransform ?? true;
     return config;
 }
 

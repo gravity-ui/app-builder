@@ -8,11 +8,8 @@ export default function (config: LibraryConfig) {
         const build = new ControllableScript(
             `
         const {buildLibrary} = require(${JSON.stringify(require.resolve('../../common/library'))});
-        buildLibrary({
-            lib: ${JSON.stringify(config.lib)},
-            newJsxTransform: ${JSON.stringify(config.newJsxTransform)}
-        });
-        `,
+        buildLibrary({lib: ${JSON.stringify(config.lib)}});
+            `,
             null,
         );
 

@@ -5,7 +5,7 @@ import fs from 'fs';
 import childProcess from 'child_process';
 import * as babel from '@babel/core';
 import fg from 'fast-glob';
-import rimraf from 'rimraf';
+import {rimraf} from 'rimraf';
 import sass from 'sass';
 import postcss from 'postcss';
 import postcssPresetEnv from 'postcss-preset-env';
@@ -216,7 +216,7 @@ export function buildLibrary(config: LibraryConfig) {
             source,
             {
                 filename: sourceFile,
-                presets: [babelPreset(config)],
+                presets: [babelPreset(config.lib)],
                 plugins: [
                     [
                         require.resolve('babel-plugin-inline-react-svg'),
@@ -331,7 +331,7 @@ export function buildLibrary(config: LibraryConfig) {
                     component,
                     {
                         filename: iconFile,
-                        presets: [babelPreset(config)],
+                        presets: [babelPreset(config.lib)],
                         sourceMaps: true,
                     },
                     (err, transformed) => {
