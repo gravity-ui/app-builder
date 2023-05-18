@@ -5,6 +5,26 @@
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    "./worker": {
+      "types": "./dist/common/webpack/worker/web-worker.d.ts",
+      "default": "./dist/common/webpack/worker/web-worker.js"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "index.d.ts": [
+        "./dist/index.d.ts"
+      ],
+      "worker": [
+        "./dist/common/webpack/worker/web-worker.d.ts"
+      ]
+    }
+  },
   "bin": {
     "app-builder": "dist/cli.js"
   },
