@@ -198,6 +198,7 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   - `type` (`'https'`) — allow to serve over HTTPS.
   - `options` (`import('https').ServerOptions`) — allow to provide your own certificate.
 - `watchOptions` — a set of options used to customize watch mode, [more](https://webpack.js.org/configuration/watch/#watchoptions)
+  - `watchPackages` (`boolean`) - watch all changes in `node_modules`.
 - `disableReactRefresh` (`boolean`) — disable `react-refresh` in dev mode.
 - `detectCircularDependencies` (`true | CircularDependenciesOptions`) - detect modules with circular dependencies, [more](https://github.com/aackerman/circular-dependency-plugin)
 
