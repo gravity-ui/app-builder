@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/gravity-ui/app-builder/compare/v0.3.0...v0.4.0) (2023-05-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **Client:** change default value for setting `client.symlinks`, used default (true) from webpack.
+
+### Features
+
+* **Client:** add setting to watch changes in node_modules ([#21](https://github.com/gravity-ui/app-builder/issues/21)) ([3a5dea6](https://github.com/gravity-ui/app-builder/commit/3a5dea6284f3a768650b388115a83136ba1b7a07))
+* **WebWorker:** support webpack 5 web workers syntax ([#19](https://github.com/gravity-ui/app-builder/issues/19)) ([bf784bb](https://github.com/gravity-ui/app-builder/commit/bf784bb6480c60497bc79c93e70d61aaead80909))
+
 ## [0.3.0](https://github.com/gravity-ui/app-builder/compare/v0.2.2...v0.3.0) (2023-05-08)
 
 
