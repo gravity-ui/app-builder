@@ -145,9 +145,16 @@ export interface ClientConfig {
     polyfill?: {
         process?: boolean;
     };
-    // Add additional options to DefinePlugin
+    /**
+     * Add additional options to DefinePlugin
+     */
     definitions?: DefinePlugin['definitions'];
-    watchOptions?: Configuration['watchOptions'];
+    watchOptions?: Configuration['watchOptions'] & {
+        /**
+         * watch changes in node_modules
+         */
+        watchPackages?: boolean;
+    };
     cdn?: CdnUploadConfig | CdnUploadConfig[];
     /**
      * use webpack 5 Web Workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)

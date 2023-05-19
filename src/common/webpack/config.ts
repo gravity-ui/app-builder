@@ -79,7 +79,7 @@ export function webpackConfigFactory(
         optimization: configureOptimization(helperOptions),
         externals: config.externals,
         node: config.node,
-        watchOptions: config.watchOptions,
+        watchOptions: configureWatchOptions(helperOptions),
         ignoreWarnings: [/Failed to parse source map/],
         infrastructureLogging: config.verbose
             ? {
@@ -99,6 +99,9 @@ export function webpackConfigFactory(
                       : undefined,
               }
             : undefined,
+        snapshot: {
+            managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
+        },
     };
 }
 
@@ -178,6 +181,21 @@ function configureDevTool({isEnvProduction, config}: HelperOptions) {
     return config.disableSourceMapGeneration ? false : format;
 }
 
+function configureWatchOptions({config}: HelperOptions): webpack.Configuration['watchOptions'] {
+    const watchOptions = {
+        ...config.watchOptions,
+        followSymlinks:
+            config.watchOptions?.followSymlinks ??
+            (!config.symlinks && config.watchOptions?.watchPackages)
+                ? true
+                : undefined,
+    };
+
+    delete watchOptions.watchPackages;
+
+    return watchOptions;
+}
+
 export function configureResolve({
     isEnvProduction,
     config,
@@ -210,7 +228,7 @@ export function configureResolve({
         },
         modules: ['node_modules', ...modules, ...(config.modules || [])],
         extensions: ['.mjs', '.cjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
-        symlinks: config.symlinks || false,
+        symlinks: config.symlinks,
         fallback: config.fallback,
     };
 }
