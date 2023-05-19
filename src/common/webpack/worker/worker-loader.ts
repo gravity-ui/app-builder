@@ -27,13 +27,14 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
     }
 
     const isEnvProduction = compilerOptions.mode === 'production';
-    const filename = isEnvProduction
+    const filename = 'worker.js';
+    const chunkFilename = isEnvProduction
         ? 'js/[name].[contenthash:8].worker.js'
         : 'js/[name].worker.js';
 
     const workerOptions = {
         filename,
-        chunkFilename: filename,
+        chunkFilename,
         publicPath: compilerOptions.output.publicPath,
         globalObject: 'self',
         devtoolNamespace: path.resolve('/', path.relative(paths.app, this.resource)),
@@ -86,33 +87,29 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
             return cb(new Error('Child compilation failed:\n' + errorDetails));
         }
 
-        const file = Object.keys(compilation.assets)[0];
-        if (file) {
-            const contents = compilation.assets[file]?.source();
-            const mapFile = `${file}.map`;
-            let map = compilation.assets[mapFile]?.source();
-            if (map) {
-                const sourceMap = JSON.parse(map.toString());
-                if (Array.isArray(sourceMap.sources)) {
-                    sourceMap.sources = sourceMap.sources.map((pathname: string) =>
-                        pathname.replace(/webpack:\/\/[^/]+\//, 'webpack://'),
-                    );
-                }
-                map = JSON.stringify(sourceMap);
-            }
-            for (const [fileName, asset] of Object.entries(compilation.assets)) {
-                if ([file, mapFile].includes(fileName)) {
-                    continue;
-                }
-                workerCompiler.parentCompilation?.emitAsset(
-                    fileName,
-                    asset,
-                    compilation.assetsInfo.get(fileName),
+        const contents = compilation.assets[filename]?.source();
+        const mapFile = `${filename}.map`;
+        let map = compilation.assets[mapFile]?.source();
+        if (map) {
+            const sourceMap = JSON.parse(map.toString());
+            if (Array.isArray(sourceMap.sources)) {
+                sourceMap.sources = sourceMap.sources.map((pathname: string) =>
+                    pathname.replace(/webpack:\/\/[^/]+\//, 'webpack://'),
                 );
             }
-            return cb(null, contents, map?.toString());
+            map = JSON.stringify(sourceMap);
         }
-        return cb(null, undefined);
+        for (const [assetName, asset] of Object.entries(compilation.assets)) {
+            if ([filename, mapFile].includes(assetName)) {
+                continue;
+            }
+            workerCompiler.parentCompilation?.emitAsset(
+                assetName,
+                asset,
+                compilation.assetsInfo.get(assetName),
+            );
+        }
+        return cb(null, contents, map?.toString());
     });
 };
 
