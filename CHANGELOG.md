@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/gravity-ui/app-builder/compare/v0.4.0...v0.4.1) (2023-05-19)
+
+
+### Bug Fixes
+
+* **worker-loader:** correctly get main worker asset ([#22](https://github.com/gravity-ui/app-builder/issues/22)) ([31984c9](https://github.com/gravity-ui/app-builder/commit/31984c9c057a915233db3d9aed470ce6d4040db4))
+
 ## [0.4.0](https://github.com/gravity-ui/app-builder/compare/v0.3.0...v0.4.0) (2023-05-19)
 
 
