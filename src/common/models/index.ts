@@ -149,6 +149,10 @@ export interface ClientConfig {
     definitions?: DefinePlugin['definitions'];
     watchOptions?: Configuration['watchOptions'];
     cdn?: CdnUploadConfig | CdnUploadConfig[];
+    /**
+     * use webpack 5 Web Workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
+     */
+    newWebWorkerSyntax?: boolean;
 }
 
 interface CdnUploadConfig {

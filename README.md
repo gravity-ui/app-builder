@@ -232,3 +232,71 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   - `languages` (`string[]`) - include only a subset of the languages supported.
   - `features` (`string[]`) - include only a subset of the editor features.
   - `customLanguages` (`IFeatureDefinition[]`) - include custom languages (outside of the ones shipped with the `monaco-editor`).
+
+##### WebWorker support
+
+Web workers allow you to run JavaScript code in a separate thread from the main UI thread.
+This can improve the performance and responsiveness of your web application by offloading
+intensive tasks to the background.
+
+To create a web worker, you need to write a script file that defines the logic of the worker. For example,
+this file (my.worker.ts) implements a simple function that adds two numbers and sends the result back to the main thread:
+
+```ts
+// my.worker.ts
+self.onmessage = async (ev) => {
+  const {a = 0, b = 0} = ev.data || {};
+  const result = a + b;
+  self.postMessage({
+    result,
+  });
+};
+```
+
+`app-builder` provides built-in support for web workers for files with the `.worker.[jt]s` suffix. You can choose
+between two variants of getting web workers by setting the `newWebWorkerSyntax` option:
+
+- `newWebWorkerSyntax: false` (default) - use the `worker-loader` to import web workers.
+  Content of worker file will be included in main bundle as blob. This variant does not
+  support dynamic imports inside worker. For example:
+
+```ts
+// main.ts
+import MyWorker from './my.worker.ts';
+
+const worker = new MyWorker();
+```
+
+In this variant, you need to add some type declarations for the worker files::
+
+```ts
+// worker.d.ts
+declare module '*.worker.ts' {
+  class WebpackWorker extends Worker {}
+
+  export default WebpackWorker;
+}
+```
+
+- `newWebWorkerSyntax: true` - use the webpack 5 web workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
+  to import web workers. This variant allows to use dynamic imports inside worker and load worker bundle from CDN. For example:
+
+```ts
+import {Worker} from '@gravity-ui/app-builder/worker';
+
+const MyWorker = new Worker(new URL('./my.worker'), import.meta.url);
+```
+
+To use the web worker in your main script, you need to communicate with it using the postMessage and onmessage methods. For example:
+
+```ts
+// main.ts
+
+const worker = '...'; // Worker creation, first or second variant
+
+worker.onmessage = ({data: {result}}) => {
+  console.log(result);
+};
+
+worker.postMessage({a: 1, b: 2});
+```

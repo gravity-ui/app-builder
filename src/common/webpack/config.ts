@@ -336,14 +336,18 @@ function createWorkerRule(options: HelperOptions): webpack.RuleSetRule {
         test: /\.worker\.[jt]sx?$/,
         exclude: /node_modules/,
         use: [
-            {
-                loader: require.resolve('worker-loader'),
-                // currently workers located on cdn are not working properly, so we are enforcing loading workers from
-                // service instead
-                options: {
-                    inline: 'no-fallback',
-                },
-            },
+            options.config.newWebWorkerSyntax
+                ? {
+                      loader: require.resolve('./worker/worker-loader'),
+                  }
+                : {
+                      loader: require.resolve('worker-loader'),
+                      // currently workers located on cdn are not working properly, so we are enforcing loading workers from
+                      // service instead
+                      options: {
+                          inline: 'no-fallback',
+                      },
+                  },
             createJavaScriptLoader(options),
         ],
     };
@@ -644,7 +648,12 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
     if (isEnvDevelopment && !config.disableReactRefresh) {
         const {webSocketPath = path.normalize(`/${config.publicPathPrefix}/build/sockjs-node`)} =
             config.devServer || {};
-        plugins.push(new ReactRefreshWebpackPlugin({overlay: {sockPath: webSocketPath}}));
+        plugins.push(
+            new ReactRefreshWebpackPlugin({
+                overlay: {sockPath: webSocketPath},
+                exclude: /\.worker\.[jt]sx?$/,
+            }),
+        );
     }
 
     if (config.detectCircularDependencies) {
