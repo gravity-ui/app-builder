@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/gravity-ui/app-builder/compare/v0.4.1...v0.4.2) (2023-05-25)
+
+
+### Bug Fixes
+
+* **build:** add to build all source files ([#24](https://github.com/gravity-ui/app-builder/issues/24)) ([9dfc536](https://github.com/gravity-ui/app-builder/commit/9dfc5360786d6462b01bcb5f96c9936ece05a4eb))
+* **dev:** delete run folder only on full build ([#25](https://github.com/gravity-ui/app-builder/issues/25)) ([f491489](https://github.com/gravity-ui/app-builder/commit/f491489e92583b4cbba327d7ee86ba42cd0add97))
+
 ## [0.4.1](https://github.com/gravity-ui/app-builder/compare/v0.4.0...v0.4.1) (2023-05-19)
 
 
