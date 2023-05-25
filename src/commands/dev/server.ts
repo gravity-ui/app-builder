@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import {rimraf} from 'rimraf';
 
 import {ControllableScript} from '../../common/child-process/controllable-script';
@@ -11,7 +11,6 @@ export function watchServerCompilation(config: NormalizedServiceConfig) {
     const serverPath = path.resolve(paths.appDist, 'server');
     rimraf.sync(serverPath);
 
-    rimraf.sync(paths.appRun);
     createRunFolder();
 
     const build = new ControllableScript(

@@ -23,6 +23,5 @@ export default function (config: NormalizedServiceConfig) {
             })(),
         );
     }
-    // createRunFolder();
     return Promise.all(compilations);
 }

@@ -1,6 +1,7 @@
+import path from 'node:path';
 import nodemon from 'nodemon';
-import path from 'path';
 import onExit from 'signal-exit';
+import {rimraf} from 'rimraf';
 
 import {shouldCompileTarget} from '../../common/utils';
 import logger from '../../common/logger';
@@ -15,6 +16,10 @@ export default async function (config: NormalizedServiceConfig) {
 
     const shouldCompileClient = shouldCompileTarget(config.target, 'client');
     const shouldCompileServer = shouldCompileTarget(config.target, 'server');
+
+    if (shouldCompileClient && shouldCompileServer) {
+        rimraf.sync(paths.appRun);
+    }
 
     let clientCompiled = !shouldCompileClient;
     let serverCompiled = !shouldCompileServer;
