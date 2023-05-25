@@ -47,14 +47,6 @@ module.exports = function (_context: unknown, options: Record<string, any> = {})
     ].filter(Boolean);
 
     const plugins = [
-        isTypeScriptEnabled && [
-            require.resolve('@babel/plugin-proposal-decorators'),
-            {
-                // @decorator
-                // export class Foo {}
-                decoratorsBeforeExport: true,
-            },
-        ],
         // Polyfills the runtime needed for async/await and generators
         [require.resolve('@babel/plugin-transform-runtime'), runtimeOptions],
         isEnvProduction && [
