@@ -51,7 +51,7 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "build": "npm run build:clean && npm run build:compile",
-    "build:compile": "tsc --module commonjs --verbatimModuleSyntax false",
+    "build:compile": "tsc -p tsconfig.production.json",
     "build:clean": "rimraf dist",
     "prepublishOnly": "npm run build"
   },
