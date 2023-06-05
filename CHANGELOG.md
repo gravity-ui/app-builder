@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/gravity-ui/app-builder/compare/v0.4.2...v0.4.3) (2023-06-05)
+
+
+### Bug Fixes
+
+* return babel-plugin-inline-react-svg to deps ([#28](https://github.com/gravity-ui/app-builder/issues/28)) ([7609c2b](https://github.com/gravity-ui/app-builder/commit/7609c2b0e9ad6c24d88bef9f2b7b22029d77c3ff))
+
 ## [0.4.2](https://github.com/gravity-ui/app-builder/compare/v0.4.1...v0.4.2) (2023-05-25)
 
 
