@@ -325,7 +325,9 @@ export function buildLibrary(config: LibraryConfig) {
 
         if (svgoRegEx.test(iconFile)) {
             try {
-                const component = await transform(fs.readFileSync(iconFile, 'utf-8'));
+                const component = await transform(fs.readFileSync(iconFile, 'utf-8'), {
+                    jsxRuntime: config.lib.newJsxTransform ? 'automatic' : 'classic',
+                });
 
                 babel.transform(
                     component,
