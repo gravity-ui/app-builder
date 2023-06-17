@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/gravity-ui/app-builder/compare/v0.4.3...v0.5.0) (2023-06-17)
+
+
+### Features
+
+* **build:** remove the use of @babel/plugin-proposal-decorators ([#27](https://github.com/gravity-ui/app-builder/issues/27)) ([2b09510](https://github.com/gravity-ui/app-builder/commit/2b09510130232578e503cc8042010e8995cb237f))
+
 ## [0.4.3](https://github.com/gravity-ui/app-builder/compare/v0.4.2...v0.4.3) (2023-06-05)
 
 
