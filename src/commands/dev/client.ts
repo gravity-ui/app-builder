@@ -41,6 +41,7 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
         liveReload: false,
         hot: true,
         client: {
+            logging: config.verbose ? 'log' : 'error',
             webSocketURL: {pathname: webSocketPath},
             overlay: {
                 runtimeErrors: config.verbose,
