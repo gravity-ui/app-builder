@@ -196,7 +196,14 @@ export type NormalizedClientConfig = Omit<
     publicPathPrefix: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
-    lazyCompilation?: {port: number};
+    lazyCompilation?: {
+        port?: number;
+        /**
+         * @default true
+         * disable lazy compilation for entries
+         */
+        entries?: boolean;
+    };
     devServer: Omit<DevServerConfig, 'port' | 'type' | 'options'> & {
         port?: number;
         server: ServerConfiguration;

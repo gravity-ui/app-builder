@@ -89,14 +89,33 @@ export function webpackConfigFactory(
             : undefined,
         experiments: isEnvDevelopment
             ? {
-                  lazyCompilation: config.lazyCompilation
-                      ? {
-                            backend: {
-                                client: require.resolve('./lazy-client.js'),
-                                listen: config.lazyCompilation,
-                            },
-                        }
-                      : undefined,
+                  lazyCompilation: (() => {
+                      if (!config.lazyCompilation) {
+                          return undefined;
+                      }
+
+                      let port;
+                      let entries;
+
+                      if (typeof config.lazyCompilation === 'object') {
+                          port = config.lazyCompilation.port;
+                          entries = config.lazyCompilation.entries;
+                      }
+
+                      return {
+                          backend: {
+                              client: require.resolve('./lazy-client.js'),
+                              ...(port
+                                  ? {
+                                        listen: {
+                                            port,
+                                        },
+                                    }
+                                  : {}),
+                          },
+                          entries,
+                      };
+                  })(),
               }
             : undefined,
         snapshot: {
