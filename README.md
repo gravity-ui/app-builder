@@ -2,10 +2,6 @@
 
 Develop and build your client-server projects, powered by typescript and webpack.
 
-FAQ:
-
-- [lazy compilation](#lazy-compilation)
-
 ## Install
 
 ```shell
@@ -205,6 +201,11 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   - `watchPackages` (`boolean`) - watch all changes in `node_modules`.
 - `disableReactRefresh` (`boolean`) — disable `react-refresh` in dev mode.
 - `detectCircularDependencies` (`true | CircularDependenciesOptions`) - detect modules with circular dependencies, [more](https://github.com/aackerman/circular-dependency-plugin)
+- `lazyCompilation` (`true | LazyCompilationConfig`) — enable experimental [lazy compilation](https://webpack.js.org/configuration/experiments/#experimentslazycompilation) feature
+  - `true` — enable feature
+  - `LazyCompilationConfig`
+    - `port` (`number`) — port where to listen to from the server
+    - `entries` (`boolean=true`) — if `false` - disables lazy compilation for `src/ui/entries` folder content
 
 ##### Production build
 
@@ -304,26 +305,4 @@ worker.onmessage = ({data: {result}}) => {
 };
 
 worker.postMessage({a: 1, b: 2});
-```
-
-### lazy-compilation
-
-[Webpack](https://webpack.js.org/configuration/experiments/#experimentslazycompilation) experimental feature.
-
-You can enable it by specifying the key (`lazyCompilation: true`) in the config or by passing an object with options:
-
-```ts
-const appBuilderConfig: ServiceConfig = {
-  // more options
-  lazyCompilation: {
-    /**
-     * override port if needed
-     */
-    // port: ...,
-    /**
-     * disable lazy compilation for `src/ui/entries` folder content
-     */
-    entries: false,
-  },
-};
 ```
