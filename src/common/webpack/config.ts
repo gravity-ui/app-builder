@@ -88,7 +88,7 @@ export function webpackConfigFactory(
               }
             : undefined,
 
-        experiments: isEnvDevelopment ? configureExperiments(helperOptions) : undefined,
+        experiments: configureExperiments(helperOptions),
         snapshot: {
             managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
         },
@@ -186,7 +186,14 @@ function configureWatchOptions({config}: HelperOptions): webpack.Configuration['
     return watchOptions;
 }
 
-function configureExperiments({config}: HelperOptions): webpack.Configuration['experiments'] {
+function configureExperiments({
+    config,
+    isEnvProduction,
+}: HelperOptions): webpack.Configuration['experiments'] {
+    if (isEnvProduction) {
+        return undefined;
+    }
+
     let lazyCompilation;
     let port;
     let entries;
