@@ -87,18 +87,8 @@ export function webpackConfigFactory(
                   level: 'verbose',
               }
             : undefined,
-        experiments: isEnvDevelopment
-            ? {
-                  lazyCompilation: config.lazyCompilation
-                      ? {
-                            backend: {
-                                client: require.resolve('./lazy-client.js'),
-                                listen: config.lazyCompilation,
-                            },
-                        }
-                      : undefined,
-              }
-            : undefined,
+
+        experiments: configureExperiments(helperOptions),
         snapshot: {
             managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
         },
@@ -194,6 +184,44 @@ function configureWatchOptions({config}: HelperOptions): webpack.Configuration['
     delete watchOptions.watchPackages;
 
     return watchOptions;
+}
+
+function configureExperiments({
+    config,
+    isEnvProduction,
+}: HelperOptions): webpack.Configuration['experiments'] {
+    if (isEnvProduction) {
+        return undefined;
+    }
+
+    let lazyCompilation;
+    let port;
+    let entries;
+
+    if (config.lazyCompilation) {
+        if (typeof config.lazyCompilation === 'object') {
+            port = config.lazyCompilation.port;
+            entries = config.lazyCompilation.entries;
+        }
+
+        lazyCompilation = {
+            backend: {
+                client: require.resolve('./lazy-client.js'),
+                ...(port
+                    ? {
+                          listen: {
+                              port,
+                          },
+                      }
+                    : {}),
+            },
+            entries,
+        };
+    }
+
+    return {
+        lazyCompilation,
+    };
 }
 
 export function configureResolve({
