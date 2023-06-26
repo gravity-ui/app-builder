@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/gravity-ui/app-builder/compare/v0.5.0...v0.5.1) (2023-06-26)
+
+
+### Features
+
+* added the ability to disable entries for webpack lazy compilation ([#32](https://github.com/gravity-ui/app-builder/issues/32)) ([fed462a](https://github.com/gravity-ui/app-builder/commit/fed462a9803f4891ea0aff300133dec45c708fb9))
+
 ## [0.5.0](https://github.com/gravity-ui/app-builder/compare/v0.4.3...v0.5.0) (2023-06-17)
 
 
