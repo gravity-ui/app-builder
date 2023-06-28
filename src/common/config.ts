@@ -36,7 +36,7 @@ function omitUndefined<T extends object>(obj: T) {
 
 export async function getProjectConfig(
     command: string,
-    {env, storybook7, ...argv}: Partial<CliArgs & {storybook7: boolean}>,
+    {env, storybook7Mode, ...argv}: Partial<CliArgs & {storybook7Mode: boolean}>,
 ) {
     function getLoader(loader: Loader): Loader {
         return async (pathname: string, content: string) => {
@@ -49,7 +49,7 @@ export async function getProjectConfig(
     }
 
     // eslint-disable-next-line security/detect-non-literal-require
-    const loader = storybook7 ? (pathname: string) => require(pathname).default : getTsLoader();
+    const loader = storybook7Mode ? (pathname: string) => require(pathname).default : getTsLoader();
     const tsLoader = getLoader(loader);
 
     const moduleName = 'app-builder';
