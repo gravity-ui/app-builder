@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/gravity-ui/app-builder/compare/v0.5.1...v0.5.2) (2023-06-28)
+
+
+### Bug Fixes
+
+* add missing entries typings to lazy compilation feature ([#34](https://github.com/gravity-ui/app-builder/issues/34)) ([5c49611](https://github.com/gravity-ui/app-builder/commit/5c49611769f496f79ab1e810a366672908cfc29b))
+
 ## [0.5.1](https://github.com/gravity-ui/app-builder/compare/v0.5.0...v0.5.1) (2023-06-26)
 
 
