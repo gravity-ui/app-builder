@@ -34,7 +34,10 @@ function omitUndefined<T extends object>(obj: T) {
     return _.omitBy(obj, _.isUndefined);
 }
 
-export async function getProjectConfig(command: string, {env, ...argv}: Partial<CliArgs>) {
+export async function getProjectConfig(
+    command: string,
+    {env, storybook7, ...argv}: Partial<CliArgs & {storybook7: boolean}>,
+) {
     function getLoader(loader: Loader): Loader {
         return async (pathname: string, content: string) => {
             const config = loader(pathname, content);
@@ -45,7 +48,9 @@ export async function getProjectConfig(command: string, {env, ...argv}: Partial<
         };
     }
 
-    const tsLoader = getLoader(getTsLoader());
+    // eslint-disable-next-line security/detect-non-literal-require
+    const loader = storybook7 ? (pathname: string) => require(pathname).default : getTsLoader();
+    const tsLoader = getLoader(loader);
 
     const moduleName = 'app-builder';
     const explorer = cosmiconfigSync(moduleName, {

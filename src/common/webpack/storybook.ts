@@ -16,8 +16,11 @@ type Mode = `${WebpackMode}`;
 export async function configureServiceWebpackConfig(
     mode: Mode,
     storybookConfig: Webpack.Configuration,
+    storybook7Mode = false,
 ): Promise<Webpack.Configuration> {
-    const serviceConfig = await getProjectConfig(mode === WebpackMode.Prod ? 'build' : 'dev', {});
+    const serviceConfig = await getProjectConfig(mode === WebpackMode.Prod ? 'build' : 'dev', {
+        storybook7: storybook7Mode,
+    });
     let options: ClientConfig = {};
     if (isLibraryConfig(serviceConfig)) {
         options = {
