@@ -50,6 +50,15 @@ export interface LibraryConfig {
     verbose?: boolean;
 }
 
+interface LazyCompilationConfig {
+    port?: number;
+    /**
+     * @default true
+     * disable lazy compilation for entries
+     */
+    entries?: boolean;
+}
+
 export interface ClientConfig {
     modules?: string[];
     /**
@@ -137,11 +146,7 @@ export interface ClientConfig {
     newJsxTransform?: boolean;
     disableForkTsChecker?: boolean;
     disableSourceMapGeneration?: boolean;
-    lazyCompilation?:
-        | boolean
-        | {
-              port?: number;
-          };
+    lazyCompilation?: boolean | LazyCompilationConfig;
     polyfill?: {
         process?: boolean;
     };
@@ -196,14 +201,7 @@ export type NormalizedClientConfig = Omit<
     publicPathPrefix: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
-    lazyCompilation?: {
-        port?: number;
-        /**
-         * @default true
-         * disable lazy compilation for entries
-         */
-        entries?: boolean;
-    };
+    lazyCompilation?: LazyCompilationConfig;
     devServer: Omit<DevServerConfig, 'port' | 'type' | 'options'> & {
         port?: number;
         server: ServerConfiguration;
