@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.3](https://github.com/gravity-ui/app-builder/compare/v0.5.2...v0.5.3) (2023-06-30)
+
+
+### Bug Fixes
+
+* **storybook:** support storybook 7 ([#38](https://github.com/gravity-ui/app-builder/issues/38)) ([1e51ac3](https://github.com/gravity-ui/app-builder/commit/1e51ac3dca99acd9b5a2a53a2525bcd90224e861))
+
 ## [0.5.2](https://github.com/gravity-ui/app-builder/compare/v0.5.1...v0.5.2) (2023-06-28)
 
 
