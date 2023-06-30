@@ -17,7 +17,9 @@ export async function configureServiceWebpackConfig(
     mode: Mode,
     storybookConfig: Webpack.Configuration,
 ): Promise<Webpack.Configuration> {
-    const serviceConfig = await getProjectConfig(mode === WebpackMode.Prod ? 'build' : 'dev', {});
+    const serviceConfig = await getProjectConfig(mode === WebpackMode.Prod ? 'build' : 'dev', {
+        storybook: true,
+    });
     let options: ClientConfig = {};
     if (isLibraryConfig(serviceConfig)) {
         options = {

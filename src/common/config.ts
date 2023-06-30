@@ -34,7 +34,30 @@ function omitUndefined<T extends object>(obj: T) {
     return _.omitBy(obj, _.isUndefined);
 }
 
-export async function getProjectConfig(command: string, {env, ...argv}: Partial<CliArgs>) {
+function getModuleLoader({storybook}: {storybook?: boolean} = {}) {
+    if (!storybook) {
+        return getTsLoader();
+    }
+
+    // storybook 7 uses esbuild-register to compile ts to cjs
+    // https://github.com/storybookjs/storybook/blob/c1ec290b3a74ce05b23f74250539ae571bffaa66/code/lib/core-common/src/utils/interpret-require.ts#L11
+    // esbuild-register uses pirates.addHook which adds _extensions[ext] to Module
+    const hasEsbuildRegistered = Boolean(require('module')._extensions['.ts']);
+    if (hasEsbuildRegistered) {
+        return (pathname: string) => {
+            // eslint-disable-next-line security/detect-non-literal-require
+            const result = require(pathname);
+            return result.default || result;
+        };
+    } else {
+        return getTsLoader();
+    }
+}
+
+export async function getProjectConfig(
+    command: string,
+    {env, storybook, ...argv}: Partial<CliArgs> & {storybook?: boolean},
+) {
     function getLoader(loader: Loader): Loader {
         return async (pathname: string, content: string) => {
             const config = loader(pathname, content);
@@ -45,7 +68,7 @@ export async function getProjectConfig(command: string, {env, ...argv}: Partial<
         };
     }
 
-    const tsLoader = getLoader(getTsLoader());
+    const tsLoader = getLoader(getModuleLoader({storybook}));
 
     const moduleName = 'app-builder';
     const explorer = cosmiconfigSync(moduleName, {
