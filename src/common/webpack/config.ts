@@ -719,6 +719,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
                 typescript: {
                     typescriptPath: require.resolve(resolve(paths.appNodeModules, 'typescript')),
                     configFile: resolve(paths.app, 'src/ui/tsconfig.json'),
+                    configOverwrite: config.forkTsCheckerConfigOverwrite,
                     diagnosticOptions: {
                         syntactic: true,
                     },
