@@ -713,17 +713,18 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         plugins.push(new CircularDependencyPlugin(circularPluginOptions));
     }
 
-    if (!config.disableForkTsChecker) {
+    if (!config.disableForkTsChecker && config.forkTsChecker !== false) {
         plugins.push(
             new ForkTsCheckerWebpackPlugin({
+                ...config.forkTsChecker,
                 typescript: {
                     typescriptPath: require.resolve(resolve(paths.appNodeModules, 'typescript')),
                     configFile: resolve(paths.app, 'src/ui/tsconfig.json'),
-                    configOverwrite: config.forkTsCheckerConfigOverwrite,
                     diagnosticOptions: {
                         syntactic: true,
                     },
                     mode: 'write-references',
+                    ...config.forkTsChecker?.typescript,
                 },
             }),
         );
