@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.4](https://github.com/gravity-ui/app-builder/compare/v0.5.3...v0.5.4) (2023-07-06)
+
+
+### Features
+
+* **ForkTSCheckerWebpackPlugin:** allow overwrite config ([#40](https://github.com/gravity-ui/app-builder/issues/40)) ([7490647](https://github.com/gravity-ui/app-builder/commit/74906477d707973dc885b0050ecc018ad6e43a00))
+
 ## [0.5.3](https://github.com/gravity-ui/app-builder/compare/v0.5.2...v0.5.3) (2023-06-30)
 
 
