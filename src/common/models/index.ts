@@ -6,6 +6,7 @@ import type {Configuration, ResolveOptions, DefinePlugin} from 'webpack';
 import type {ServerConfiguration} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
 import type {Config as SvgrConfig} from '@svgr/core';
+import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
 
 export interface Entities<T> {
     data: Record<string, T>;
@@ -144,7 +145,11 @@ export interface ClientConfig {
      * use new JSX Transform
      */
     newJsxTransform?: boolean;
+    /**
+     * @deprecated
+     * */
     disableForkTsChecker?: boolean;
+    forkTsChecker?: false | ForkTsCheckerWebpackPluginOptions;
     disableSourceMapGeneration?: boolean;
     lazyCompilation?: boolean | LazyCompilationConfig;
     polyfill?: {
