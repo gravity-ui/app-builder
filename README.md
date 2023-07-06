@@ -187,7 +187,7 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 - `svgr` (`SvgrConfig`) — svgr plugin options. [more](https://react-svgr.com/docs/options/)
 - `entryFilter` (`string[]`) — filter used entrypoints.
 - `excludeFromClean` (`string[]`) — do not clean provided paths before build.
-- `forkTsCheker` (`ForkTsCheckerWebpackPluginOptions`) - config for ForkTsCheckerWebpackPlugin [more](https://github.com/TypeStrong/fork-ts-checker-webpack-plugin#options).
+- `forkTsCheker` (`false | ForkTsCheckerWebpackPluginOptions`) - config for ForkTsCheckerWebpackPlugin [more](https://github.com/TypeStrong/fork-ts-checker-webpack-plugin#options).
 
 ##### Dev build
 
