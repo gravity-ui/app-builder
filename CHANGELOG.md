@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.5](https://github.com/gravity-ui/app-builder/compare/v0.5.4...v0.5.5) (2023-07-07)
+
+
+### Features
+
+* statoscope can be configured ([#42](https://github.com/gravity-ui/app-builder/issues/42)) ([9a21979](https://github.com/gravity-ui/app-builder/commit/9a219798ad416811dfd6d448c9dfa4e330e0659c))
+
 ## [0.5.4](https://github.com/gravity-ui/app-builder/compare/v0.5.3...v0.5.4) (2023-07-06)
 
 
