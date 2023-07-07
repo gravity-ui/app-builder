@@ -7,6 +7,7 @@ import type {ServerConfiguration} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
 import type {Config as SvgrConfig} from '@svgr/core';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
+import type {Options as StatoscopeOptions} from '@statoscope/webpack-plugin';
 
 export interface Entities<T> {
     data: Record<string, T>;
@@ -132,6 +133,7 @@ export interface ClientConfig {
     entryFilter?: string[];
     excludeFromClean?: string[];
     analyzeBundle?: 'true' | 'statoscope';
+    statoscopeConfig?: StatoscopeOptions;
     reactProfiling?: boolean;
     /**
      *  Disable react-refresh in dev mode
