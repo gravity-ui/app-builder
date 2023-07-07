@@ -767,6 +767,8 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         }
 
         if (config.analyzeBundle === 'statoscope') {
+            const customStatoscopeConfig = config.statoscopeConfig || {};
+
             plugins.push(
                 new StatoscopeWebpackPlugin({
                     saveReportTo: path.resolve(paths.appBuild, 'report.html'),
@@ -775,6 +777,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
                     statsOptions: {
                         all: true,
                     },
+                    ...customStatoscopeConfig,
                 }),
             );
         }
