@@ -133,7 +133,7 @@ export interface ClientConfig {
     entryFilter?: string[];
     excludeFromClean?: string[];
     analyzeBundle?: 'true' | 'statoscope';
-    statoscopeConfig?: StatoscopeOptions;
+    statoscopeConfig?: Partial<StatoscopeOptions>;
     reactProfiling?: boolean;
     /**
      *  Disable react-refresh in dev mode
