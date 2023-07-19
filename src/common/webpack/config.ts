@@ -92,6 +92,7 @@ export function webpackConfigFactory(
         snapshot: {
             managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
         },
+        cache: config.cache,
     };
 }
 
@@ -335,7 +336,7 @@ function createJavaScriptLoader({
                 isEnvProduction && require.resolve('babel-plugin-lodash'),
             ].filter(Boolean),
             sourceType: 'unambiguous',
-            cacheDirectory: true,
+            cacheDirectory: config.babelCacheDirectory ? config.babelCacheDirectory : true,
             cacheCompression: isEnvProduction,
             compact: isEnvProduction,
             sourceMap: !config.disableSourceMapGeneration,

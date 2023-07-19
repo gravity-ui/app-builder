@@ -188,6 +188,8 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 - `entryFilter` (`string[]`) — filter used entrypoints.
 - `excludeFromClean` (`string[]`) — do not clean provided paths before build.
 - `forkTsCheker` (`false | ForkTsCheckerWebpackPluginOptions`) - config for ForkTsCheckerWebpackPlugin [more](https://github.com/TypeStrong/fork-ts-checker-webpack-plugin#options). If `false`, ForkTsCheckerWebpackPlugin will be disabled.
+- `cache` (`boolean | FileCacheOptions | MemoryCacheOptions`) — Cache the generated webpack modules and chunks to improve build speed. [more](https://webpack.js.org/configuration/cache/)
+- `babelCacheDirectory` (`boolean | string`) — Set directory for babel-loader cache (`default: node_modules/.cache/babel-loader``)
 
 ##### Dev build
 
