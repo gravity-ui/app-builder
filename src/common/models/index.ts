@@ -2,7 +2,13 @@ import type {EditorLanguage} from 'monaco-editor-webpack-plugin/out/languages';
 import type {EditorFeature} from 'monaco-editor-webpack-plugin/out/features';
 import type {IFeatureDefinition} from 'monaco-editor-webpack-plugin/out/types';
 import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plugin';
-import type {Configuration, ResolveOptions, DefinePlugin} from 'webpack';
+import type {
+    Configuration,
+    ResolveOptions,
+    DefinePlugin,
+    FileCacheOptions,
+    MemoryCacheOptions,
+} from 'webpack';
 import type {ServerConfiguration} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
 import type {Config as SvgrConfig} from '@svgr/core';
@@ -172,6 +178,8 @@ export interface ClientConfig {
      * use webpack 5 Web Workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
      */
     newWebWorkerSyntax?: boolean;
+    babelCacheDirectory?: boolean | string;
+    cache?: boolean | FileCacheOptions | MemoryCacheOptions;
 }
 
 interface CdnUploadConfig {
