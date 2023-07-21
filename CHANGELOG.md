@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.6](https://github.com/gravity-ui/app-builder/compare/v0.5.5...v0.5.6) (2023-07-21)
+
+
+### Features
+
+* add webpack cache option ([#47](https://github.com/gravity-ui/app-builder/issues/47)) ([fb5311a](https://github.com/gravity-ui/app-builder/commit/fb5311a5635dfc95051434fdeb878b4c34c457c2))
+
+
+### Bug Fixes
+
+* make statoscope config fields optional ([#45](https://github.com/gravity-ui/app-builder/issues/45)) ([1e80938](https://github.com/gravity-ui/app-builder/commit/1e809384b3af358ed4837d57c28928a291e99a4e))
+
 ## [0.5.5](https://github.com/gravity-ui/app-builder/compare/v0.5.4...v0.5.5) (2023-07-07)
 
 
