@@ -8,7 +8,14 @@ import FetchCompileAsyncWasmPlugin from 'webpack/lib/web/FetchCompileAsyncWasmPl
 
 import paths from '../../paths';
 
+const pluginId = 'APP_BUILDER_WORKER_LOADER';
+
 const publicPath = path.resolve(__dirname, 'public-path.worker.js');
+
+interface Cache {
+    content?: string | Buffer;
+    map?: string;
+}
 
 export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
     this.cacheable(false);
@@ -19,7 +26,7 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
 
     const compilerOptions = this._compiler.options;
 
-    const logger = this.getLogger('APP_BUILDER_WORKER_LOADER');
+    const logger = this.getLogger(pluginId);
     if (compilerOptions.output.globalObject === 'window') {
         logger.warn(
             'Warning (app-builder-worker-loader): output.globalObject is set to "window". It should be set to "self" or "this" to support HMR in Workers.',
@@ -87,29 +94,54 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
             return cb(new Error('Child compilation failed:\n' + errorDetails));
         }
 
-        const contents = compilation.assets[filename]?.source();
-        const mapFile = `${filename}.map`;
-        let map = compilation.assets[mapFile]?.source();
-        if (map) {
-            const sourceMap = JSON.parse(map.toString());
-            if (Array.isArray(sourceMap.sources)) {
-                sourceMap.sources = sourceMap.sources.map((pathname: string) =>
-                    pathname.replace(/webpack:\/\/[^/]+\//, 'webpack://'),
+        const cache = workerCompiler.getCache(pluginId);
+        const cacheIdent = request;
+        const cacheETag = cache.getLazyHashedEtag(compilation.assets[filename]!);
+
+        return cache.get<Cache>(cacheIdent, cacheETag, (getCacheError, cacheContent) => {
+            if (getCacheError) {
+                return cb(getCacheError);
+            }
+
+            if (cacheContent) {
+                return cb(null, cacheContent.content, cacheContent.map);
+            }
+
+            const content = compilation.assets[filename]?.source();
+            const mapFile = `${filename}.map`;
+            let map = compilation.assets[mapFile]?.source();
+            if (map) {
+                const sourceMap = JSON.parse(map.toString());
+                if (Array.isArray(sourceMap.sources)) {
+                    sourceMap.sources = sourceMap.sources.map((pathname: string) =>
+                        pathname.replace(/webpack:\/\/[^/]+\//, 'webpack://'),
+                    );
+                }
+                map = JSON.stringify(sourceMap);
+            }
+            for (const [assetName, asset] of Object.entries(compilation.assets)) {
+                if ([filename, mapFile].includes(assetName)) {
+                    continue;
+                }
+                workerCompiler.parentCompilation?.emitAsset(
+                    assetName,
+                    asset,
+                    compilation.assetsInfo.get(assetName),
                 );
             }
-            map = JSON.stringify(sourceMap);
-        }
-        for (const [assetName, asset] of Object.entries(compilation.assets)) {
-            if ([filename, mapFile].includes(assetName)) {
-                continue;
-            }
-            workerCompiler.parentCompilation?.emitAsset(
-                assetName,
-                asset,
-                compilation.assetsInfo.get(assetName),
+            return cache.store<Cache>(
+                cacheIdent,
+                cacheETag,
+                {content, map: map?.toString()},
+                (storeCacheError) => {
+                    if (storeCacheError) {
+                        return cb(storeCacheError);
+                    }
+
+                    return cb(null, content, map?.toString());
+                },
             );
-        }
-        return cb(null, contents, map?.toString());
+        });
     });
 };
 
