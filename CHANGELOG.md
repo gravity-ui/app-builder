@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/gravity-ui/app-builder/compare/v0.5.6...v0.6.0) (2023-07-23)
+
+
+### Features
+
+* add caching to worker loader ([#48](https://github.com/gravity-ui/app-builder/issues/48)) ([c7db4fb](https://github.com/gravity-ui/app-builder/commit/c7db4fb2786729a173e5fbe0f62c679639b9a99a))
+
 ## [0.5.6](https://github.com/gravity-ui/app-builder/compare/v0.5.5...v0.5.6) (2023-07-21)
 
 
