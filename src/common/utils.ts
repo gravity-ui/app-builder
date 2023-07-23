@@ -1,4 +1,7 @@
 import fs from 'fs';
+import os from 'os';
+
+import findCacheDir from 'find-cache-dir';
 
 import paths from './paths';
 
@@ -11,4 +14,8 @@ export function createRunFolder() {
 
 export function shouldCompileTarget(target: 'client' | 'server' | undefined, targetName: string) {
     return target === undefined || target === targetName;
+}
+
+export function getCacheDir() {
+    return findCacheDir({name: '@gravity-ui/app-builder', create: true}) || os.tmpdir();
 }

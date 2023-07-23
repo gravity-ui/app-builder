@@ -1,9 +1,10 @@
 import {tmpNameSync} from './utils';
-import path from 'path';
 import * as fs from 'fs-extra';
 import * as execa from 'execa';
 
 import type {ChildProcess} from 'child_process';
+
+import {getCacheDir} from '../utils';
 
 interface IDebugInfo {
     break?: boolean;
@@ -22,7 +23,7 @@ export class ControllableScript {
     }
     start(): void {
         const args: Array<string> = [];
-        this.tmpFileName = tmpNameSync(path.join(process.cwd(), 'node_modules'));
+        this.tmpFileName = tmpNameSync(getCacheDir());
         fs.outputFileSync(this.tmpFileName, this.script);
         this.isRunning = true;
         // Passing --inspect isn't necessary for the child process to launch a port, but it allows some editors to automatically attach
