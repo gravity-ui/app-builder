@@ -92,7 +92,15 @@ async function detectContentTypeFromBuffer(buffer: Buffer) {
         throw Error('Cannot detect content type for buffer');
     }
 
-    return type.mime;
+    let contentType = type.mime;
+
+    // use default charset for content type
+    const charset = mime.charset(contentType);
+    if (charset) {
+        contentType += `; charset=${charset.toLowerCase()}`;
+    }
+
+    return contentType;
 }
 
 function detectContentTypeFromExt(filePath: string) {
@@ -101,13 +109,19 @@ function detectContentTypeFromExt(filePath: string) {
         filePath = filePath.slice(0, -3);
     }
 
-    const type = mime.lookup(filePath);
+    let contentType = mime.lookup(filePath);
 
-    if (!type) {
+    if (!contentType) {
         throw Error(`Cannot detect content type for file ${filePath}`);
     }
 
-    return type;
+    // use default charset for content type
+    const charset = mime.charset(contentType);
+    if (charset) {
+        contentType += `; charset=${charset.toLowerCase()}`;
+    }
+
+    return contentType;
 }
 
 interface UploadOptionsCommon {
