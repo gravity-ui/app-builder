@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/gravity-ui/app-builder/compare/v0.6.1...v0.6.2) (2023-07-24)
+
+
+### Bug Fixes
+
+* **build-lib:** correctly transform svg icons ([#53](https://github.com/gravity-ui/app-builder/issues/53)) ([9c9d3a6](https://github.com/gravity-ui/app-builder/commit/9c9d3a626ea6375a9edf93462fe0f7b367046b16))
+
 ## [0.6.1](https://github.com/gravity-ui/app-builder/compare/v0.6.0...v0.6.1) (2023-07-24)
 
 
