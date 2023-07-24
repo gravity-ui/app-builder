@@ -15,7 +15,6 @@ export class ControllableScript {
     isRunning = false;
     private process?: ChildProcess;
     private script = '';
-    private tmpFileName = '';
     private debugInfo: IDebugInfo | null;
     constructor(script: string, debugInfo: IDebugInfo | null) {
         this.script = script;
@@ -23,8 +22,8 @@ export class ControllableScript {
     }
     start(): void {
         const args: Array<string> = [];
-        this.tmpFileName = tmpNameSync(getCacheDir());
-        fs.outputFileSync(this.tmpFileName, this.script);
+        const tmpFileName = tmpNameSync(getCacheDir());
+        fs.outputFileSync(tmpFileName, this.script);
         this.isRunning = true;
         // Passing --inspect isn't necessary for the child process to launch a port, but it allows some editors to automatically attach
         if (this.debugInfo) {
@@ -35,7 +34,7 @@ export class ControllableScript {
             }
         }
 
-        this.process = execa.node(this.tmpFileName, args, {
+        this.process = execa.node(tmpFileName, args, {
             env: {
                 ...process.env,
             },
@@ -44,6 +43,9 @@ export class ControllableScript {
         });
         this.process.on('unhandledRejection', () => {
             this.stop('SIGABRT');
+        });
+        this.process.on('exit', () => {
+            fs.unlinkSync(tmpFileName);
         });
     }
     async stop(signal: NodeJS.Signals | null = null, code?: number): Promise<void> {
@@ -85,7 +87,6 @@ export class ControllableScript {
                     this.process.removeAllListeners();
                 }
                 this.process = undefined;
-                fs.unlinkSync(this.tmpFileName);
                 resolve();
             });
         });

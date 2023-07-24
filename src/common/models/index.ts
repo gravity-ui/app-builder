@@ -180,6 +180,8 @@ export interface ClientConfig {
     newWebWorkerSyntax?: boolean;
     babelCacheDirectory?: boolean | string;
     cache?: boolean | FileCacheOptions | MemoryCacheOptions;
+    /** Use [Lighting CSS](https://lightningcss.dev) to transform and minimize css instead of PostCSS and cssnano*/
+    transformCssWithLightningCss?: boolean;
 }
 
 interface CdnUploadConfig {

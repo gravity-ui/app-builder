@@ -7,14 +7,15 @@ import {CleanWebpackPlugin} from 'clean-webpack-plugin';
 import {WebpackManifestPlugin} from 'webpack-manifest-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import MiniCSSExtractPlugin from 'mini-css-extract-plugin';
-import OptimizeCSSAssetsPlugin from 'css-minimizer-webpack-plugin';
 import {BundleAnalyzerPlugin} from 'webpack-bundle-analyzer';
-import postcssPresetEnv from 'postcss-preset-env';
 import WebpackAssetsManifest from 'webpack-assets-manifest';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import MomentTimezoneDataPlugin from 'moment-timezone-data-webpack-plugin';
 import StatoscopeWebpackPlugin from '@statoscope/webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
+import type TerserWebpackPlugin from 'terser-webpack-plugin';
+import type * as Lightningcss from 'lightningcss';
+import type CssMinimizerWebpackPlugin from 'css-minimizer-webpack-plugin';
 
 import paths from '../paths';
 import tempData from '../tempData';
@@ -426,16 +427,20 @@ function createStylesRule({
         },
     });
 
-    loaders.push({
-        loader: require.resolve('postcss-loader'),
-        options: {
-            sourceMap: !config.disableSourceMapGeneration,
-            postcssOptions: {
-                config: false,
-                plugins: [postcssPresetEnv({enableClientSidePolyfills: false})],
+    if (!config.transformCssWithLightningCss) {
+        loaders.push({
+            loader: require.resolve('postcss-loader'),
+            options: {
+                sourceMap: !config.disableSourceMapGeneration,
+                postcssOptions: {
+                    config: false,
+                    plugins: [
+                        [require.resolve('postcss-preset-env'), {enableClientSidePolyfills: false}],
+                    ],
+                },
             },
-        },
-    });
+        });
+    }
 
     loaders.push({
         loader: require.resolve('resolve-url-loader'),
@@ -744,19 +749,6 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
             }),
         );
 
-        plugins.push(
-            new OptimizeCSSAssetsPlugin({
-                minimizerOptions: {
-                    preset: [
-                        'default',
-                        {
-                            svgo: false,
-                        },
-                    ],
-                },
-            }),
-        );
-
         if (config.analyzeBundle === 'true') {
             plugins.push(
                 new BundleAnalyzerPlugin({
@@ -845,10 +837,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
     return plugins;
 }
 
-function configureOptimization({
-    isEnvProduction,
-    config,
-}: HelperOptions): webpack.Configuration['optimization'] {
+function configureOptimization({config}: HelperOptions): webpack.Configuration['optimization'] {
     const configVendors = config.vendors ?? [];
 
     const vendorsList = [
@@ -867,7 +856,6 @@ function configureOptimization({
     ];
 
     const optimization: webpack.Configuration['optimization'] = {
-        minimize: isEnvProduction && !config.reactProfiling,
         splitChunks: {
             chunks: 'all',
             cacheGroups: {
@@ -880,18 +868,50 @@ function configureOptimization({
             },
         },
         runtimeChunk: 'single',
-    };
+        minimizer: [
+            (compiler) => {
+                // CssMinimizerWebpackPlugin works with MiniCSSExtractPlugin, so only relevant for production builds.
+                // Lazy load the CssMinimizerPlugin plugin
+                const CssMinimizerPlugin: typeof CssMinimizerWebpackPlugin = require('css-minimizer-webpack-plugin');
 
-    if (config.safari10) {
-        const TerserPlugin = require('terser-webpack-plugin');
-        optimization.minimizer = [
-            new TerserPlugin({
-                terserOptions: {
-                    safari10: true,
-                },
-            }),
-        ];
-    }
+                if (config.transformCssWithLightningCss) {
+                    const lightningCss = require('lightningcss');
+                    const browserslist = require('browserslist');
+
+                    new CssMinimizerPlugin<Partial<Lightningcss.BundleOptions<{}>>>({
+                        minify: CssMinimizerPlugin.lightningCssMinify,
+                        minimizerOptions: {
+                            targets: lightningCss.browserslistToTargets(browserslist()),
+                        },
+                    }).apply(compiler);
+                } else {
+                    new CssMinimizerPlugin({
+                        minimizerOptions: {
+                            preset: [
+                                'default',
+                                {
+                                    svgo: false,
+                                },
+                            ],
+                        },
+                    }).apply(compiler);
+                }
+            },
+            (compiler) => {
+                // Lazy load the Terser plugin
+                const TerserPlugin: typeof TerserWebpackPlugin = require('terser-webpack-plugin');
+                new TerserPlugin({
+                    terserOptions: {
+                        compress: {
+                            passes: 2,
+                        },
+                        safari10: config.safari10,
+                        mangle: !config.reactProfiling,
+                    },
+                }).apply(compiler);
+            },
+        ],
+    };
 
     return optimization;
 }
