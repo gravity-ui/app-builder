@@ -327,6 +327,7 @@ export function buildLibrary(config: LibraryConfig) {
             try {
                 const component = await transform(fs.readFileSync(iconFile, 'utf-8'), {
                     jsxRuntime: config.lib.newJsxTransform ? 'automatic' : 'classic',
+                    plugins: [require.resolve('@svgr/plugin-jsx')],
                 });
 
                 babel.transform(
