@@ -232,6 +232,7 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   - `highlight.js` (`string[]`) — list of language names to include, e.g. `['javascript', 'python', 'bash']`;
   - `locale`: (`string[]=['ru']`) — list of `moment.js` or `day.js` locales to include, e.g. `['de', 'es']`. Locale `En` is always present.
 - `safari10` (`boolean`) — Enables `safari10` terser's option. [Terser options](https://github.com/terser/terser#minify-options)
+- `transformCssWithLightningCss` (`boolean`) — use [Lighting CSS](https://lightningcss.dev) to transform and minimize css instead of PostCSS and cssnano
 
 ##### Monaco editor support
 
