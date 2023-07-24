@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.1](https://github.com/gravity-ui/app-builder/compare/v0.6.0...v0.6.1) (2023-07-24)
+
+
+### Features
+
+* **css:** use Lightning CSS ([#52](https://github.com/gravity-ui/app-builder/issues/52)) ([d16cd09](https://github.com/gravity-ui/app-builder/commit/d16cd09067276eee9b0952f2c198e6e4e6365c3d))
+
+
+### Bug Fixes
+
+* **s3-client:** add charset to content type ([#50](https://github.com/gravity-ui/app-builder/issues/50)) ([8b1a944](https://github.com/gravity-ui/app-builder/commit/8b1a944d675e0f1b88f80fa43d0929148ce82a05))
+
 ## [0.6.0](https://github.com/gravity-ui/app-builder/compare/v0.5.6...v0.6.0) (2023-07-23)
 
 
