@@ -865,6 +865,16 @@ function configureOptimization({config}: HelperOptions): webpack.Configuration['
                     test: new RegExp(`([\\\\/])node_modules\\1(${vendorsList.join('|')})\\1`),
                     priority: Infinity,
                 },
+                ...(config.bundleSameModules
+                    ? {
+                          default: {
+                              enforce: true,
+                              minChunks: 2,
+                              priority: -20,
+                              reuseExistingChunk: true,
+                          },
+                      }
+                    : {}),
             },
         },
         runtimeChunk: 'single',
