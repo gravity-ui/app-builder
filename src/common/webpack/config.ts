@@ -106,6 +106,7 @@ export function configureModuleRules(helperOptions: HelperOptions) {
                 createWorkerRule(helperOptions),
                 createJavaScriptRule(helperOptions, jsLoader),
                 createStylesRule(helperOptions),
+                createSassStylesRule(helperOptions),
                 createIconsRule(helperOptions), // workaround for https://github.com/webpack/webpack/issues/9309
                 createIconsRule(helperOptions, jsLoader),
                 ...createAssetsRules(helperOptions),
@@ -401,7 +402,7 @@ function createWorkerRule(options: HelperOptions): webpack.RuleSetRule {
     };
 }
 
-function createStylesRule({
+function createSassStylesRule({
     isEnvDevelopment,
     isEnvProduction,
     config,
@@ -460,7 +461,55 @@ function createStylesRule({
     });
 
     return {
-        test: /\.s?css$/,
+        test: /\.scss$/,
+        sideEffects: isEnvProduction ? true : undefined,
+        use: loaders,
+    };
+}
+
+function createStylesRule({
+    isEnvDevelopment,
+    isEnvProduction,
+    config,
+}: HelperOptions): webpack.RuleSetRule {
+    const loaders: webpack.RuleSetUseItem[] = [];
+
+    if (isEnvProduction) {
+        loaders.push(MiniCSSExtractPlugin.loader);
+    }
+
+    if (isEnvDevelopment) {
+        loaders.push({
+            loader: require.resolve('style-loader'),
+        });
+    }
+
+    loaders.push({
+        loader: require.resolve('css-loader'),
+        options: {
+            esModule: false,
+            sourceMap: !config.disableSourceMapGeneration,
+            importLoaders: 2,
+        },
+    });
+
+    if (!config.transformCssWithLightningCss) {
+        loaders.push({
+            loader: require.resolve('postcss-loader'),
+            options: {
+                sourceMap: !config.disableSourceMapGeneration,
+                postcssOptions: {
+                    config: false,
+                    plugins: [
+                        [require.resolve('postcss-preset-env'), {enableClientSidePolyfills: false}],
+                    ],
+                },
+            },
+        });
+    }
+
+    return {
+        test: /\.css$/,
         sideEffects: isEnvProduction ? true : undefined,
         use: loaders,
     };
