@@ -239,7 +239,7 @@ export function buildLibrary(config: LibraryConfig) {
                 } else if (transformed) {
                     let code =
                         transformed.code
-                            ?.replace(/import '\.(.*)\.scss';/g, "import '.$1.css';")
+                            ?.replace(/import ['"]\.(.*)\.scss['"];/g, "import '.$1.css';")
                             ?.replace(/import "\.(.*)\.scss";/g, 'import ".$1.css";')
                             ?.replace(
                                 /import (\w*) from '\.\.\/(.*)\/assets\/(.*)\.svg';/g,
