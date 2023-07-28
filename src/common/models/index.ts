@@ -182,10 +182,6 @@ export interface ClientConfig {
     cache?: boolean | FileCacheOptions | MemoryCacheOptions;
     /** Use [Lighting CSS](https://lightningcss.dev) to transform and minimize css instead of PostCSS and cssnano*/
     transformCssWithLightningCss?: boolean;
-    /**
-     * Same modules will be forced to bundle to already existed chunk, if they appeared more than once
-     */
-    bundleSameModules?: boolean;
 }
 
 interface CdnUploadConfig {
