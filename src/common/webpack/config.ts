@@ -454,14 +454,14 @@ function createStylesRule({
     };
 }
 
-function getCssLoaders(opts: HelperOptions) {
+function getCssLoaders({isEnvDevelopment, isEnvProduction, config}: HelperOptions) {
     const loaders: webpack.RuleSetUseItem[] = [];
 
-    if (opts.isEnvProduction) {
+    if (isEnvProduction) {
         loaders.push(MiniCSSExtractPlugin.loader);
     }
 
-    if (opts.isEnvDevelopment) {
+    if (isEnvDevelopment) {
         loaders.push({
             loader: require.resolve('style-loader'),
         });
@@ -471,16 +471,16 @@ function getCssLoaders(opts: HelperOptions) {
         loader: require.resolve('css-loader'),
         options: {
             esModule: false,
-            sourceMap: !opts.config.disableSourceMapGeneration,
+            sourceMap: !config.disableSourceMapGeneration,
             importLoaders: 2,
         },
     });
 
-    if (!opts.config.transformCssWithLightningCss) {
+    if (!config.transformCssWithLightningCss) {
         loaders.push({
             loader: require.resolve('postcss-loader'),
             options: {
-                sourceMap: !opts.config.disableSourceMapGeneration,
+                sourceMap: !config.disableSourceMapGeneration,
                 postcssOptions: {
                     config: false,
                     plugins: [
