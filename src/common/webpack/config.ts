@@ -407,41 +407,11 @@ function createSassStylesRule({
     isEnvProduction,
     config,
 }: HelperOptions): webpack.RuleSetRule {
-    const loaders: webpack.RuleSetUseItem[] = [];
-
-    if (isEnvProduction) {
-        loaders.push(MiniCSSExtractPlugin.loader);
-    }
-
-    if (isEnvDevelopment) {
-        loaders.push({
-            loader: require.resolve('style-loader'),
-        });
-    }
-
-    loaders.push({
-        loader: require.resolve('css-loader'),
-        options: {
-            esModule: false,
-            sourceMap: !config.disableSourceMapGeneration,
-            importLoaders: 2,
-        },
+    const loaders = getCssLoaders({
+        isEnvDevelopment,
+        isEnvProduction,
+        config,
     });
-
-    if (!config.transformCssWithLightningCss) {
-        loaders.push({
-            loader: require.resolve('postcss-loader'),
-            options: {
-                sourceMap: !config.disableSourceMapGeneration,
-                postcssOptions: {
-                    config: false,
-                    plugins: [
-                        [require.resolve('postcss-preset-env'), {enableClientSidePolyfills: false}],
-                    ],
-                },
-            },
-        });
-    }
 
     loaders.push({
         loader: require.resolve('resolve-url-loader'),
@@ -472,13 +442,26 @@ function createStylesRule({
     isEnvProduction,
     config,
 }: HelperOptions): webpack.RuleSetRule {
+    const loaders = getCssLoaders({
+        isEnvDevelopment,
+        isEnvProduction,
+        config,
+    });
+    return {
+        test: /\.css$/,
+        sideEffects: isEnvProduction ? true : undefined,
+        use: loaders,
+    };
+}
+
+function getCssLoaders(opts: HelperOptions) {
     const loaders: webpack.RuleSetUseItem[] = [];
 
-    if (isEnvProduction) {
+    if (opts.isEnvProduction) {
         loaders.push(MiniCSSExtractPlugin.loader);
     }
 
-    if (isEnvDevelopment) {
+    if (opts.isEnvDevelopment) {
         loaders.push({
             loader: require.resolve('style-loader'),
         });
@@ -488,16 +471,16 @@ function createStylesRule({
         loader: require.resolve('css-loader'),
         options: {
             esModule: false,
-            sourceMap: !config.disableSourceMapGeneration,
+            sourceMap: !opts.config.disableSourceMapGeneration,
             importLoaders: 2,
         },
     });
 
-    if (!config.transformCssWithLightningCss) {
+    if (!opts.config.transformCssWithLightningCss) {
         loaders.push({
             loader: require.resolve('postcss-loader'),
             options: {
-                sourceMap: !config.disableSourceMapGeneration,
+                sourceMap: !opts.config.disableSourceMapGeneration,
                 postcssOptions: {
                     config: false,
                     plugins: [
@@ -507,12 +490,7 @@ function createStylesRule({
             },
         });
     }
-
-    return {
-        test: /\.css$/,
-        sideEffects: isEnvProduction ? true : undefined,
-        use: loaders,
-    };
+    return loaders;
 }
 
 function createIconsRule(
