@@ -866,6 +866,7 @@ function configureOptimization({config}: HelperOptions): webpack.Configuration['
                     priority: Infinity,
                 },
                 css: {
+                    test: /\.css$/,
                     enforce: true,
                     minChunks: 2,
                     reuseExistingChunk: true,
