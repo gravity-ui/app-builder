@@ -867,10 +867,9 @@ function configureOptimization({config}: HelperOptions): webpack.Configuration['
                 },
                 ...(config.bundleSameModules
                     ? {
-                          default: {
+                          css: {
                               enforce: true,
                               minChunks: 2,
-                              priority: -20,
                               reuseExistingChunk: true,
                           },
                       }
