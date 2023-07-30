@@ -106,6 +106,7 @@ export function configureModuleRules(helperOptions: HelperOptions) {
                 createWorkerRule(helperOptions),
                 createJavaScriptRule(helperOptions, jsLoader),
                 createStylesRule(helperOptions),
+                createSassStylesRule(helperOptions),
                 createIconsRule(helperOptions), // workaround for https://github.com/webpack/webpack/issues/9309
                 createIconsRule(helperOptions, jsLoader),
                 ...createAssetsRules(helperOptions),
@@ -401,11 +402,59 @@ function createWorkerRule(options: HelperOptions): webpack.RuleSetRule {
     };
 }
 
+function createSassStylesRule({
+    isEnvDevelopment,
+    isEnvProduction,
+    config,
+}: HelperOptions): webpack.RuleSetRule {
+    const loaders = getCssLoaders({
+        isEnvDevelopment,
+        isEnvProduction,
+        config,
+    });
+
+    loaders.push({
+        loader: require.resolve('resolve-url-loader'),
+        options: {
+            sourceMap: !config.disableSourceMapGeneration,
+        },
+    });
+
+    loaders.push({
+        loader: require.resolve('sass-loader'),
+        options: {
+            sourceMap: true, // must be always true for work with resolve-url-loader
+            sassOptions: {
+                includePaths: [paths.appClient],
+            },
+        },
+    });
+
+    return {
+        test: /\.scss$/,
+        sideEffects: isEnvProduction ? true : undefined,
+        use: loaders,
+    };
+}
+
 function createStylesRule({
     isEnvDevelopment,
     isEnvProduction,
     config,
 }: HelperOptions): webpack.RuleSetRule {
+    const loaders = getCssLoaders({
+        isEnvDevelopment,
+        isEnvProduction,
+        config,
+    });
+    return {
+        test: /\.css$/,
+        sideEffects: isEnvProduction ? true : undefined,
+        use: loaders,
+    };
+}
+
+function getCssLoaders({isEnvDevelopment, isEnvProduction, config}: HelperOptions) {
     const loaders: webpack.RuleSetUseItem[] = [];
 
     if (isEnvProduction) {
@@ -441,29 +490,7 @@ function createStylesRule({
             },
         });
     }
-
-    loaders.push({
-        loader: require.resolve('resolve-url-loader'),
-        options: {
-            sourceMap: !config.disableSourceMapGeneration,
-        },
-    });
-
-    loaders.push({
-        loader: require.resolve('sass-loader'),
-        options: {
-            sourceMap: true, // must be always true for work with resolve-url-loader
-            sassOptions: {
-                includePaths: [paths.appClient],
-            },
-        },
-    });
-
-    return {
-        test: /\.s?css$/,
-        sideEffects: isEnvProduction ? true : undefined,
-        use: loaders,
-    };
+    return loaders;
 }
 
 function createIconsRule(
