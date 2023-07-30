@@ -107,7 +107,7 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
                 return cb(null, cacheContent.content, cacheContent.map);
             }
 
-            const content = compilation.assets[filename]?.source();
+            let content = compilation.assets[filename]?.source().toString();
             const mapFile = `${filename}.map`;
             let map = compilation.assets[mapFile]?.source();
             if (map) {
@@ -119,15 +119,32 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
                 }
                 map = JSON.stringify(sourceMap);
             }
-            for (const [assetName, asset] of Object.entries(compilation.assets)) {
-                if ([filename, mapFile].includes(assetName)) {
-                    continue;
+
+            const licenseFile = `${filename}.LICENSE.txt`;
+            const license = compilation.assets[licenseFile]?.source().toString();
+            if (license && content) {
+                if (content.startsWith('/*')) {
+                    content = content.replace(/^\/\*.*?\*\//, license);
                 }
-                workerCompiler.parentCompilation?.emitAsset(
-                    assetName,
-                    asset,
-                    compilation.assetsInfo.get(assetName),
-                );
+            }
+
+            const parentCompilation = workerCompiler.parentCompilation;
+            if (parentCompilation) {
+                for (const [assetName, asset] of Object.entries(compilation.assets)) {
+                    if ([filename, mapFile, licenseFile].includes(assetName)) {
+                        continue;
+                    }
+
+                    if (parentCompilation.assetsInfo.has(assetName)) {
+                        continue;
+                    }
+
+                    parentCompilation.emitAsset(
+                        assetName,
+                        asset,
+                        compilation.assetsInfo.get(assetName),
+                    );
+                }
             }
             return cache.store<Cache>(
                 cacheIdent,
