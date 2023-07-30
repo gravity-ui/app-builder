@@ -67,16 +67,16 @@ function compileToCjs(
     const compiledCjsDir = path.dirname(compiledCjsFile);
     const sourcemapCjsFile = getFilePath(file, {dir: compiledDir, ext: 'js.map'});
     const sourcemapCjsUrl = `// #sourceMappingURL=${path.basename(sourcemapCjsFile)}`;
-    const finalCode = code.replace(/import '(.*)\.css';/g, '');
 
     fs.mkdirSync(compiledCjsDir, {recursive: true});
     babel.transform(
-        finalCode,
+        code,
         {
             filename: sourceFile,
             plugins: [
-                '@babel/plugin-transform-modules-commonjs',
-                '@babel/plugin-proposal-dynamic-import',
+                require.resolve('./babel-plugin-remove-css-imports'),
+                require.resolve('@babel/plugin-transform-modules-commonjs'),
+                require.resolve('@babel/plugin-proposal-dynamic-import'),
             ],
             sourceMaps: true,
             inputSourceMap,
@@ -228,6 +228,7 @@ export function buildLibrary(config: LibraryConfig) {
                         },
                     ],
                     require.resolve('babel-plugin-lodash'),
+                    require.resolve('./babel-plugin-replace-paths'),
                 ],
                 sourceMaps: true,
             },
@@ -237,25 +238,10 @@ export function buildLibrary(config: LibraryConfig) {
                     logger.error(err.toString());
                     throw err;
                 } else if (transformed) {
-                    let code =
-                        transformed.code
-                            ?.replace(/import '\.(.*)\.scss';/g, "import '.$1.css';")
-                            ?.replace(
-                                /import (\w*) from '\.\.\/(.*)\/assets\/(.*)\.svg';/g,
-                                "import $1 from '$2/assets/$3';",
-                            )
-                            ?.replace(
-                                /export { *default as (\w*) *} from '\.\.\/(.*)\/assets\/(.*)\.svg';/g,
-                                "export { default as $1 } from '$2/assets/$3';",
-                            )
-                            ?.replace(
-                                /import\('\.\.\/(.*)\/assets\/(.*)\.svg'\)/g,
-                                "import('$1/assets/$2')",
-                            ) ?? '';
-                    code += (code.length ? '\n' : '') + sourcemapUrl;
+                    const code = transformed.code ?? '';
                     fs.writeFile(
                         compiledFile,
-                        code,
+                        (code.length ? '\n' : '') + sourcemapUrl,
                         errorHandlerFactory(
                             `Source compilation has failed on writing ${compiledFile}`,
                         ),
