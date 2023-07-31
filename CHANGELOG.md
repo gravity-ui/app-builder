@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.3](https://github.com/gravity-ui/app-builder/compare/v0.6.2...v0.6.3) (2023-07-31)
+
+
+### Bug Fixes
+
+* **build-lib:** replace style and svg paths with babel plugin ([#60](https://github.com/gravity-ui/app-builder/issues/60)) ([3b7760e](https://github.com/gravity-ui/app-builder/commit/3b7760e0af7350e60c9d3c7a704e510958d46050))
+* **build:** always dedupe css modules ([#55](https://github.com/gravity-ui/app-builder/issues/55)) ([6ea483e](https://github.com/gravity-ui/app-builder/commit/6ea483eb335eb24f80f9dddc33943f0a12336281))
+* **css:** disable sass loaders for pure css ([#56](https://github.com/gravity-ui/app-builder/issues/56)) ([1c23832](https://github.com/gravity-ui/app-builder/commit/1c2383299f1f4cbbc826acdd2b6231c15ab26956))
+* **webworker:** correctly handle licenses and do not emit assets twice ([#58](https://github.com/gravity-ui/app-builder/issues/58)) ([e514bc6](https://github.com/gravity-ui/app-builder/commit/e514bc68ac9bed6cbbfaeddbaa95d8ea8f459acc))
+
 ## [0.6.2](https://github.com/gravity-ui/app-builder/compare/v0.6.1...v0.6.2) (2023-07-24)
 
 
