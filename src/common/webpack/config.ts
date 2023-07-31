@@ -892,6 +892,12 @@ function configureOptimization({config}: HelperOptions): webpack.Configuration['
                     test: new RegExp(`([\\\\/])node_modules\\1(${vendorsList.join('|')})\\1`),
                     priority: Infinity,
                 },
+                css: {
+                    test: /\.css$/,
+                    enforce: true,
+                    minChunks: 2,
+                    reuseExistingChunk: true,
+                },
             },
         },
         runtimeChunk: 'single',
