@@ -154,8 +154,8 @@ export interface ClientConfig {
      */
     newJsxTransform?: boolean;
     /**
-     * @deprecated
-     * */
+     * @deprecated use `forkTsChecker: false` instead
+     */
     disableForkTsChecker?: boolean;
     forkTsChecker?: false | ForkTsCheckerWebpackPluginOptions;
     disableSourceMapGeneration?: boolean;
