@@ -239,9 +239,10 @@ export function buildLibrary(config: LibraryConfig) {
                     throw err;
                 } else if (transformed) {
                     const code = transformed.code ?? '';
+                    const esmCode = code + (code.length ? '\n' : '') + sourcemapUrl;
                     fs.writeFile(
                         compiledFile,
-                        (code.length ? '\n' : '') + sourcemapUrl,
+                        esmCode,
                         errorHandlerFactory(
                             `Source compilation has failed on writing ${compiledFile}`,
                         ),
