@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.4](https://github.com/gravity-ui/app-builder/compare/v0.6.3...v0.6.4) (2023-08-04)
+
+
+### Bug Fixes
+
+* **build-library:** correctly write esm code to file ([#62](https://github.com/gravity-ui/app-builder/issues/62)) ([b1f1be2](https://github.com/gravity-ui/app-builder/commit/b1f1be2dfd93d79b54ee8c99e99cea945c0b6f16)), closes [#61](https://github.com/gravity-ui/app-builder/issues/61)
+
 ## [0.6.3](https://github.com/gravity-ui/app-builder/compare/v0.6.2...v0.6.3) (2023-07-31)
 
 
