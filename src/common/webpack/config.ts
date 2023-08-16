@@ -335,7 +335,10 @@ function createJavaScriptLoader({
                               }
                             : undefined,
                     ],
-                isEnvProduction && require.resolve('babel-plugin-lodash'),
+                isEnvProduction && [
+                    require.resolve('babel-plugin-import'),
+                    {libraryName: 'lodash', libraryDirectory: '', camel2DashComponentName: false},
+                ],
             ].filter(Boolean),
             sourceType: 'unambiguous',
             cacheDirectory: config.babelCacheDirectory ? config.babelCacheDirectory : true,
