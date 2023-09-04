@@ -33,7 +33,6 @@ export function createCli(argv: string[]) {
 
     return cli
         .option('verbose', {
-            default: false,
             type: 'boolean',
             describe: 'Turn on verbose output',
             global: true,
@@ -225,8 +224,8 @@ function getCommandHandler(
     handler?: (args: ProjectConfig, cmd: (args: ProjectConfig) => void) => void,
 ): (argv: yargs.Arguments) => void {
     return async (argv) => {
-        logger.setVerbose(Boolean(argv.verbose));
         const config = await getProjectConfig(command, argv as CliArgs);
+        logger.setVerbose(Boolean(config.verbose));
 
         const args = {...config, logger};
         const localCmd = resolveLocalCommand(command);
