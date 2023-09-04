@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.6](https://github.com/gravity-ui/app-builder/compare/v0.6.5...v0.6.6) (2023-09-04)
+
+
+### Bug Fixes
+
+* respect verbose property defined in config ([#68](https://github.com/gravity-ui/app-builder/issues/68)) ([6cba27c](https://github.com/gravity-ui/app-builder/commit/6cba27c1d1321874694446724fa4c37ef9788a93)), closes [#67](https://github.com/gravity-ui/app-builder/issues/67)
+
 ## [0.6.5](https://github.com/gravity-ui/app-builder/compare/v0.6.4...v0.6.5) (2023-08-16)
 
 
