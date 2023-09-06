@@ -227,7 +227,14 @@ export function buildLibrary(config: LibraryConfig) {
                             },
                         },
                     ],
-                    require.resolve('babel-plugin-lodash'),
+                    [
+                        require.resolve('babel-plugin-import'),
+                        {
+                            libraryName: 'lodash',
+                            libraryDirectory: '',
+                            camel2DashComponentName: false,
+                        },
+                    ],
                     require.resolve('./babel-plugin-replace-paths'),
                 ],
                 sourceMaps: true,
