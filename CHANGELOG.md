@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.7](https://github.com/gravity-ui/app-builder/compare/v0.6.6...v0.6.7) (2023-09-06)
+
+
+### Bug Fixes
+
+* **build-lib:** replace babel-plugin-lodash with babel-plugin-import ([#70](https://github.com/gravity-ui/app-builder/issues/70)) ([e193fb7](https://github.com/gravity-ui/app-builder/commit/e193fb71f6707dbaf2d09062cfb1a0eb0ba46643))
+
 ## [0.6.6](https://github.com/gravity-ui/app-builder/compare/v0.6.5...v0.6.6) (2023-09-04)
 
 
