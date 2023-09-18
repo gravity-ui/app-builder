@@ -57,32 +57,34 @@ If the config needs to be conditionally determined, it can export a function ins
 ```ts
 import {defineConfig} from '@gravity-ui/app-builder';
 
-export default defineConfig(async function (
-  /** @type dev | build */
-  command,
-  /**
-   * values specified with --env flag
-   *
-   * @type {[k in string]: string}
-   *
-   * @example
-   *   With follow command:
-   *       app-build dev --env=path.to.member1=value1 --env=path.to.member2=value2
-   *   you get:
-   *       env = {path: {to: {member1: 'value1', member2: 'value2'}}}
-   */
-  env,
-) {
-  return {
-    verbose: command === 'dev',
-    client: {
-      // client settings
-    },
-    server: {
-      // server settings
-    },
-  };
-});
+export default defineConfig(
+  async function (
+    /** @type dev | build */
+    command,
+    /**
+     * values specified with --env flag
+     *
+     * @type {[k in string]: string}
+     *
+     * @example
+     *   With follow command:
+     *       app-build dev --env=path.to.member1=value1 --env=path.to.member2=value2
+     *   you get:
+     *       env = {path: {to: {member1: 'value1', member2: 'value2'}}}
+     */
+    env,
+  ) {
+    return {
+      verbose: command === 'dev',
+      client: {
+        // client settings
+      },
+      server: {
+        // server settings
+      },
+    };
+  },
+);
 
 export default config;
 ```

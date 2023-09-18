@@ -1,5 +1,5 @@
-import crypto from 'crypto';
-import path from 'path';
+import * as crypto from 'node:crypto';
+import * as path from 'node:path';
 import * as fs from 'fs-extra';
 
 const RANDOM_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';

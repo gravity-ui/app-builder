@@ -1,5 +1,5 @@
-import path from 'path';
-import fs from 'fs';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
 import {prettyTime} from '../logger/pretty-time';
 
 import type webpack from 'webpack';

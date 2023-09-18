@@ -1,12 +1,12 @@
-import path from 'path';
-import fs from 'fs';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
 import webpack from 'webpack';
 import WebpackDevServer from 'webpack-dev-server';
 import {getCompilerHooks} from 'webpack-manifest-plugin';
 
 import paths from '../../common/paths';
 import {Logger} from '../../common/logger';
-import {webpackConfigFactory, WebpackMode} from '../../common/webpack/config';
+import {WebpackMode, webpackConfigFactory} from '../../common/webpack/config';
 
 import type {Configuration} from 'webpack-dev-server';
 import type {NormalizedServiceConfig} from '../../common/models';

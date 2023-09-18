@@ -4,10 +4,10 @@ import type {IFeatureDefinition} from 'monaco-editor-webpack-plugin/out/types';
 import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plugin';
 import type {
     Configuration,
-    ResolveOptions,
     DefinePlugin,
     FileCacheOptions,
     MemoryCacheOptions,
+    ResolveOptions,
 } from 'webpack';
 import type {ServerConfiguration} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';

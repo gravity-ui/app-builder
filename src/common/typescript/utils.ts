@@ -1,10 +1,14 @@
 import type Typescript from 'typescript';
 import type {Logger} from '../logger';
 
-export function getProjectConfig(ts: typeof Typescript, projectPath: string) {
-    const configPath = ts.findConfigFile(projectPath, ts.sys.fileExists, 'tsconfig.json');
+export function getProjectConfig(
+    ts: typeof Typescript,
+    projectPath: string,
+    filename = 'tsconfig.json',
+) {
+    const configPath = ts.findConfigFile(projectPath, ts.sys.fileExists, filename);
     if (!configPath) {
-        throw new Error("Could not find a valid 'tsconfig.json'.");
+        throw new Error(`Could not find a valid '${filename}'.`);
     }
 
     return configPath;

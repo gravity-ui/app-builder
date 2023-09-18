@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import {rimraf} from 'rimraf';
-import path from 'path';
+import * as path from 'node:path';
 
 import type {LinkedPackage} from '../models';
 import logger from '../logger';

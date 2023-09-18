@@ -1,4 +1,4 @@
-import path from 'node:path';
+import * as path from 'node:path';
 import {rimraf} from 'rimraf';
 
 import {ControllableScript} from '../../common/child-process/controllable-script';

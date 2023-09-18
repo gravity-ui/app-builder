@@ -1,6 +1,6 @@
 import yargs from 'yargs';
 import {hideBin} from 'yargs/helpers';
-import path from 'path';
+import * as path from 'node:path';
 
 import logger from './common/logger';
 import {getProjectConfig} from './common/config';
@@ -49,41 +49,44 @@ export function createCli(argv: string[]) {
                 if (!args) {
                     return {};
                 }
-                return args.reduce((values, value) => {
-                    if (value.endsWith('=')) {
-                        value = value.concat('""');
-                    }
+                return args.reduce(
+                    (values, value) => {
+                        if (value.endsWith('=')) {
+                            value = value.concat('""');
+                        }
 
-                    // This ensures we're only splitting by the first `=`
-                    const [allKeys, val] = value.split(/[=](.+)/, 2);
-                    if (typeof allKeys === 'string') {
-                        const splitKeys = allKeys.split(/\.(?!$)/);
+                        // This ensures we're only splitting by the first `=`
+                        const [allKeys, val] = value.split(/[=](.+)/, 2);
+                        if (typeof allKeys === 'string') {
+                            const splitKeys = allKeys.split(/\.(?!$)/);
 
-                        let prevRef = values;
+                            let prevRef = values;
 
-                        splitKeys.forEach((someKey, index) => {
-                            if (!prevRef[someKey]) {
-                                prevRef[someKey] = {};
-                            }
-
-                            if (typeof prevRef[someKey] === 'string') {
-                                prevRef[someKey] = {};
-                            }
-
-                            if (index === splitKeys.length - 1) {
-                                if (typeof val === 'string') {
-                                    prevRef[someKey] = val;
-                                } else {
-                                    prevRef[someKey] = true;
+                            splitKeys.forEach((someKey, index) => {
+                                if (!prevRef[someKey]) {
+                                    prevRef[someKey] = {};
                                 }
-                            }
 
-                            prevRef = prevRef[someKey];
-                        });
-                    }
+                                if (typeof prevRef[someKey] === 'string') {
+                                    prevRef[someKey] = {};
+                                }
 
-                    return values;
-                }, {} as Record<string, any>);
+                                if (index === splitKeys.length - 1) {
+                                    if (typeof val === 'string') {
+                                        prevRef[someKey] = val;
+                                    } else {
+                                        prevRef[someKey] = true;
+                                    }
+                                }
+
+                                prevRef = prevRef[someKey];
+                            });
+                        }
+
+                        return values;
+                    },
+                    {} as Record<string, any>,
+                );
             },
         })
         .command({

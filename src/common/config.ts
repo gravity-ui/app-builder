@@ -1,4 +1,4 @@
-import path from 'path';
+import * as path from 'node:path';
 import _ from 'lodash';
 
 import {cosmiconfigSync} from 'cosmiconfig';
@@ -10,14 +10,14 @@ import type {Loader} from 'cosmiconfig';
 import type {CosmiconfigResult} from 'cosmiconfig/dist/types';
 
 import type {
-    ProjectConfig,
-    NormalizedServiceConfig,
-    ServiceConfig,
-    LibraryConfig,
     ClientConfig,
-    ServerConfig,
+    LibraryConfig,
     NormalizedClientConfig,
     NormalizedServerConfig,
+    NormalizedServiceConfig,
+    ProjectConfig,
+    ServerConfig,
+    ServiceConfig,
 } from './models';
 import type {CliArgs} from '../create-cli';
 import {getPort} from './utils';

@@ -1,4 +1,4 @@
-import path from 'node:path';
+import * as path from 'node:path';
 import nodemon from 'nodemon';
 import {onExit} from 'signal-exit';
 import {rimraf} from 'rimraf';
