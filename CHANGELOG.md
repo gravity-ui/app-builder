@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.9](https://github.com/gravity-ui/app-builder/compare/v0.6.8...v0.6.9) (2023-09-18)
+
+
+### Bug Fixes
+
+* pass correct version to semver ([#77](https://github.com/gravity-ui/app-builder/issues/77)) ([d3f8ed8](https://github.com/gravity-ui/app-builder/commit/d3f8ed8d210995d9d7325f6fd16f0e7e57193105))
+
 ## [0.6.8](https://github.com/gravity-ui/app-builder/compare/v0.6.7...v0.6.8) (2023-09-18)
 
 
