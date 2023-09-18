@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.8](https://github.com/gravity-ui/app-builder/compare/v0.6.7...v0.6.8) (2023-09-18)
+
+
+### Bug Fixes
+
+* config fails to load ([#75](https://github.com/gravity-ui/app-builder/issues/75)) ([1847dc7](https://github.com/gravity-ui/app-builder/commit/1847dc7ddb6270b61d73836f84ad1944e04d96a7))
+* get-port v5 incorrectly detects empty port ([#73](https://github.com/gravity-ui/app-builder/issues/73)) ([3d7b4df](https://github.com/gravity-ui/app-builder/commit/3d7b4dfd0ba244b1d03b2965beffd9234b328cd6))
+
 ## [0.6.7](https://github.com/gravity-ui/app-builder/compare/v0.6.6...v0.6.7) (2023-09-06)
 
 
