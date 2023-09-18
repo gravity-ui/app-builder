@@ -1,6 +1,6 @@
 import path from 'node:path';
 import nodemon from 'nodemon';
-import onExit from 'signal-exit';
+import {onExit} from 'signal-exit';
 import {rimraf} from 'rimraf';
 
 import {shouldCompileTarget} from '../../common/utils';

@@ -10,7 +10,7 @@ import {
 import {fromBuffer} from 'file-type';
 import * as mime from 'mime-types';
 import pMap from 'p-map';
-import fg from 'fast-glob';
+import {globSync} from 'fast-glob';
 
 import type {S3ClientConfig, PutObjectCommandInput} from '@aws-sdk/client-s3';
 
@@ -66,7 +66,7 @@ export function getS3Client(options: S3ClientOptions) {
             keyPrefix = '',
             {concurrency = 512, ...opts}: S3UploadDirOptions = {},
         ) {
-            const files = fg.sync('**', {cwd: dirPath});
+            const files = globSync('**', {cwd: dirPath});
 
             return pMap(
                 files,

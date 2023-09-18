@@ -2,7 +2,7 @@ import {tmpNameSync} from './utils';
 import * as fs from 'fs-extra';
 import * as execa from 'execa';
 
-import type {ChildProcess} from 'child_process';
+import type {ChildProcess, Serializable} from 'child_process';
 
 import {getCacheDir} from '../utils';
 
@@ -103,8 +103,7 @@ export class ControllableScript {
         }
         this.process.on(`exit`, callback);
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    send(msg: any): void {
+    send(msg: Serializable): void {
         if (!this.process) {
             throw new Error(`Trying to send a message before process started`);
         }
