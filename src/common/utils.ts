@@ -19,3 +19,8 @@ export function shouldCompileTarget(target: 'client' | 'server' | undefined, tar
 export function getCacheDir() {
     return findCacheDir({name: '@gravity-ui/app-builder', create: true}) || os.tmpdir();
 }
+
+export async function getPort({port}: {port: number}) {
+    const {default: getPortDefault, portNumbers} = await import('get-port');
+    return getPortDefault({port: portNumbers(port, port + 100)});
+}

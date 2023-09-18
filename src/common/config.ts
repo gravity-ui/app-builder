@@ -3,7 +3,6 @@ import _ from 'lodash';
 
 import {cosmiconfigSync} from 'cosmiconfig';
 import {TypeScriptLoader as getTsLoader} from 'cosmiconfig-typescript-loader';
-import getPort from 'get-port';
 
 import {isLibraryConfig, isServiceConfig} from './models';
 
@@ -21,6 +20,7 @@ import type {
     NormalizedServerConfig,
 } from './models';
 import type {CliArgs} from '../create-cli';
+import {getPort} from './utils';
 
 function splitPaths(paths: string | string[]) {
     return (Array.isArray(paths) ? paths : [paths]).flatMap((p) => p.split(','));

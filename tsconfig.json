@@ -1,11 +1,12 @@
 {
   "extends": "@gravity-ui/tsconfig",
   "compilerOptions": {
+    "noEmit": true,
     "target": "ES2020",
-    "module": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "noErrorTruncation": true,
     "resolveJsonModule": true,
-    "verbatimModuleSyntax": true,
     "noUncheckedIndexedAccess": true,
     "experimentalDecorators": false
   },

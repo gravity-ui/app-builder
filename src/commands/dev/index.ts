@@ -56,7 +56,7 @@ export default async function (config: NormalizedServiceConfig) {
 
     let serverCompilation: ControllableScript | undefined;
     if (shouldCompileServer) {
-        const {watchServerCompilation} = await import('./server');
+        const {watchServerCompilation} = await import('./server.js');
         serverCompilation = watchServerCompilation(config);
         serverCompilation.onMessage((msg) => {
             if (msg.type === 'Emitted') {
@@ -68,7 +68,7 @@ export default async function (config: NormalizedServiceConfig) {
 
     let clientCompilation: WebpackDevServer | undefined;
     if (shouldCompileClient) {
-        const {watchClientCompilation} = await import('./client');
+        const {watchClientCompilation} = await import('./client.js');
         clientCompilation = await watchClientCompilation(config, () => {
             logger.success('Manifest was compiled successfully');
             clientCompiled = true;
