@@ -1,4 +1,4 @@
-import onExit from 'signal-exit';
+import {onExit} from 'signal-exit';
 import {ControllableScript} from '../../common/child-process/controllable-script';
 
 import type {LibraryConfig} from '../../common/models';

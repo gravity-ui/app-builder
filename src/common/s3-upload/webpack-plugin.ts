@@ -1,5 +1,5 @@
 import {WebpackError} from 'webpack';
-import fg from 'fast-glob';
+import {globSync} from 'fast-glob';
 
 import {uploadFiles} from './upload.js';
 
@@ -27,10 +27,10 @@ export class S3UploadPlugin {
             let fileNames = Object.keys(compilation.assets);
 
             if (this.options.additionalPattern) {
-                const additionallFiles = fg.sync(this.options.additionalPattern, {
+                const additionalFiles = globSync(this.options.additionalPattern, {
                     cwd: compilation.outputOptions.path,
                 });
-                fileNames = fileNames.concat(additionallFiles);
+                fileNames = fileNames.concat(additionalFiles);
             }
 
             fileNames = fileNames.filter((name) => {

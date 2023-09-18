@@ -1,10 +1,8 @@
-/* eslint-disable quotes */
-
 import path from 'path';
 import fs from 'fs';
 import childProcess from 'child_process';
 import * as babel from '@babel/core';
-import fg from 'fast-glob';
+import {globStream} from 'fast-glob';
 import {rimraf} from 'rimraf';
 import sass from 'sass';
 import postcss from 'postcss';
@@ -76,7 +74,7 @@ function compileToCjs(
             plugins: [
                 require.resolve('./babel-plugin-remove-css-imports'),
                 require.resolve('@babel/plugin-transform-modules-commonjs'),
-                require.resolve('@babel/plugin-proposal-dynamic-import'),
+                require.resolve('@babel/plugin-transform-dynamic-import'),
             ],
             sourceMaps: true,
             inputSourceMap,
@@ -118,7 +116,7 @@ function compileStyles(
     onFinish?: () => void,
     additionalGlobs: string[] = [],
 ) {
-    const origStylesStream = fg.stream(['**/*.{sass,scss,css}', ...additionalGlobs], {
+    const origStylesStream = globStream(['**/*.{sass,scss,css}', ...additionalGlobs], {
         cwd: inputDir,
     });
     origStylesStream.on('data', (file) => {
@@ -140,7 +138,7 @@ function compileStyles(
             outputDir === paths.libBuildEsm
                 ? ['**/*.{sass,scss,css}', '!cjs/**/*']
                 : ['**/*.{sass,scss,css}'];
-        const stylesStream = fg.stream(globs, {cwd: outputDir});
+        const stylesStream = globStream(globs, {cwd: outputDir});
         stylesStream.on('data', async (file) => {
             const origScssFile = getFilePath(file, {dir: inputDir});
             const scssFile = getFilePath(file, {dir: outputDir});
@@ -199,7 +197,7 @@ export function buildLibrary(config: LibraryConfig) {
     rimraf.sync(paths.libBuild);
 
     // sources compilation
-    const sourceStream = fg.stream(['**/*.{js,jsx,ts,tsx}', '!**/*.d.ts', ...internalGlobs], {
+    const sourceStream = globStream(['**/*.{js,jsx,ts,tsx}', '!**/*.d.ts', ...internalGlobs], {
         cwd: paths.src,
     });
     sourceStream.on('data', (file) => {
@@ -282,7 +280,7 @@ export function buildLibrary(config: LibraryConfig) {
 
             if (!error && !stderr) {
                 logger.message('Typechecking successfully completed');
-                const typingsStream = fg.stream(['**/*.d.ts', '!cjs/**/*'], {
+                const typingsStream = globStream(['**/*.d.ts', '!cjs/**/*'], {
                     cwd: paths.libBuildEsm,
                 });
                 typingsStream.on('data', copyToCjs);
@@ -310,7 +308,7 @@ export function buildLibrary(config: LibraryConfig) {
     `;
     const svgoRegEx = /assets\/icons/;
 
-    const iconsStream = fg.stream(['**/*.svg', ...internalGlobs], {cwd: paths.libAssets});
+    const iconsStream = globStream(['**/*.svg', ...internalGlobs], {cwd: paths.libAssets});
     iconsStream.on('data', async (file) => {
         const iconFile = getFilePath(file, {dir: paths.libAssets});
         const componentFile = getFilePath(file, {dir: paths.libCompiledAssetsEsm, ext: 'js'});
@@ -369,8 +367,7 @@ export function buildLibrary(config: LibraryConfig) {
                 throw err;
             }
         } else {
-            // eslint-disable-next-line security/detect-new-buffer
-            const encoded = new Buffer(fs.readFileSync(iconFile, 'utf-8')).toString('base64');
+            const encoded = Buffer.from(fs.readFileSync(iconFile, 'utf-8')).toString('base64');
             const code = `export default 'data:image/svg+xml;base64,${encoded}'`;
             fs.mkdirSync(componentDir, {recursive: true});
             fs.writeFile(
@@ -388,7 +385,10 @@ export function buildLibrary(config: LibraryConfig) {
     });
 
     // file assets copying
-    const assetsStream = fg.stream(['**/*.json', '**/*.d.ts', ...internalGlobs], {cwd: paths.src});
+    const assetsStream = globStream(
+        ['**/*.json', '!**/tsconfig.json', '**/*.d.ts', ...internalGlobs],
+        {cwd: paths.src},
+    );
     assetsStream.on('data', (file) => {
         const assetFile = getFilePath(file);
         const copiedAssetFile = getFilePath(file, {dir: paths.libBuildEsm});
