@@ -124,8 +124,8 @@ function updateImportDeclaration(
     context: Typescript.TransformationContext,
     resolvedPath: string,
 ) {
-    if (semver.lt(ts.version, '5.0')) {
-        // for versions before 5.0
+    if (semver.lt(ts.version, '5.0.0')) {
+        // for versions before 5.0.0
         return context.factory.updateImportDeclaration(
             node,
             // @ts-expect-error
@@ -152,8 +152,8 @@ function updateExportDeclaration(
     context: Typescript.TransformationContext,
     resolvedPath: string,
 ) {
-    if (semver.lt(ts.version, '5.0')) {
-        // for versions before 5.0
+    if (semver.lt(ts.version, '5.0.0')) {
+        // for versions before 5.0.0
         return context.factory.updateExportDeclaration(
             node,
             // @ts-expect-error
@@ -183,8 +183,8 @@ function updateImportTypeNode(
     context: Typescript.TransformationContext,
     resolvedPath: string,
 ) {
-    if (semver.lt(ts.version, '5.0')) {
-        // for versions before 5.0
+    if (semver.lt(ts.version, '5.0.0')) {
+        // for versions before 5.0.0
         return context.factory.updateImportTypeNode(
             node,
             context.factory.createLiteralTypeNode(
