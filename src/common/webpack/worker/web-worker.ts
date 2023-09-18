@@ -1,3 +1,6 @@
+// eslint-disable-next-line camelcase
+declare let __webpack_public_path__: string;
+
 class WebWorker extends Worker {
     constructor(url: string | URL, options?: WorkerOptions) {
         // eslint-disable-next-line camelcase

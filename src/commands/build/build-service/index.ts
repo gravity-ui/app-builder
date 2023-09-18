@@ -10,7 +10,7 @@ export default function (config: NormalizedServiceConfig) {
     if (shouldCompileClient) {
         compilations.push(
             (async () => {
-                const {buildClient} = await import('./client');
+                const {buildClient} = await import('./client.js');
                 return buildClient(config);
             })(),
         );
@@ -18,7 +18,7 @@ export default function (config: NormalizedServiceConfig) {
     if (shouldCompileServer) {
         compilations.push(
             (async () => {
-                const {buildServer} = await import('./server');
+                const {buildServer} = await import('./server.js');
                 return buildServer(config);
             })(),
         );
