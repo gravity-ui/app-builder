@@ -5,7 +5,7 @@
 
 ### Features
 
-* **build-lib:** support sentry webpack plugin ([#80](https://github.com/gravity-ui/app-builder/issues/80)) ([d7932d8](https://github.com/gravity-ui/app-builder/commit/d7932d8d7df389aa4c7a0fbd30a3fe9fba0d1b8c))
+* **build:** support sentry webpack plugin ([#80](https://github.com/gravity-ui/app-builder/issues/80)) ([d7932d8](https://github.com/gravity-ui/app-builder/commit/d7932d8d7df389aa4c7a0fbd30a3fe9fba0d1b8c))
 
 ## [0.6.9](https://github.com/gravity-ui/app-builder/compare/v0.6.8...v0.6.9) (2023-09-18)
 
