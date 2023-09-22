@@ -16,6 +16,7 @@ import CircularDependencyPlugin from 'circular-dependency-plugin';
 import type TerserWebpackPlugin from 'terser-webpack-plugin';
 import type * as Lightningcss from 'lightningcss';
 import type CssMinimizerWebpackPlugin from 'css-minimizer-webpack-plugin';
+import {sentryWebpackPlugin} from '@sentry/webpack-plugin';
 
 import paths from '../paths';
 import tempData from '../tempData';
@@ -778,6 +779,10 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
                 ignoreOrder: true,
             }),
         );
+
+        if (config.sentryConfig) {
+            plugins.push(sentryWebpackPlugin({...config.sentryConfig}));
+        }
 
         if (config.analyzeBundle === 'true') {
             plugins.push(

@@ -14,6 +14,7 @@ import type {Options as CircularDependenciesOptions} from 'circular-dependency-p
 import type {Config as SvgrConfig} from '@svgr/core';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
 import type {Options as StatoscopeOptions} from '@statoscope/webpack-plugin';
+import type {SentryWebpackPluginOptions} from '@sentry/webpack-plugin';
 
 export interface Entities<T> {
     data: Record<string, T>;
@@ -182,6 +183,7 @@ export interface ClientConfig {
     cache?: boolean | FileCacheOptions | MemoryCacheOptions;
     /** Use [Lighting CSS](https://lightningcss.dev) to transform and minimize css instead of PostCSS and cssnano*/
     transformCssWithLightningCss?: boolean;
+    sentryConfig?: SentryWebpackPluginOptions;
 }
 
 interface CdnUploadConfig {
