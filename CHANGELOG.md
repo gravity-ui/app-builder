@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.11](https://github.com/gravity-ui/app-builder/compare/v0.6.10...v0.6.11) (2023-10-02)
+
+
+### Bug Fixes
+
+* **config:** set explicitly verbose false by default ([#83](https://github.com/gravity-ui/app-builder/issues/83)) ([368a69d](https://github.com/gravity-ui/app-builder/commit/368a69d7bff6fe4ed1b3dda745c880c5628480bb))
+
 ## [0.6.10](https://github.com/gravity-ui/app-builder/compare/v0.6.9...v0.6.10) (2023-09-22)
 
 
