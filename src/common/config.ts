@@ -115,7 +115,7 @@ export async function getProjectConfig(
         inspectBrk: argv.inspectBrk,
     };
 
-    const config = {...(await cfg?.config)};
+    const config = {verbose: false, ...(await cfg?.config)};
     if (isLibraryConfig(config)) {
         return normalizeConfig({
             ...config,
