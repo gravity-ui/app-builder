@@ -1,9 +1,9 @@
-import path from 'path';
+import * as path from 'node:path';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import MiniCSSExtractPlugin from 'mini-css-extract-plugin';
 import OptimizeCSSAssetsPlugin from 'css-minimizer-webpack-plugin';
 
-import {configureModuleRules, configureResolve, WebpackMode} from './config';
+import {WebpackMode, configureModuleRules, configureResolve} from './config';
 import {getProjectConfig, normalizeConfig} from '../config';
 import {isLibraryConfig} from '../models';
 
@@ -91,11 +91,9 @@ function configurePlugins({isEnvDevelopment, isEnvProduction, config}: HelperOpt
     const plugins: Webpack.Configuration['plugins'] = [];
 
     if (config.definitions) {
-        // eslint-disable-next-line security/detect-non-literal-require
-        const webpack = require(path.resolve(
-            process.cwd(),
-            'node_modules/webpack',
-        )) as typeof Webpack;
+        const webpack = require(
+            path.resolve(process.cwd(), 'node_modules/webpack'),
+        ) as typeof Webpack;
         plugins.push(
             new webpack.DefinePlugin({
                 ...config.definitions,

@@ -1,6 +1,6 @@
-import path from 'path';
-import fs from 'fs';
-import childProcess from 'child_process';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
+import * as childProcess from 'node:child_process';
 import * as babel from '@babel/core';
 import {globStream} from 'fast-glob';
 import {rimraf} from 'rimraf';
@@ -272,6 +272,7 @@ export function buildLibrary(config: LibraryConfig) {
     // type definitions compilation and type checking
     const projectFilePath = path.resolve(paths.app, 'tsconfig.publish.json');
     const tscExec = path.resolve(paths.appNodeModules, 'typescript/bin/tsc');
+    // eslint-disable-next-line security/detect-child-process
     childProcess.exec(
         `${tscExec} -p ${projectFilePath} --declaration --emitDeclarationOnly --outDir build/esm`,
         (error, stdout, stderr) => {

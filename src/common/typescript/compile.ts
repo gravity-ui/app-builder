@@ -5,13 +5,23 @@ import {createTransformPathsToLocalModules} from './transformers';
 import {elapsedTime} from '../logger/pretty-time';
 import {formatDiagnosticBrief} from './diagnostic';
 
-export function compile(ts: typeof Typescript, projectPath: string, {logger}: {logger: Logger}) {
+interface CompileOptions {
+    projectPath: string;
+    configFileName?: string;
+    logger: Logger;
+    optionsToExtend?: Typescript.CompilerOptions;
+}
+
+export function compile(
+    ts: typeof Typescript,
+    {projectPath, configFileName = 'tsconfig.json', optionsToExtend, logger}: CompileOptions,
+) {
     const start = process.hrtime.bigint();
     logger.message('Start compilation');
     logger.message(`Typescript v${ts.version}`);
 
-    logger.verbose(`Searching for the tsconfig.json in ${projectPath}`);
-    const configPath = getProjectConfig(ts, projectPath);
+    logger.verbose(`Searching for the ${configFileName} in ${projectPath}`);
+    const configPath = getProjectConfig(ts, projectPath, configFileName);
 
     const formatHost = {
         getCanonicalFileName: (path: string) => path,
@@ -30,12 +40,12 @@ export function compile(ts: typeof Typescript, projectPath: string, {logger}: {l
 
     const parsedConfig = ts.getParsedCommandLineOfConfigFile(
         configPath,
-        {noEmitOnError: true},
+        {noEmitOnError: true, ...optionsToExtend},
         parseConfigFileHost,
     );
 
     if (!parsedConfig) {
-        throw new Error("Invalid 'tsconfig.json'");
+        throw new Error(`Invalid '${configFileName}'`);
     }
     logger.verbose('Config found and parsed');
 

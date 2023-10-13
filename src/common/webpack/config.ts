@@ -1,6 +1,6 @@
 /* eslint-disable complexity */
-import path, {resolve} from 'path';
-import fs from 'fs';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
 import * as webpack from 'webpack';
 import _ from 'lodash';
 import {CleanWebpackPlugin} from 'clean-webpack-plugin';
@@ -281,8 +281,8 @@ function configureEntry({config}: HelperOptions): webpack.EntryObject {
     let entries = fs.readdirSync(paths.appEntry).filter((file) => /\.[jt]sx?$/.test(file));
 
     if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
-        entries = entries.filter((entry) =>
-            config.entryFilter?.includes(entry.split('.')[0] ?? ''),
+        entries = entries.filter(
+            (entry) => config.entryFilter?.includes(entry.split('.')[0] ?? ''),
         );
     }
 
@@ -755,8 +755,10 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
             new ForkTsCheckerWebpackPlugin({
                 ...config.forkTsChecker,
                 typescript: {
-                    typescriptPath: require.resolve(resolve(paths.appNodeModules, 'typescript')),
-                    configFile: resolve(paths.app, 'src/ui/tsconfig.json'),
+                    typescriptPath: require.resolve(
+                        path.resolve(paths.appNodeModules, 'typescript'),
+                    ),
+                    configFile: path.resolve(paths.app, 'src/ui/tsconfig.json'),
                     diagnosticOptions: {
                         syntactic: true,
                     },

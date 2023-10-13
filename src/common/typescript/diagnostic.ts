@@ -1,5 +1,5 @@
 import type Typescript from 'typescript';
-import path from 'path';
+import * as path from 'node:path';
 
 import {colors} from '../logger/colors';
 

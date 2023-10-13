@@ -1,6 +1,6 @@
-import {createReadStream, createWriteStream} from 'fs';
+import {createReadStream, createWriteStream} from 'node:fs';
 
-import {createGzip, createBrotliCompress} from 'zlib';
+import {createBrotliCompress, createGzip} from 'zlib';
 
 import type {Transform} from 'stream';
 

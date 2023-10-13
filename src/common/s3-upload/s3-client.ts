@@ -1,18 +1,18 @@
 import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as path from 'node:path';
 
 import {
-    S3Client,
-    PutObjectCommand,
     DeleteObjectCommand,
     HeadObjectCommand,
+    PutObjectCommand,
+    S3Client,
 } from '@aws-sdk/client-s3';
 import {fromBuffer} from 'file-type';
 import * as mime from 'mime-types';
 import pMap from 'p-map';
 import {globSync} from 'fast-glob';
 
-import type {S3ClientConfig, PutObjectCommandInput} from '@aws-sdk/client-s3';
+import type {PutObjectCommandInput, S3ClientConfig} from '@aws-sdk/client-s3';
 
 export type S3ClientOptions = S3ClientConfig;
 export function getS3Client(options: S3ClientOptions) {

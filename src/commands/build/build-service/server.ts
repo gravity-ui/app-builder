@@ -19,7 +19,7 @@ export function buildServer(config: NormalizedServiceConfig): Promise<void> {
         )});
 
         const logger = new Logger('server', ${config.verbose});
-        compile(ts, ${JSON.stringify(paths.appServer)}, {logger});
+        compile(ts, {logger, projectPath: ${JSON.stringify(paths.appServer)}});
     `,
             null,
         );

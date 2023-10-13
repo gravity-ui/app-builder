@@ -1,5 +1,5 @@
 import type Typescript from 'typescript';
-import * as path from 'path';
+import * as path from 'node:path';
 import * as semver from 'semver';
 
 export function createTransformPathsToLocalModules(ts: typeof Typescript) {

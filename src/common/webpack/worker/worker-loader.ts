@@ -1,4 +1,4 @@
-import path from 'node:path';
+import * as path from 'node:path';
 
 import webpack from 'webpack';
 import NodeTargetPlugin from 'webpack/lib/node/NodeTargetPlugin';
