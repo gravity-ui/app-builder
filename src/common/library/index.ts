@@ -70,6 +70,7 @@ function compileToCjs(
     babel.transform(
         code,
         {
+            babelrc: false,
             filename: sourceFile,
             plugins: [
                 require.resolve('./babel-plugin-remove-css-imports'),
@@ -213,6 +214,7 @@ export function buildLibrary(config: LibraryConfig) {
         babel.transform(
             source,
             {
+                babelrc: false,
                 filename: sourceFile,
                 presets: [babelPreset(config.lib)],
                 plugins: [
@@ -326,6 +328,7 @@ export function buildLibrary(config: LibraryConfig) {
                 babel.transform(
                     component,
                     {
+                        babelrc: false,
                         filename: iconFile,
                         presets: [babelPreset(config.lib)],
                         sourceMaps: true,
