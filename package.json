@@ -60,7 +60,6 @@
     "@aws-sdk/client-s3": "^3.353.0",
     "@babel/core": "^7.22.0",
     "@babel/helper-plugin-utils": "^7.22.5",
-    "@babel/plugin-proposal-decorators": "^7.22.0",
     "@babel/plugin-transform-class-properties": "^7.22.5",
     "@babel/plugin-transform-dynamic-import": "^7.22.0",
     "@babel/plugin-transform-modules-commonjs": "^7.22.0",
