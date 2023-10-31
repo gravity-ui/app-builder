@@ -55,7 +55,7 @@ module.exports = function (_context: unknown, options: Record<string, any> = {})
          * Can be removed once the issue is fixed and released.
          * @see https://github.com/babel/babel/issues/14289
          */
-        [require.resolve('@babel/plugin-proposal-class-properties')],
+        [require.resolve('@babel/plugin-transform-class-properties')],
         isEnvProduction && [
             require.resolve('babel-plugin-transform-react-remove-prop-types'),
             {
