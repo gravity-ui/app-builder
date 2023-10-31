@@ -73,7 +73,6 @@ function compileToCjs(
             babelrc: false,
             filename: sourceFile,
             plugins: [
-                require.resolve('./babel-plugin-remove-css-imports'),
                 require.resolve('@babel/plugin-transform-modules-commonjs'),
                 require.resolve('@babel/plugin-transform-dynamic-import'),
             ],
@@ -296,7 +295,17 @@ export function buildLibrary(config: LibraryConfig) {
 
     // css compilation
     compileStyles(paths.libGlobalStyles, paths.libCompiledGlobalStyles, () => {
-        compileStyles(paths.src, paths.libBuildEsm, undefined, internalGlobs);
+        compileStyles(
+            paths.src,
+            paths.libBuildEsm,
+            () => {
+                const stylesStream = globStream(['**/*.{css,css.map}'], {
+                    cwd: paths.libBuildEsm,
+                });
+                stylesStream.on('data', copyToCjs);
+            },
+            internalGlobs,
+        );
     });
 
     // icons compilation to js
