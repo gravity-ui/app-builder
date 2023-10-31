@@ -1,6 +1,7 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import * as childProcess from 'node:child_process';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 import * as babel from '@babel/core';
 import {globStream} from 'fast-glob';
 import {rimraf} from 'rimraf';
@@ -146,35 +147,46 @@ function compileStyles(
             const sourceMapFile = getFilePath(file, {dir: outputDir, ext: 'css.map'});
 
             try {
-                const sassTransformed = sass.renderSync({
-                    file: scssFile,
+                const sassTransformed = sass.compile(scssFile, {
                     sourceMap: true,
-                    sourceMapContents: true,
-                    outFile: cssFile,
-                    importer: (url) => {
-                        if (url.startsWith('~')) {
-                            return {file: path.resolve(paths.appNodeModules, url.replace('~', ''))};
-                        }
-
-                        return new Error(`Unrecognized import ${url} in ${origScssFile}`);
-                    },
+                    sourceMapIncludeSources: true,
+                    importers: [
+                        {
+                            findFileUrl(url) {
+                                if (url.startsWith('~')) {
+                                    return pathToFileURL(
+                                        getFilePath(url.substring(1), {dir: paths.appNodeModules}),
+                                    );
+                                }
+                                throw new Error(`Unrecognized import ${url} in ${origScssFile}`);
+                            },
+                        },
+                    ],
                 });
 
-                if (sassTransformed?.css) {
+                if (sassTransformed.css) {
+                    const sourceMap = sassTransformed.sourceMap;
+                    if (sourceMap) {
+                        sourceMap.sources = sourceMap.sources.map((url) => {
+                            return path.relative(path.dirname(scssFile), fileURLToPath(url));
+                        });
+                    }
                     const postcssTransformed = await postcss([
                         postcssPresetEnv({enableClientSidePolyfills: false}),
                     ]).process(sassTransformed.css, {
-                        to: cssFile.split('/').pop(),
-                        map: {prev: sassTransformed.map?.toString(), inline: false},
+                        to: path.basename(cssFile),
+                        from: path.basename(scssFile),
+                        map: {prev: sourceMap, inline: false},
                     });
-                    fs.writeFileSync(cssFile, postcssTransformed.css);
 
+                    let css = postcssTransformed.css;
                     if (postcssTransformed.map) {
-                        fs.writeFileSync(
-                            sourceMapFile,
-                            JSON.stringify(postcssTransformed.map.toJSON()),
-                        );
+                        const finalSourceMap = postcssTransformed.map.toJSON();
+                        finalSourceMap.sourceRoot = '';
+                        fs.writeFileSync(sourceMapFile, JSON.stringify(finalSourceMap));
+                        css += `\n/*# sourceMappingURL=${path.basename(sourceMapFile)} */`;
                     }
+                    fs.writeFileSync(cssFile, css);
                 }
             } catch (sassErr) {
                 logger.error(`Style compilation errors for ${scssFile}`);
