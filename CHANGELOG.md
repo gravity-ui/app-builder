@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.7.0](https://github.com/gravity-ui/app-builder/compare/v0.6.11...v0.7.0) (2023-10-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* **build-lib:** ignore .babelrc file ([#88](https://github.com/gravity-ui/app-builder/issues/88))
+
+### Features
+
+* allow overwrite vendors list ([#94](https://github.com/gravity-ui/app-builder/issues/94)) ([3eec2cf](https://github.com/gravity-ui/app-builder/commit/3eec2cf4ad923d9ef6e3a12c3f7015ff298e7706))
+* minimum supported node v18 ([#85](https://github.com/gravity-ui/app-builder/issues/85)) ([99476a9](https://github.com/gravity-ui/app-builder/commit/99476a973b508784719039d01062b82500e118e0))
+
+
+### Bug Fixes
+
+* add @babel/plugin-transform-class-properties to workaround bug in Safari 15 ([#91](https://github.com/gravity-ui/app-builder/issues/91)) ([c69b82e](https://github.com/gravity-ui/app-builder/commit/c69b82eb2e381312da47edfaf08d9fc0ed54a3e0))
+* **build-lib:** ignore .babelrc file ([#88](https://github.com/gravity-ui/app-builder/issues/88)) ([0524ec0](https://github.com/gravity-ui/app-builder/commit/0524ec010e0e4425a2f251b4ee6cfbe351179899))
+* **build-lib:** preserve css imports in CommonJS ([#93](https://github.com/gravity-ui/app-builder/issues/93)) ([63718ba](https://github.com/gravity-ui/app-builder/commit/63718baa4f8d03668bc0bf2a9d3e9e5ced3ecc74))
+* **build-lib:** replace deprecated sass api with a new one ([#95](https://github.com/gravity-ui/app-builder/issues/95)) ([7f11da1](https://github.com/gravity-ui/app-builder/commit/7f11da1ba8fd371cf7325af1bb65739787139593))
+
 ## [0.6.11](https://github.com/gravity-ui/app-builder/compare/v0.6.10...v0.6.11) (2023-10-02)
 
 
