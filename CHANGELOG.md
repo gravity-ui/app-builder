@@ -5,7 +5,9 @@
 
 ### ⚠ BREAKING CHANGES
 
+* minimum supported node v18 ([#85](https://github.com/gravity-ui/app-builder/issues/85)) ([99476a9](https://github.com/gravity-ui/app-builder/commit/99476a973b508784719039d01062b82500e118e0))
 * **build-lib:** ignore .babelrc file ([#88](https://github.com/gravity-ui/app-builder/issues/88))
+* **build-lib:** preserve css imports in CommonJS ([#93](https://github.com/gravity-ui/app-builder/issues/93)) ([63718ba](https://github.com/gravity-ui/app-builder/commit/63718baa4f8d03668bc0bf2a9d3e9e5ced3ecc74))
 
 ### Features
 
