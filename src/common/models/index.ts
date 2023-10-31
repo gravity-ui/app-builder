@@ -106,9 +106,9 @@ export interface ClientConfig {
      */
     hiddenSourceMap?: boolean;
     /**
-     * additional libraries for vendor chunk
+     * additional libraries or a function returning libraries for a vendor chunk
      */
-    vendors?: string[];
+    vendors?: string[] | ((defaultVendors: string[]) => string[]);
     /**
      * [settings](https://www.npmjs.com/package/moment-timezone-data-webpack-plugin) for moment-timezone (by default data is truncated)
      */
