@@ -877,7 +877,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
 function configureOptimization({config}: HelperOptions): webpack.Configuration['optimization'] {
     const configVendors = config.vendors ?? [];
 
-    const vendorsList = [
+    let vendorsList = [
         'react',
         'react-dom',
         'prop-types',
@@ -889,19 +889,32 @@ function configureOptimization({config}: HelperOptions): webpack.Configuration['
         'moment',
         'bem-cn-lite',
         'axios',
-        ...configVendors,
     ];
+
+    if (typeof configVendors === 'function') {
+        vendorsList = configVendors(vendorsList);
+    } else if (Array.isArray(configVendors)) {
+        vendorsList = vendorsList.concat(configVendors);
+    }
+
+    const useVendorsList = vendorsList.length > 0;
 
     const optimization: webpack.Configuration['optimization'] = {
         splitChunks: {
             chunks: 'all',
             cacheGroups: {
-                defaultVendors: {
-                    name: 'vendors',
-                    // eslint-disable-next-line security/detect-non-literal-regexp
-                    test: new RegExp(`([\\\\/])node_modules\\1(${vendorsList.join('|')})\\1`),
-                    priority: Infinity,
-                },
+                ...(useVendorsList
+                    ? {
+                          defaultVendors: {
+                              name: 'vendors',
+                              // eslint-disable-next-line security/detect-non-literal-regexp
+                              test: new RegExp(
+                                  `([\\\\/])node_modules\\1(${vendorsList.join('|')})\\1`,
+                              ),
+                              priority: Infinity,
+                          },
+                      }
+                    : undefined),
                 css: {
                     test: /\.css$/,
                     enforce: true,

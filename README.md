@@ -229,7 +229,7 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 
 ##### Optimization
 
-- `vendors` (`string[]`) — additional libraries for vendor chunk
+- `vendors` (`string[] | (defaultVendors: string[]) => string[]`) — additional libraries or a function returning libraries for a vendor chunk;
 - `momentTz` — [settings](https://www.npmjs.com/package/moment-timezone-data-webpack-plugin) for moment-timezone (by default data is truncated);
 - `contextReplacement` (`object`)
   - `highlight.js` (`string[]`) — list of language names to include, e.g. `['javascript', 'python', 'bash']`;
