@@ -18,6 +18,17 @@ module.exports = function (_context: unknown, options: Record<string, any> = {})
     const reactOptions = getOption(options.react, {});
 
     const presets = [
+        [
+            () => ({
+                /**
+                 * Safari 15 has a buggy implementation of class properties,
+                 * but @babel/compat-data marks it as stable.
+                 * Can be removed once the issue is fixed and released.
+                 * @see https://github.com/babel/babel/issues/14289
+                 */
+                plugins: [require.resolve('@babel/plugin-transform-class-properties')],
+            }),
+        ],
         // Latest stable ECMAScript features
         (isEnvDevelopment || isEnvProduction) && [require.resolve('@babel/preset-env'), envOptions],
         // ES features necessary for current Node version
@@ -49,13 +60,6 @@ module.exports = function (_context: unknown, options: Record<string, any> = {})
     const plugins = [
         // Polyfills the runtime needed for async/await and generators
         [require.resolve('@babel/plugin-transform-runtime'), runtimeOptions],
-        /**
-         * Safari 15 has a buggy implementation of class properties,
-         * but @babel/compat-data marks it as stable.
-         * Can be removed once the issue is fixed and released.
-         * @see https://github.com/babel/babel/issues/14289
-         */
-        [require.resolve('@babel/plugin-transform-class-properties')],
         isEnvProduction && [
             require.resolve('babel-plugin-transform-react-remove-prop-types'),
             {
