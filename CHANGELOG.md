@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.1](https://github.com/gravity-ui/app-builder/compare/v0.7.0...v0.7.1) (2023-11-01)
+
+
+### Bug Fixes
+
+* move transform-class-properties to presets ([#97](https://github.com/gravity-ui/app-builder/issues/97)) ([1a6b7ea](https://github.com/gravity-ui/app-builder/commit/1a6b7eac0e98969a89c972a83726d67cc12ce17a))
+* remove useless dependencies ([#92](https://github.com/gravity-ui/app-builder/issues/92)) ([47faf6a](https://github.com/gravity-ui/app-builder/commit/47faf6aa1b4c317b083fec862e303bc92f66c15d))
+
 ## [0.7.0](https://github.com/gravity-ui/app-builder/compare/v0.6.11...v0.7.0) (2023-10-31)
 
 
