@@ -15,6 +15,7 @@ import type {Config as SvgrConfig} from '@svgr/core';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
 import type {Options as StatoscopeOptions} from '@statoscope/webpack-plugin';
 import type {SentryWebpackPluginOptions} from '@sentry/webpack-plugin';
+import type {WebpackMode} from '../webpack/config';
 
 export interface Entities<T> {
     data: Record<string, T>;
@@ -184,6 +185,13 @@ export interface ClientConfig {
     /** Use [Lighting CSS](https://lightningcss.dev) to transform and minimize css instead of PostCSS and cssnano*/
     transformCssWithLightningCss?: boolean;
     sentryConfig?: SentryWebpackPluginOptions;
+    /**
+     * Modify or return a custom Webpack config.
+     */
+    webpack?: (
+        config: Configuration,
+        options: {configType: `${WebpackMode}`},
+    ) => Configuration | Promise<Configuration>;
 }
 
 interface CdnUploadConfig {
@@ -226,6 +234,10 @@ export type NormalizedClientConfig = Omit<
         server: ServerConfiguration;
     };
     verbose?: boolean;
+    webpack: (
+        config: Configuration,
+        options: {configType: `${WebpackMode}`},
+    ) => Configuration | Promise<Configuration>;
 };
 
 export type NormalizedServerConfig = Omit<ServerConfig, 'serverPort'> & {

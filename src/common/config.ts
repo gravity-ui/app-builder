@@ -184,6 +184,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
     client.hiddenSourceMap = client.hiddenSourceMap ?? true;
     client.svgr = client.svgr ?? {};
     client.entryFilter = client.entryFilter && splitPaths(client.entryFilter);
+    client.webpack = typeof client.webpack === 'function' ? client.webpack : (config) => config;
 
     if (mode === 'dev') {
         if (client.lazyCompilation) {

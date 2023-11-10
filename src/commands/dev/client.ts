@@ -30,7 +30,7 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
     } = config.client.devServer || {};
 
     const normalizedConfig = {...config.client, devServer: {...devServer, webSocketPath}};
-    const webpackConfig = webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger});
+    const webpackConfig = await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger});
 
     const options: Configuration = {
         static: path.resolve(paths.appDist, 'public'),
