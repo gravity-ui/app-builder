@@ -132,6 +132,11 @@ export function createCli(argv: string[]) {
                         group: 'Client',
                         type: 'boolean',
                         describe: 'Enable lazy compilation',
+                    })
+                    .option('debug-webpack', {
+                        group: 'Client',
+                        type: 'boolean',
+                        describe: 'Display final webpack configurations for debugging purposes',
                     }),
             handler: handlerP(
                 getCommandHandler('dev', (args, cmd) => {
@@ -198,6 +203,11 @@ export function createCli(argv: string[]) {
                         group: 'Client',
                         describe: 'Disable upload files to CDN [false]',
                         type: 'string',
+                    })
+                    .option('debug-webpack', {
+                        group: 'Client',
+                        type: 'boolean',
+                        describe: 'Display final webpack configurations for debugging purposes',
                     }),
             handler: handlerP(getCommandHandler('build')),
         })

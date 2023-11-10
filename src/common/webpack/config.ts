@@ -26,6 +26,7 @@ import type {Logger} from '../logger';
 import {ProgressPlugin} from './progress-plugin';
 import {resolveTsconfigPathsToAlias} from './utils';
 import {S3UploadPlugin} from '../s3-upload';
+import {logConfig} from '../logger/log-config';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -98,6 +99,10 @@ export async function webpackConfigFactory(
     };
 
     webpackConfig = await config.webpack(webpackConfig, {configType: webpackMode});
+
+    if (config.debugWebpack) {
+        logConfig('Preview webpack config', webpackConfig);
+    }
 
     return webpackConfig;
 }
