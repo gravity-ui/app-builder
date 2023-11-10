@@ -47,11 +47,11 @@ export const enum WebpackMode {
     Dev = 'development',
 }
 
-export function webpackConfigFactory(
+export async function webpackConfigFactory(
     webpackMode: WebpackMode,
     config: NormalizedClientConfig,
     {logger}: {logger?: Logger} = {},
-): webpack.Configuration {
+): Promise<webpack.Configuration> {
     const isEnvDevelopment = webpackMode === WebpackMode.Dev;
     const isEnvProduction = webpackMode === WebpackMode.Prod;
 
@@ -66,7 +66,7 @@ export function webpackConfigFactory(
         tsLinkedPackages,
     };
 
-    return {
+    let webpackConfig: webpack.Configuration = {
         mode: webpackMode,
         context: paths.app,
         bail: isEnvProduction,
@@ -96,6 +96,10 @@ export function webpackConfigFactory(
         },
         cache: config.cache,
     };
+
+    webpackConfig = await config.webpack(webpackConfig, {configType: webpackMode});
+
+    return webpackConfig;
 }
 
 export function configureModuleRules(helperOptions: HelperOptions) {
