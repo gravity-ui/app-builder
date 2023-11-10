@@ -72,6 +72,7 @@ function compileToCjs(
         code,
         {
             babelrc: false,
+            configFile: false,
             filename: sourceFile,
             plugins: [
                 require.resolve('@babel/plugin-transform-modules-commonjs'),
@@ -226,6 +227,7 @@ export function buildLibrary(config: LibraryConfig) {
             source,
             {
                 babelrc: false,
+                configFile: false,
                 filename: sourceFile,
                 presets: [babelPreset(config.lib)],
                 plugins: [
@@ -350,6 +352,7 @@ export function buildLibrary(config: LibraryConfig) {
                     component,
                     {
                         babelrc: false,
+                        configFile: false,
                         filename: iconFile,
                         presets: [babelPreset(config.lib)],
                         sourceMaps: true,
