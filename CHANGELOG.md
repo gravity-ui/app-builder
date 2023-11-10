@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.8.0](https://github.com/gravity-ui/app-builder/compare/v0.7.1...v0.8.0) (2023-11-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **build-library:** ignore babel.config.json file ([#98](https://github.com/gravity-ui/app-builder/issues/98))
+
+### Features
+
+* **service:** allow override babel transform options ([#102](https://github.com/gravity-ui/app-builder/issues/102)) ([5725e0c](https://github.com/gravity-ui/app-builder/commit/5725e0c5d49121c9fe386b9b60720904b7f30098))
+* **service:** allow override the default webpack configuration ([#100](https://github.com/gravity-ui/app-builder/issues/100)) ([ca9354c](https://github.com/gravity-ui/app-builder/commit/ca9354cfffb4a0126d81fdaa6febac3fe0670c21))
+* **services:** add --debug-webpack cli option to show final webpack config ([#101](https://github.com/gravity-ui/app-builder/issues/101)) ([b7ee812](https://github.com/gravity-ui/app-builder/commit/b7ee812f782b98147618c7956f83046846daf790))
+
+
+### Bug Fixes
+
+* **build-library:** ignore babel.config.json file ([#98](https://github.com/gravity-ui/app-builder/issues/98)) ([695c4b3](https://github.com/gravity-ui/app-builder/commit/695c4b3ed4195b803dd858399833f794f612d972))
+
 ## [0.7.1](https://github.com/gravity-ui/app-builder/compare/v0.7.0...v0.7.1) (2023-11-01)
 
 
