@@ -238,6 +238,7 @@ export type NormalizedClientConfig = Omit<
         config: Configuration,
         options: {configType: `${WebpackMode}`},
     ) => Configuration | Promise<Configuration>;
+    debugWebpack?: boolean;
 };
 
 export type NormalizedServerConfig = Omit<ServerConfig, 'serverPort'> & {

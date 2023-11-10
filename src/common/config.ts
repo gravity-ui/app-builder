@@ -130,6 +130,7 @@ export async function getProjectConfig(
             ...config.client,
             ...omitUndefined(client),
             ...(argv.cdn === 'false' ? {cdn: undefined} : undefined),
+            ...(argv.debugWebpack ? {debugWebpack: argv.debugWebpack} : undefined),
         },
         server: {
             ...config.server,
