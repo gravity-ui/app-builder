@@ -13,10 +13,12 @@ import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import MomentTimezoneDataPlugin from 'moment-timezone-data-webpack-plugin';
 import StatoscopeWebpackPlugin from '@statoscope/webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
+import {sentryWebpackPlugin} from '@sentry/webpack-plugin';
+
 import type TerserWebpackPlugin from 'terser-webpack-plugin';
 import type * as Lightningcss from 'lightningcss';
 import type CssMinimizerWebpackPlugin from 'css-minimizer-webpack-plugin';
-import {sentryWebpackPlugin} from '@sentry/webpack-plugin';
+import type * as Babel from '@babel/core';
 
 import paths from '../paths';
 import tempData from '../tempData';
@@ -36,6 +38,7 @@ export interface HelperOptions {
     logger?: Logger;
     isEnvDevelopment: boolean;
     isEnvProduction: boolean;
+    configType: `${WebpackMode}`;
     updateIncludes?: (
         values: string[],
         options?: {includeRootAssets?: boolean; includeRootStyles?: boolean},
@@ -65,6 +68,7 @@ export async function webpackConfigFactory(
         isEnvProduction,
         updateIncludes,
         tsLinkedPackages,
+        configType: webpackMode,
     };
 
     let webpackConfig: webpack.Configuration = {
@@ -325,36 +329,48 @@ function configureOutput({
 function createJavaScriptLoader({
     isEnvProduction,
     isEnvDevelopment,
+    configType,
     config,
 }: HelperOptions): webpack.RuleSetUseItem {
+    const plugins: Babel.PluginItem[] = [];
+    if (isEnvDevelopment && !config.disableReactRefresh) {
+        plugins.push([
+            require.resolve('react-refresh/babel'),
+            config.devServer?.webSocketPath
+                ? {
+                      overlay: {
+                          sockPath: config.devServer.webSocketPath,
+                      },
+                  }
+                : undefined,
+        ]);
+    }
+    if (isEnvProduction) {
+        plugins.push([
+            require.resolve('babel-plugin-import'),
+            {libraryName: 'lodash', libraryDirectory: '', camel2DashComponentName: false},
+        ]);
+    }
+
+    const transformOptions = config.babel(
+        {
+            presets: [babelPreset(config)],
+            plugins,
+        },
+        {configType},
+    );
+
     return {
         loader: require.resolve('babel-loader'),
         options: {
+            sourceType: 'unambiguous',
+            ...transformOptions,
             babelrc: false,
             configFile: false,
-            presets: [babelPreset(config)],
-            plugins: [
-                isEnvDevelopment &&
-                    !config.disableReactRefresh && [
-                        require.resolve('react-refresh/babel'),
-                        config.devServer?.webSocketPath
-                            ? {
-                                  overlay: {
-                                      sockPath: config.devServer.webSocketPath,
-                                  },
-                              }
-                            : undefined,
-                    ],
-                isEnvProduction && [
-                    require.resolve('babel-plugin-import'),
-                    {libraryName: 'lodash', libraryDirectory: '', camel2DashComponentName: false},
-                ],
-            ].filter(Boolean),
-            sourceType: 'unambiguous',
-            cacheDirectory: config.babelCacheDirectory ? config.babelCacheDirectory : true,
-            cacheCompression: isEnvProduction,
             compact: isEnvProduction,
-            sourceMap: !config.disableSourceMapGeneration,
+            sourceMaps: !config.disableSourceMapGeneration,
+            cacheCompression: isEnvProduction,
+            cacheDirectory: config.babelCacheDirectory ? config.babelCacheDirectory : true,
         },
     };
 }
@@ -415,21 +431,13 @@ function createWorkerRule(options: HelperOptions): webpack.RuleSetRule {
     };
 }
 
-function createSassStylesRule({
-    isEnvDevelopment,
-    isEnvProduction,
-    config,
-}: HelperOptions): webpack.RuleSetRule {
-    const loaders = getCssLoaders({
-        isEnvDevelopment,
-        isEnvProduction,
-        config,
-    });
+function createSassStylesRule(options: HelperOptions): webpack.RuleSetRule {
+    const loaders = getCssLoaders(options);
 
     loaders.push({
         loader: require.resolve('resolve-url-loader'),
         options: {
-            sourceMap: !config.disableSourceMapGeneration,
+            sourceMap: !options.config.disableSourceMapGeneration,
         },
     });
 
@@ -445,24 +453,16 @@ function createSassStylesRule({
 
     return {
         test: /\.scss$/,
-        sideEffects: isEnvProduction ? true : undefined,
+        sideEffects: options.isEnvProduction ? true : undefined,
         use: loaders,
     };
 }
 
-function createStylesRule({
-    isEnvDevelopment,
-    isEnvProduction,
-    config,
-}: HelperOptions): webpack.RuleSetRule {
-    const loaders = getCssLoaders({
-        isEnvDevelopment,
-        isEnvProduction,
-        config,
-    });
+function createStylesRule(options: HelperOptions): webpack.RuleSetRule {
+    const loaders = getCssLoaders(options);
     return {
         test: /\.css$/,
-        sideEffects: isEnvProduction ? true : undefined,
+        sideEffects: options.isEnvProduction ? true : undefined,
         use: loaders,
     };
 }
