@@ -186,6 +186,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
     client.svgr = client.svgr ?? {};
     client.entryFilter = client.entryFilter && splitPaths(client.entryFilter);
     client.webpack = typeof client.webpack === 'function' ? client.webpack : (config) => config;
+    client.babel = typeof client.babel === 'function' ? client.babel : (config) => config;
 
     if (mode === 'dev') {
         if (client.lazyCompilation) {

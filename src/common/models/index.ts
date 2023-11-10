@@ -9,6 +9,7 @@ import type {
     MemoryCacheOptions,
     ResolveOptions,
 } from 'webpack';
+import type * as Babel from '@babel/core';
 import type {ServerConfiguration} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
 import type {Config as SvgrConfig} from '@svgr/core';
@@ -192,6 +193,13 @@ export interface ClientConfig {
         config: Configuration,
         options: {configType: `${WebpackMode}`},
     ) => Configuration | Promise<Configuration>;
+    /**
+     * Modify or return a custom Babel config.
+     */
+    babel?: (
+        config: Babel.TransformOptions,
+        options: {configType: `${WebpackMode}`},
+    ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
 }
 
 interface CdnUploadConfig {
@@ -239,6 +247,10 @@ export type NormalizedClientConfig = Omit<
         options: {configType: `${WebpackMode}`},
     ) => Configuration | Promise<Configuration>;
     debugWebpack?: boolean;
+    babel: (
+        config: Babel.TransformOptions,
+        options: {configType: `${WebpackMode}`},
+    ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
 };
 
 export type NormalizedServerConfig = Omit<ServerConfig, 'serverPort'> & {

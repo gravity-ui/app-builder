@@ -76,6 +76,7 @@ export async function configureWebpackConfigForStorybook(
         isEnvDevelopment,
         isEnvProduction,
         config: config.client,
+        configType: mode,
     };
 
     return {

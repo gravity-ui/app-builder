@@ -192,7 +192,8 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 - `forkTsCheker` (`false | ForkTsCheckerWebpackPluginOptions`) - config for ForkTsCheckerWebpackPlugin [more](https://github.com/TypeStrong/fork-ts-checker-webpack-plugin#options). If `false`, ForkTsCheckerWebpackPlugin will be disabled.
 - `cache` (`boolean | FileCacheOptions | MemoryCacheOptions`) — Cache the generated webpack modules and chunks to improve build speed. [more](https://webpack.js.org/configuration/cache/)
 - `babelCacheDirectory` (`boolean | string`) — Set directory for babel-loader cache (`default: node_modules/.cache/babel-loader``)
-- `webpack` (`(config: webpack.Configuration, options: {configType: 'development' | 'production'}) => webpack.Configuration | Promise<webpack.Configuration>`) - Allow override the default configuration
+- `babel` (`(config: babel.TransformOptions, options: {configType: 'development' | 'production'}) => babel.TransformOptions | Promise<babel.TransformOptions>`) - Allow override the default babel transform options.
+- `webpack` (`(config: webpack.Configuration, options: {configType: 'development' | 'production'}) => webpack.Configuration | Promise<webpack.Configuration>`) - Allow override the default configuration.
 
 ##### Dev build
 
