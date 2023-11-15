@@ -743,7 +743,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         plugins.push(
             new ReactRefreshWebpackPlugin({
                 overlay: {sockPath: webSocketPath},
-                exclude: /\.worker\.[jt]sx?$/,
+                exclude: [/node_modules/, /\.worker\.[jt]sx?$/],
             }),
         );
     }
