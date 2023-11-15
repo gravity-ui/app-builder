@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.2](https://github.com/gravity-ui/app-builder/compare/v0.8.1...v0.8.2) (2023-11-15)
+
+
+### Features
+
+* support shared workers with newWebWorkerSyntax enabled ([#105](https://github.com/gravity-ui/app-builder/issues/105)) ([6527cc3](https://github.com/gravity-ui/app-builder/commit/6527cc3bf10f9445e7bc910db95c7c08b75b3817))
+
 ## [0.8.1](https://github.com/gravity-ui/app-builder/compare/v0.8.0...v0.8.1) (2023-11-15)
 
 
