@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/gravity-ui/app-builder/compare/v0.8.0...v0.8.1) (2023-11-15)
+
+
+### Bug Fixes
+
+* exclude node_modules from being processed by react-refresh ([#103](https://github.com/gravity-ui/app-builder/issues/103)) ([2d25374](https://github.com/gravity-ui/app-builder/commit/2d253748d841de451befd7fccc30f820cf7b2a75))
+
 ## [0.8.0](https://github.com/gravity-ui/app-builder/compare/v0.7.1...v0.8.0) (2023-11-10)
 
 
