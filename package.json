@@ -8,8 +8,8 @@
   "types": "dist/index.d.ts",
   "exports": {
     "./worker": {
-      "types": "./dist/common/webpack/worker/web-worker.d.ts",
-      "default": "./dist/common/webpack/worker/web-worker.js"
+      "types": "./dist/common/webpack/worker/index.d.ts",
+      "default": "./dist/common/webpack/worker/index.js"
     },
     ".": {
       "types": "./dist/index.d.ts",
