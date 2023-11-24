@@ -1,6 +1,9 @@
 // eslint-disable-next-line camelcase
 declare let __webpack_public_path__: string;
 
+// @ts-expect-error ts does not find types in @okikio/sharedworker/@types/index.d.ts
+import {SharedWorkerPolyfill} from '@okikio/sharedworker';
+
 class WebWorker extends Worker {
     constructor(url: string | URL, options?: WorkerOptions) {
         const objectURL = generateWorkerLoader(url);
@@ -9,7 +12,7 @@ class WebWorker extends Worker {
     }
 }
 
-class SharedWebWorker extends SharedWorker {
+class SharedWebWorker extends SharedWorkerPolyfill {
     constructor(url: string | URL, options?: string | WorkerOptions) {
         const objectURL = generateWorkerLoader(url);
         super(objectURL, options);
