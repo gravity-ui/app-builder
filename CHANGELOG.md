@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.3](https://github.com/gravity-ui/app-builder/compare/v0.8.2...v0.8.3) (2023-11-24)
+
+
+### Bug Fixes
+
+* ponyfill SharedWorker ([#109](https://github.com/gravity-ui/app-builder/issues/109)) ([af37266](https://github.com/gravity-ui/app-builder/commit/af372662229c264a87a03981d75ce79d7e8b3e57))
+
 ## [0.8.2](https://github.com/gravity-ui/app-builder/compare/v0.8.1...v0.8.2) (2023-11-15)
 
 
