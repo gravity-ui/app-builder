@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.4](https://github.com/gravity-ui/app-builder/compare/v0.8.3...v0.8.4) (2024-01-03)
+
+
+### Features
+
+* **build:** support typescript v5.3 ([#114](https://github.com/gravity-ui/app-builder/issues/114)) ([7de7c87](https://github.com/gravity-ui/app-builder/commit/7de7c8725581f45ccddf4c0e5e2cbaabe3cc2991))
+* **s3-upload:** pass logger to s3 uploader ([#113](https://github.com/gravity-ui/app-builder/issues/113)) ([50f0755](https://github.com/gravity-ui/app-builder/commit/50f075535b088db535eb77e2e761ca12b7176462))
+
+
+### Bug Fixes
+
+* **S3UploadPlugin:** do not upload files if compilation finished with errors ([#111](https://github.com/gravity-ui/app-builder/issues/111)) ([e6d63e1](https://github.com/gravity-ui/app-builder/commit/e6d63e10755a961ef4b735a460fe2ca583af759d))
+
 ## [0.8.3](https://github.com/gravity-ui/app-builder/compare/v0.8.2...v0.8.3) (2023-11-24)
 
 
