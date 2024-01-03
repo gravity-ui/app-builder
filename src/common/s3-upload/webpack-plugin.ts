@@ -4,6 +4,7 @@ import {globSync} from 'fast-glob';
 import {uploadFiles} from './upload.js';
 
 import type {Compiler} from 'webpack';
+import type {Logger} from '../logger/index.js';
 import type {UploadOptions} from './upload.js';
 import type {S3ClientOptions} from './s3-client.js';
 
@@ -14,6 +15,7 @@ interface S3UploadPluginOptions {
     s3ClientOptions: S3ClientOptions;
     s3UploadOptions: Pick<UploadOptions, 'bucket' | 'targetPath' | 'existsBehavior'>;
     additionalPattern?: string | string[];
+    logger?: Logger;
 }
 export class S3UploadPlugin {
     private options: S3UploadPluginOptions;
@@ -55,7 +57,11 @@ export class S3UploadPlugin {
                         ...this.options.s3UploadOptions,
                         sourcePath: stats.compilation.outputOptions.path ?? '',
                     },
+                    logger: this.options.logger,
                 });
+                this.options.logger?.success(
+                    `Files successfully uploaded to bucket ${this.options.s3UploadOptions.bucket}`,
+                );
             } catch (e) {
                 const error = new WebpackError(
                     `s3-upload-plugin: ${e instanceof Error ? e.message : e}`,

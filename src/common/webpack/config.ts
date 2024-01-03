@@ -875,6 +875,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
                         targetPath: cdn.prefix,
                     },
                     additionalPattern: cdn.additionalPattern,
+                    logger: options.logger,
                 }),
             );
         }
