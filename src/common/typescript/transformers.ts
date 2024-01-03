@@ -142,7 +142,7 @@ function updateImportDeclaration(
         node.modifiers,
         node.importClause,
         context.factory.createStringLiteral(resolvedPath),
-        node.assertClause,
+        node.attributes || node.assertClause,
     );
 }
 
@@ -173,7 +173,7 @@ function updateExportDeclaration(
         node.isTypeOnly,
         node.exportClause,
         context.factory.createStringLiteral(resolvedPath),
-        node.assertClause,
+        node.attributes || node.assertClause,
     );
 }
 
@@ -199,7 +199,7 @@ function updateImportTypeNode(
     return context.factory.updateImportTypeNode(
         node,
         context.factory.createLiteralTypeNode(context.factory.createStringLiteral(resolvedPath)),
-        node.assertions,
+        node.attributes || (node.assertions as any),
         node.qualifier,
         node.typeArguments,
         node.isTypeOf,

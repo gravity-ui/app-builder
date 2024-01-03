@@ -46,11 +46,11 @@ export function watch(
         'createProgram',
         () => {
             logger.verbose("We're about to create the program");
-            // @ts-ignore
+            // @ts-expect-error
             host.readFile.enableDisplay();
         },
         () => {
-            // @ts-ignore
+            // @ts-expect-error
             const count = host.readFile.disableDisplay();
             logger.verbose(`Program created, read ${count} files`);
         },
