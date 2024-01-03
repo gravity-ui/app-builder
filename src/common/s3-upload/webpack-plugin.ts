@@ -23,18 +23,27 @@ export class S3UploadPlugin {
     }
 
     apply(compiler: Compiler) {
-        compiler.hooks.done.tapPromise('S3UploadPlugin', async ({compilation}) => {
-            let fileNames = Object.keys(compilation.assets);
+        compiler.hooks.done.tapPromise('s3-upload-plugin', async (stats) => {
+            if (stats.hasErrors()) {
+                stats.compilation.warnings.push(
+                    new WebpackError(
+                        's3-upload-plugin: skipped upload to s3 due to compilation errors',
+                    ),
+                );
+                return;
+            }
+
+            let fileNames = Object.keys(stats.compilation.assets);
 
             if (this.options.additionalPattern) {
                 const additionalFiles = globSync(this.options.additionalPattern, {
-                    cwd: compilation.outputOptions.path,
+                    cwd: stats.compilation.outputOptions.path,
                 });
                 fileNames = fileNames.concat(additionalFiles);
             }
 
             fileNames = fileNames.filter((name) => {
-                const fullPath = compilation.outputOptions.path + '/' + name;
+                const fullPath = stats.compilation.outputOptions.path + '/' + name;
                 return this.isIncludeAndNotExclude(fullPath);
             });
 
@@ -44,12 +53,14 @@ export class S3UploadPlugin {
                     compress: this.options.compress,
                     options: {
                         ...this.options.s3UploadOptions,
-                        sourcePath: compilation.outputOptions.path ?? '',
+                        sourcePath: stats.compilation.outputOptions.path ?? '',
                     },
                 });
             } catch (e) {
-                const error = new WebpackError(`${e instanceof Error ? e.message : e}`);
-                compilation.errors.push(error);
+                const error = new WebpackError(
+                    `s3-upload-plugin: ${e instanceof Error ? e.message : e}`,
+                );
+                stats.compilation.errors.push(error);
             }
         });
     }
