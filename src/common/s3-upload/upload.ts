@@ -2,9 +2,11 @@ import * as path from 'node:path';
 
 import PQueue from 'p-queue';
 
+import logger from '../logger/index.js';
 import {getS3Client} from './s3-client.js';
 import {brotli, gzip} from './compress.js';
 
+import type {Logger} from '../logger/index.js';
 import type {S3ClientOptions, S3UploadFileOptions} from './s3-client.js';
 
 export interface UploadOptions {
@@ -19,10 +21,12 @@ export interface UploadFilesOptions {
     concurrency?: number;
     compress?: boolean;
     options: UploadOptions;
+    logger?: Logger;
 }
 
 export function uploadFiles(files: string[], config: UploadFilesOptions) {
     const s3Client = getS3Client(config.s3);
+    const log = config.logger ?? logger;
 
     const queue = new PQueue({
         concurrency: config.concurrency ?? 512,
@@ -62,13 +66,13 @@ export function uploadFiles(files: string[], config: UploadFilesOptions) {
             const sourceFilePath = path.join(options.sourcePath, relativeFilePath);
             const targetFilePath = path.join(options.targetPath || '', relativeFilePath);
 
-            console.info(`Uploading file ${relativeFilePath} ...`);
+            log.verbose(`Uploading file ${relativeFilePath} ...`);
             const exists = await doesExist(options.bucket, targetFilePath);
 
             if (exists) {
                 switch (options.existsBehavior) {
                     case 'overwrite': {
-                        console.info(`File ${targetFilePath} will be overwritten.`);
+                        log.verbose(`File ${targetFilePath} will be overwritten.`);
                         break;
                     }
                     case 'throw': {
@@ -77,7 +81,9 @@ export function uploadFiles(files: string[], config: UploadFilesOptions) {
                         );
                     }
                     default: {
-                        console.info(`Nothing todo with '${relativeFilePath}'`);
+                        log.message(
+                            `Nothing to do with '${relativeFilePath}' because '${targetFilePath}' already exists in '${options.bucket}'`,
+                        );
                         return Promise.resolve(relativeFilePath);
                     }
                 }
@@ -85,14 +91,14 @@ export function uploadFiles(files: string[], config: UploadFilesOptions) {
 
             return uploadFile(options.bucket, sourceFilePath, targetFilePath)
                 .then(() => {
-                    console.info(`  ${relativeFilePath} => ${targetFilePath}`);
+                    log.message(`Uploaded ${relativeFilePath} => ${targetFilePath}`);
 
                     return relativeFilePath;
                 })
                 .catch((error) => {
-                    console.error(`Failed to upload file ${relativeFilePath}`);
+                    log.error(`Failed to upload file ${relativeFilePath}`);
                     if (error instanceof Error) {
-                        console.error(`msg: ${error.message}`);
+                        log.error(`msg: ${error.message}`);
                     }
 
                     throw error;
