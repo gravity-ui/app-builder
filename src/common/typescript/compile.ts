@@ -52,10 +52,10 @@ export function compile(
     logger.verbose("We're about to create the program");
     const compilerHost = ts.createCompilerHost(parsedConfig.options);
     compilerHost.readFile = displayFilename(compilerHost.readFile, 'Reading', logger);
-    // @ts-ignore
+    // @ts-expect-error
     compilerHost.readFile.enableDisplay();
     const program = ts.createProgram(parsedConfig.fileNames, parsedConfig.options, compilerHost);
-    // @ts-ignore
+    // @ts-expect-error
     const filesCount = compilerHost.readFile.disableDisplay();
     const allDiagnostics = ts.getPreEmitDiagnostics(program).slice();
     logger.verbose(`Program created, read ${filesCount} files`);
