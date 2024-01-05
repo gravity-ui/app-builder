@@ -926,7 +926,7 @@ function configureOptimization({config}: HelperOptions): webpack.Configuration['
                       }
                     : undefined),
                 css: {
-                    test: /\.css$/,
+                    type: 'css/mini-extract',
                     enforce: true,
                     minChunks: 2,
                     reuseExistingChunk: true,
