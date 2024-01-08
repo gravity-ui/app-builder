@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.5](https://github.com/gravity-ui/app-builder/compare/v0.8.4...v0.8.5) (2024-01-08)
+
+
+### Bug Fixes
+
+* redundant JS chunks for each CSS chunk ([#115](https://github.com/gravity-ui/app-builder/issues/115)) ([5aa6fcc](https://github.com/gravity-ui/app-builder/commit/5aa6fcc5174c45905b1b8ba36056513df2059314))
+
 ## [0.8.4](https://github.com/gravity-ui/app-builder/compare/v0.8.3...v0.8.4) (2024-01-03)
 
 
