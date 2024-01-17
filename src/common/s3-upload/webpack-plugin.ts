@@ -13,7 +13,10 @@ interface S3UploadPluginOptions {
     exclude?: Rule | Rule[];
     compress?: boolean;
     s3ClientOptions: S3ClientOptions;
-    s3UploadOptions: Pick<UploadOptions, 'bucket' | 'targetPath' | 'existsBehavior'>;
+    s3UploadOptions: Pick<
+        UploadOptions,
+        'bucket' | 'targetPath' | 'existsBehavior' | 'cacheControl'
+    >;
     additionalPattern?: string | string[];
     logger?: Logger;
 }

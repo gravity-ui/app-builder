@@ -202,12 +202,13 @@ export interface ClientConfig {
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
 }
 
-interface CdnUploadConfig {
+export interface CdnUploadConfig {
     bucket: string;
     prefix?: string;
     region?: string;
     endpoint?: string;
     compress?: boolean;
+    cacheControl?: string | ((filename: string) => string);
     /**
      * pattern for additional files in build that need to be loaded to CDN
      */
