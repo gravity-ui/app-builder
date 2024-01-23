@@ -17,6 +17,7 @@ import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-pl
 import type {Options as StatoscopeOptions} from '@statoscope/webpack-plugin';
 import type {SentryWebpackPluginOptions} from '@sentry/webpack-plugin';
 import type {WebpackMode} from '../webpack/config';
+import type {UploadOptions} from '../s3-upload/upload';
 
 export interface Entities<T> {
     data: Record<string, T>;
@@ -208,7 +209,7 @@ export interface CdnUploadConfig {
     region?: string;
     endpoint?: string;
     compress?: boolean;
-    cacheControl?: string | ((filename: string) => string);
+    cacheControl?: UploadOptions['cacheControl'];
     /**
      * pattern for additional files in build that need to be loaded to CDN
      */

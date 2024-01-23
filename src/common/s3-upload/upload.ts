@@ -8,14 +8,13 @@ import {brotli, gzip} from './compress.js';
 
 import type {Logger} from '../logger/index.js';
 import type {S3ClientOptions, S3UploadFileOptions} from './s3-client.js';
-import type {CdnUploadConfig} from '../models/index.js';
 
 export interface UploadOptions {
     bucket: string;
     sourcePath: string;
     targetPath?: string;
     existsBehavior?: 'overwrite' | 'throw' | 'ignore';
-    cacheControl?: CdnUploadConfig['cacheControl'];
+    cacheControl?: string | ((filename: string) => string);
 }
 
 export interface UploadFilesOptions {
