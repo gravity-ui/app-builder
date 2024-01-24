@@ -873,6 +873,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
                     s3UploadOptions: {
                         bucket: cdn.bucket,
                         targetPath: cdn.prefix,
+                        cacheControl: cdn.cacheControl,
                     },
                     additionalPattern: cdn.additionalPattern,
                     logger: options.logger,

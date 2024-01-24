@@ -57,6 +57,10 @@ export function getS3Client(options: S3ClientOptions) {
                 params.Metadata = {...params.Metadata, Expires: expires.toString()};
             }
 
+            if (opts.cacheControl) {
+                params.CacheControl = opts.cacheControl;
+            }
+
             return s3Client.send(new PutObjectCommand(params));
         },
 
@@ -127,6 +131,7 @@ function detectContentTypeFromExt(filePath: string) {
 interface UploadOptionsCommon {
     expires?: PutObjectCommandInput['Expires'];
     meta?: PutObjectCommandInput['Metadata'];
+    cacheControl?: PutObjectCommandInput['CacheControl'];
 }
 
 export interface S3UploadDirOptions extends UploadOptionsCommon {

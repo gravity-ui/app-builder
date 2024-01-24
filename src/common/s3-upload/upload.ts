@@ -14,6 +14,7 @@ export interface UploadOptions {
     sourcePath: string;
     targetPath?: string;
     existsBehavior?: 'overwrite' | 'throw' | 'ignore';
+    cacheControl?: string | ((filename: string) => string);
 }
 
 export interface UploadFilesOptions {
@@ -89,7 +90,14 @@ export function uploadFiles(files: string[], config: UploadFilesOptions) {
                 }
             }
 
-            return uploadFile(options.bucket, sourceFilePath, targetFilePath)
+            const cacheControl =
+                typeof options.cacheControl === 'function'
+                    ? options.cacheControl(targetFilePath)
+                    : options.cacheControl;
+
+            return uploadFile(options.bucket, sourceFilePath, targetFilePath, {
+                cacheControl,
+            })
                 .then(() => {
                     log.message(`Uploaded ${relativeFilePath} => ${targetFilePath}`);
 
