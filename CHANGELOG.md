@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.6](https://github.com/gravity-ui/app-builder/compare/v0.8.5...v0.8.6) (2024-01-24)
+
+
+### Features
+
+* **S3UploadPlugin:** added ability to pass or calc CacheControl parameter to S3 ([#117](https://github.com/gravity-ui/app-builder/issues/117)) ([d2bbb06](https://github.com/gravity-ui/app-builder/commit/d2bbb0622a5ebf2e91fe94120a9751cc700c8631))
+
 ## [0.8.5](https://github.com/gravity-ui/app-builder/compare/v0.8.4...v0.8.5) (2024-01-08)
 
 
