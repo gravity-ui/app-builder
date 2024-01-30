@@ -895,7 +895,6 @@ function configureOptimization({config}: HelperOptions): webpack.Configuration['
         'redux',
         'react-redux',
         '@reduxjs/toolkit',
-        'lodash',
         'lodash-es',
         'moment',
         'bem-cn-lite',
