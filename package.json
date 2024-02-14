@@ -68,6 +68,8 @@
     "@babel/preset-react": "^7.22.0",
     "@babel/preset-typescript": "^7.22.0",
     "@babel/runtime": "^7.22.0",
+    "@module-federation/enhanced": "^0.0.13",
+    "@module-federation/runtime": "^0.0.13",
     "@okikio/sharedworker": "^1.0.4",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@sentry/webpack-plugin": "^2.7.1",

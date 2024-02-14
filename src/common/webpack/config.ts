@@ -14,6 +14,7 @@ import MomentTimezoneDataPlugin from 'moment-timezone-data-webpack-plugin';
 import StatoscopeWebpackPlugin from '@statoscope/webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
 import {sentryWebpackPlugin} from '@sentry/webpack-plugin';
+import {ModuleFederationPlugin} from '@module-federation/enhanced';
 
 import type TerserWebpackPlugin from 'terser-webpack-plugin';
 import type * as Lightningcss from 'lightningcss';
@@ -803,6 +804,10 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
                     reportFilename: 'stats.html',
                 }),
             );
+        }
+
+        if (config.federationPlugin) {
+            plugins.push(new ModuleFederationPlugin(config.federationPlugin));
         }
 
         if (config.analyzeBundle === 'statoscope') {

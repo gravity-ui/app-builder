@@ -201,6 +201,7 @@ export interface ClientConfig {
         config: Babel.TransformOptions,
         options: {configType: `${WebpackMode}`},
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
+    federationPlugin: any;
 }
 
 export interface CdnUploadConfig {
@@ -235,6 +236,7 @@ export type NormalizedClientConfig = Omit<
     ClientConfig,
     'publicPathPrefix' | 'hiddenSourceMap' | 'svgr' | 'lazyCompilation' | 'devServer'
 > & {
+    federationPlugin: any;
     publicPathPrefix: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
