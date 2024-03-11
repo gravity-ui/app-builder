@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.7](https://github.com/gravity-ui/app-builder/compare/v0.8.6...v0.8.7) (2024-03-11)
+
+
+### Bug Fixes
+
+* **worker:** fix public path in worker ([#122](https://github.com/gravity-ui/app-builder/issues/122)) ([95babef](https://github.com/gravity-ui/app-builder/commit/95babef0e6aadbbcd2c694bd9706ce4b7a2329cd))
+
 ## [0.8.6](https://github.com/gravity-ui/app-builder/compare/v0.8.5...v0.8.6) (2024-01-24)
 
 
