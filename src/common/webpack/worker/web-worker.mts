@@ -27,7 +27,7 @@ function generateWorkerLoader(url: string | URL) {
     const publicPath = __webpack_public_path__;
     const workerPublicPath = publicPath.match(/^https?:\/\//)
         ? publicPath
-        : new URL(publicPath, window.location.href).toString();
+        : new URL(publicPath, window.location.origin).toString();
     const objectURL = URL.createObjectURL(
         new Blob(
             [
