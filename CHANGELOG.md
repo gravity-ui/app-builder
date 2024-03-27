@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.0](https://github.com/gravity-ui/app-builder/compare/v0.8.7...v0.9.0) (2024-03-27)
+
+
+### Features
+
+* **client:** allow to pass terser options ([#126](https://github.com/gravity-ui/app-builder/issues/126)) ([0eabea9](https://github.com/gravity-ui/app-builder/commit/0eabea9499011906d89522b67ef437cd6e28dbcd))
+* make some deps optional ([#127](https://github.com/gravity-ui/app-builder/issues/127)) ([e2793ea](https://github.com/gravity-ui/app-builder/commit/e2793ea94e3cdc6b428ef482d18659f63247549e))
+* **monaco:** set default filename template for worker scripts for production build ([#124](https://github.com/gravity-ui/app-builder/issues/124)) ([9cebc38](https://github.com/gravity-ui/app-builder/commit/9cebc38750e9338ad08cf3a4d139291edb80c0ac))
+
 ## [0.8.7](https://github.com/gravity-ui/app-builder/compare/v0.8.6...v0.8.7) (2024-03-11)
 
 
