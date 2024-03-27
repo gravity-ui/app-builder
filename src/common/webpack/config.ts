@@ -13,7 +13,7 @@ import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import MomentTimezoneDataPlugin from 'moment-timezone-data-webpack-plugin';
 import StatoscopeWebpackPlugin from '@statoscope/webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
-import {sentryWebpackPlugin} from '@sentry/webpack-plugin';
+import type {sentryWebpackPlugin} from '@sentry/webpack-plugin';
 
 import type TerserWebpackPlugin from 'terser-webpack-plugin';
 import type * as Lightningcss from 'lightningcss';
@@ -793,7 +793,8 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         );
 
         if (config.sentryConfig) {
-            plugins.push(sentryWebpackPlugin({...config.sentryConfig}));
+            const sentryPlugin: typeof sentryWebpackPlugin = require('@sentry/webpack-plugin');
+            plugins.push(sentryPlugin({...config.sentryConfig}));
         }
 
         if (config.analyzeBundle === 'true') {
