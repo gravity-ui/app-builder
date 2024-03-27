@@ -238,6 +238,7 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   - `locale`: (`string[]=['ru']`) — list of `moment.js` or `day.js` locales to include, e.g. `['de', 'es']`. Locale `En` is always present.
 - `safari10` (`boolean`) — Enables `safari10` terser's option. [Terser options](https://github.com/terser/terser#minify-options)
 - `transformCssWithLightningCss` (`boolean`) — use [Lighting CSS](https://lightningcss.dev) to transform and minimize css instead of PostCSS and cssnano
+- `terser` (`(options: TerserOptions) => TerserOptions`) - modify or return a custom [Terser options](https://github.com/terser/terser#minify-options).
 
 ##### Monaco editor support
 
