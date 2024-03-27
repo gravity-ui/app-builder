@@ -70,7 +70,6 @@
     "@babel/runtime": "^7.22.0",
     "@okikio/sharedworker": "^1.0.4",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
-    "@sentry/webpack-plugin": "^2.7.1",
     "@statoscope/webpack-plugin": "^5.27.0",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
@@ -97,7 +96,6 @@
     "fork-ts-checker-webpack-plugin": "^8.0.0",
     "fs-extra": "^11.1.1",
     "get-port": "^7.0.0",
-    "lightningcss": "^1.21.5",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.35",
     "mini-css-extract-plugin": "^2.7.6",
@@ -140,6 +138,7 @@
     "@gravity-ui/eslint-config": "^3.0.0",
     "@gravity-ui/prettier-config": "^1.1.0",
     "@gravity-ui/tsconfig": "^1.0.0",
+    "@sentry/webpack-plugin": "^2.7.1",
     "@types/babel__helper-plugin-utils": "^7.10.1",
     "@types/circular-dependency-plugin": "^5.0.6",
     "@types/common-tags": "^1.8.2",
@@ -159,6 +158,7 @@
     "eslint": "^8.49.0",
     "husky": "^8.0.3",
     "jest": "^29.5.0",
+    "lightningcss": "^1.21.5",
     "monaco-editor-webpack-plugin": "^6.0.0",
     "nano-staged": "^0.8.0",
     "npm-run-all": "^4.1.5",
@@ -166,10 +166,18 @@
     "ts-jest": "^29.1.0"
   },
   "peerDependencies": {
-    "monaco-editor-webpack-plugin": "*"
+    "lightningcss": "^1.21.5",
+    "monaco-editor-webpack-plugin": "*",
+    "@sentry/webpack-plugin": "^2.7.1"
   },
   "peerDependenciesMeta": {
+    "lightningcss": {
+      "optional": true
+    },
     "monaco-editor-webpack-plugin": {
+      "optional": true
+    },
+    "@sentry/webpack-plugin": {
       "optional": true
     }
   },
