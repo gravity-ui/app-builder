@@ -18,6 +18,7 @@ import type {Options as StatoscopeOptions} from '@statoscope/webpack-plugin';
 import type {SentryWebpackPluginOptions} from '@sentry/webpack-plugin';
 import type {WebpackMode} from '../webpack/config';
 import type {UploadOptions} from '../s3-upload/upload';
+import type {TerserOptions} from 'terser-webpack-plugin';
 
 export interface Entities<T> {
     data: Record<string, T>;
@@ -134,6 +135,8 @@ export interface ClientConfig {
     symlinks?: boolean;
     /**
      * Enables `safari10` terser's option. [Terser options](https://github.com/terser/terser#minify-options)
+     *
+     * @deprecated use `terser` option instead
      */
     safari10?: boolean;
     /**
@@ -201,6 +204,10 @@ export interface ClientConfig {
         config: Babel.TransformOptions,
         options: {configType: `${WebpackMode}`},
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
+    /**
+     * Modify or return a custom [Terser options](https://github.com/terser/terser#minify-options).
+     */
+    terser?: (options: TerserOptions) => TerserOptions;
 }
 
 export interface CdnUploadConfig {

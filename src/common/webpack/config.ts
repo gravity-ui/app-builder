@@ -968,15 +968,18 @@ function configureOptimization({config}: HelperOptions): webpack.Configuration['
             (compiler) => {
                 // Lazy load the Terser plugin
                 const TerserPlugin: typeof TerserWebpackPlugin = require('terser-webpack-plugin');
-                new TerserPlugin({
-                    terserOptions: {
-                        compress: {
-                            passes: 2,
-                        },
-                        safari10: config.safari10,
-                        mangle: !config.reactProfiling,
+                let terserOptions: TerserWebpackPlugin.TerserOptions = {
+                    compress: {
+                        passes: 2,
                     },
-                }).apply(compiler);
+                    safari10: config.safari10,
+                    mangle: !config.reactProfiling,
+                };
+                const {terser} = config;
+                if (typeof terser === 'function') {
+                    terserOptions = terser(terserOptions);
+                }
+                new TerserPlugin({terserOptions}).apply(compiler);
             },
         ],
     };
