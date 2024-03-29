@@ -913,9 +913,6 @@ function configureOptimization({config}: HelperOptions): webpack.Configuration['
     const useVendorsList = vendorsList.length > 0;
 
     const optimization: webpack.Configuration['optimization'] = {
-        usedExports: true,
-        innerGraph: true,
-        sideEffects: true,
         splitChunks: {
             chunks: 'all',
             cacheGroups: {
