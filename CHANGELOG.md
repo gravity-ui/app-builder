@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/gravity-ui/app-builder/compare/v0.9.0...v0.9.1) (2024-04-03)
+
+
+### Bug Fixes
+
+* update @babel/core ([#129](https://github.com/gravity-ui/app-builder/issues/129)) ([d4a1402](https://github.com/gravity-ui/app-builder/commit/d4a1402167e5c412e620fb4ea5621dc32798c935))
+
 ## [0.9.0](https://github.com/gravity-ui/app-builder/compare/v0.8.7...v0.9.0) (2024-03-27)
 
 
