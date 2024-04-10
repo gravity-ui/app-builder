@@ -6,7 +6,7 @@ import type webpack from 'webpack';
 import type {Logger} from '../logger';
 
 export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
-    return async (err?: Error, stats?: webpack.Stats) => {
+    return async (err?: Error | null, stats?: webpack.Stats) => {
         if (err) {
             logger.panic(err.message, err);
         }
@@ -33,10 +33,16 @@ export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?:
             await onCompilationEnd();
         }
 
-        const time = stats?.endTime - stats?.startTime;
-        logger.success(
-            `Client was successfully compiled in ${prettyTime(BigInt(time) * BigInt(1_000_000))}`,
-        );
+        if (stats) {
+            const time = stats.endTime - stats.startTime;
+            logger.success(
+                `Client was successfully compiled in ${prettyTime(
+                    BigInt(time) * BigInt(1_000_000),
+                )}`,
+            );
+        } else {
+            logger.success(`Client was successfully compiled`);
+        }
     };
 }
 
