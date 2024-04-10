@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.2](https://github.com/gravity-ui/app-builder/compare/v0.9.1...v0.9.2) (2024-04-10)
+
+
+### Bug Fixes
+
+* **client:** update some of webpack deps ([#128](https://github.com/gravity-ui/app-builder/issues/128)) ([eacd035](https://github.com/gravity-ui/app-builder/commit/eacd03511ff58f3998cbf26db1f75cd6e129be0f))
+
 ## [0.9.1](https://github.com/gravity-ui/app-builder/compare/v0.9.0...v0.9.1) (2024-04-03)
 
 
