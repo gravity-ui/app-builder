@@ -1,6 +1,6 @@
 {
   "name": "@gravity-ui/app-builder",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Develop and build your React client-server projects, powered by typescript and webpack",
   "license": "MIT",
   "type": "commonjs",
