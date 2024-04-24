@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.3](https://github.com/gravity-ui/app-builder/compare/v0.9.2...v0.9.3) (2024-04-24)
+
+
+### Bug Fixes
+
+* **client:** transform class private methods ([#133](https://github.com/gravity-ui/app-builder/issues/133)) ([4121b38](https://github.com/gravity-ui/app-builder/commit/4121b388e7cb7ae9115810635dfcec3f2b5100d3))
+
 ## [0.9.2](https://github.com/gravity-ui/app-builder/compare/v0.9.1...v0.9.2) (2024-04-10)
 
 
