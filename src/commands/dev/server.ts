@@ -15,7 +15,15 @@ export function watchServerCompilation(config: NormalizedServiceConfig) {
 
     const build = new ControllableScript(
         `
-        const ts = require('typescript');
+        let ts;
+        try {
+            ts = require('typescript');
+        } catch (e) {
+            if (e.code !== 'MODULE_NOT_FOUND') {
+                throw e;
+            }
+            ts = require(${JSON.stringify(require.resolve('typescript'))});
+        }
         const {Logger} = require(${JSON.stringify(require.resolve('../../common/logger'))});
         const {watch} = require(${JSON.stringify(
             require.resolve('../../common/typescript/watch'),
@@ -30,9 +38,7 @@ export function watchServerCompilation(config: NormalizedServiceConfig) {
                 onAfterFilesEmitted: () => {
                     process.send({type: 'Emitted'});
                 },
-                enableSourceMap: ${
-                    config.server.inspect || config.server.inspectBrk ? 'true' : 'false'
-                }
+                enableSourceMap: true
             }
         );
         `,
