@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.4](https://github.com/gravity-ui/app-builder/compare/v0.9.3...v0.9.4) (2024-04-26)
+
+
+### Bug Fixes
+
+* **service:** always generate server source maps in dev ([#135](https://github.com/gravity-ui/app-builder/issues/135)) ([33996ef](https://github.com/gravity-ui/app-builder/commit/33996efc9a8f60eed847064efbd4b77b075d179b))
+
 ## [0.9.3](https://github.com/gravity-ui/app-builder/compare/v0.9.2...v0.9.3) (2024-04-24)
 
 
