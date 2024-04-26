@@ -12,7 +12,15 @@ export function buildServer(config: NormalizedServiceConfig): Promise<void> {
     return new Promise((resolve, reject) => {
         const build = new ControllableScript(
             `
-        const ts = require('typescript');
+        let ts;
+        try {
+            ts = require('typescript');
+        } catch (e) {
+            if (e.code !== 'MODULE_NOT_FOUND') {
+                throw e;
+            }
+            ts = require(${JSON.stringify(require.resolve('typescript'))});
+        }
         const {Logger} = require(${JSON.stringify(require.resolve('../../../common/logger'))});
         const {compile} = require(${JSON.stringify(
             require.resolve('../../../common/typescript/compile'),
