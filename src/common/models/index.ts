@@ -40,6 +40,7 @@ interface DevServerConfig {
     webSocketPath?: string;
     type?: 'https';
     options?: import('https').ServerOptions;
+    writeToDisk?: boolean | ((targetPath: string) => boolean);
 }
 
 interface ContextReplacement {

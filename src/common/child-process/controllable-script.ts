@@ -1,6 +1,5 @@
 import {tmpNameSync} from './utils';
 import * as fs from 'fs-extra';
-import * as execa from 'execa';
 
 import type {ChildProcess, Serializable} from 'child_process';
 
@@ -20,9 +19,9 @@ export class ControllableScript {
         this.script = script;
         this.debugInfo = debugInfo;
     }
-    start(): void {
+    async start(): Promise<void> {
         const args: Array<string> = [];
-        const tmpFileName = tmpNameSync(getCacheDir());
+        const tmpFileName = tmpNameSync(await getCacheDir());
         fs.outputFileSync(tmpFileName, this.script);
         this.isRunning = true;
         // Passing --inspect isn't necessary for the child process to launch a port, but it allows some editors to automatically attach
@@ -34,7 +33,8 @@ export class ControllableScript {
             }
         }
 
-        this.process = execa.node(tmpFileName, args, {
+        const {execaNode} = await import('execa');
+        this.process = execaNode(tmpFileName, args, {
             env: {
                 ...process.env,
             },

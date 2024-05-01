@@ -32,27 +32,33 @@ export function buildServer(config: NormalizedServiceConfig): Promise<void> {
             null,
         );
 
-        build.start();
-        build.onExit((code) => {
-            if (code) {
-                reject(new Error('Error compile server'));
-            } else {
-                resolve();
-            }
-        });
+        build.start().then(
+            () => {
+                build.onExit((code) => {
+                    if (code) {
+                        reject(new Error('Error compile server'));
+                    } else {
+                        resolve();
+                    }
+                });
 
-        process.on('SIGINT', async () => {
-            await build.stop('SIGINT');
-            process.exit(1);
-        });
+                process.on('SIGINT', async () => {
+                    await build.stop('SIGINT');
+                    process.exit(1);
+                });
 
-        process.on('SIGTERM', async () => {
-            await build.stop('SIGTERM');
-            process.exit(1);
-        });
+                process.on('SIGTERM', async () => {
+                    await build.stop('SIGTERM');
+                    process.exit(1);
+                });
 
-        onExit((_code, signal) => {
-            build.stop(signal as any);
-        });
+                onExit((_code, signal) => {
+                    build.stop(signal);
+                });
+            },
+            (error) => {
+                reject(error);
+            },
+        );
     });
 }
