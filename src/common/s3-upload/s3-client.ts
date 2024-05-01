@@ -7,9 +7,7 @@ import {
     PutObjectCommand,
     S3Client,
 } from '@aws-sdk/client-s3';
-import {fromBuffer} from 'file-type';
 import * as mime from 'mime-types';
-import pMap from 'p-map';
 import {globSync} from 'fast-glob';
 
 import type {PutObjectCommandInput, S3ClientConfig} from '@aws-sdk/client-s3';
@@ -64,7 +62,7 @@ export function getS3Client(options: S3ClientOptions) {
             return s3Client.send(new PutObjectCommand(params));
         },
 
-        uploadDir(
+        async uploadDir(
             bucket: string,
             dirPath: string,
             keyPrefix = '',
@@ -72,6 +70,7 @@ export function getS3Client(options: S3ClientOptions) {
         ) {
             const files = globSync('**', {cwd: dirPath});
 
+            const {default: pMap} = await import('p-map');
             return pMap(
                 files,
                 (filePath) => {
@@ -90,7 +89,8 @@ export function getS3Client(options: S3ClientOptions) {
 }
 
 async function detectContentTypeFromBuffer(buffer: Buffer) {
-    const type = await fromBuffer(buffer);
+    const {fileTypeFromBuffer} = await import('file-type');
+    const type = await fileTypeFromBuffer(buffer);
 
     if (!type) {
         throw Error('Cannot detect content type for buffer');

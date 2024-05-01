@@ -57,7 +57,7 @@ export default async function (config: NormalizedServiceConfig) {
     let serverCompilation: ControllableScript | undefined;
     if (shouldCompileServer) {
         const {watchServerCompilation} = await import('./server.js');
-        serverCompilation = watchServerCompilation(config);
+        serverCompilation = await watchServerCompilation(config);
         serverCompilation.onMessage((msg) => {
             if (msg.type === 'Emitted') {
                 serverCompiled = true;

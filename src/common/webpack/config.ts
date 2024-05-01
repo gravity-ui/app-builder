@@ -297,8 +297,8 @@ function configureEntry({config}: HelperOptions): webpack.EntryObject {
     let entries = fs.readdirSync(paths.appEntry).filter((file) => /\.[jt]sx?$/.test(file));
 
     if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
-        entries = entries.filter(
-            (entry) => config.entryFilter?.includes(entry.split('.')[0] ?? ''),
+        entries = entries.filter((entry) =>
+            config.entryFilter?.includes(entry.split('.')[0] ?? ''),
         );
     }
 

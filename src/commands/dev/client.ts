@@ -8,7 +8,7 @@ import paths from '../../common/paths';
 import {Logger} from '../../common/logger';
 import {WebpackMode, webpackConfigFactory} from '../../common/webpack/config';
 
-import type {Configuration} from 'webpack-dev-server';
+import type {Configuration, HttpProxyMiddlewareOptionsFilter} from 'webpack-dev-server';
 import type {NormalizedServiceConfig} from '../../common/models';
 
 export async function watchClientCompilation(
@@ -26,17 +26,21 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
 
     const {
         webSocketPath = path.normalize(`/${config.client.publicPathPrefix}/build/sockjs-node`),
+        writeToDisk,
         ...devServer
     } = config.client.devServer || {};
 
     const normalizedConfig = {...config.client, devServer: {...devServer, webSocketPath}};
     const webpackConfig = await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger});
 
+    const publicPath = path.normalize(config.client.publicPathPrefix + '/build/');
+    const staticFolder = path.resolve(paths.appDist, 'public');
     const options: Configuration = {
-        static: path.resolve(paths.appDist, 'public'),
+        static: staticFolder,
         devMiddleware: {
-            publicPath: path.normalize(config.client.publicPathPrefix + '/build/'),
+            publicPath,
             stats: 'errors-warnings',
+            writeToDisk,
         },
         liveReload: false,
         hot: true,
@@ -68,42 +72,38 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
         options.ipc = path.resolve(paths.appDist, 'run/client.sock');
     }
 
+    const proxy = options.proxy || [];
     if (config.client.lazyCompilation) {
-        options.proxy = {
-            ...options.proxy,
-            '/build/lazy': {
-                target: `http://localhost:${config.client.lazyCompilation.port}`,
-                pathRewrite: {'^/build/lazy': ''},
-            },
-        };
+        proxy.push({
+            context: ['/build/lazy'],
+            target: `http://localhost:${config.client.lazyCompilation.port}`,
+            pathRewrite: {'^/build/lazy': ''},
+        });
     }
 
     if (config.server.port) {
-        options.proxy = {
-            ...options.proxy,
-            '/': {
-                target: `http://localhost:${config.server.port}`,
-                bypass: (req) => {
-                    if (req.method !== 'GET' && req.method !== 'HEAD') {
-                        return null;
-                    }
+        // if server port is specified, proxy to it
+        const filter: HttpProxyMiddlewareOptionsFilter = (pathname, req) => {
+            // do not proxy build files
+            if (pathname.startsWith(publicPath)) {
+                return false;
+            }
 
-                    const pathname = req.path.replace(/^\//, '');
-                    const filepath = path.resolve(paths.appDist, 'public', pathname);
-                    if (!fs.existsSync(filepath)) {
-                        return null;
-                    }
+            // do not proxy static files
+            const filepath = path.resolve(staticFolder, pathname.replace(/^\//, ''));
+            if (req.method === 'GET' && fs.existsSync(filepath) && fs.statSync(filepath).isFile()) {
+                return false;
+            }
 
-                    const stat = fs.statSync(filepath);
-                    if (!stat.isFile()) {
-                        return null;
-                    }
-
-                    return req.path;
-                },
-            },
+            return true;
         };
+        proxy.push({
+            context: (...args) => filter(...args),
+            target: `http://localhost:${config.server.port}`,
+        });
     }
+
+    options.proxy = proxy;
 
     const compiler = webpack(webpackConfig);
     const server = new WebpackDevServer(options, compiler);
