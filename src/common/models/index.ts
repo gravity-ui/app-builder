@@ -247,9 +247,9 @@ export type NormalizedClientConfig = Omit<
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
     lazyCompilation?: LazyCompilationConfig;
-    devServer: Omit<DevServerConfig, 'port' | 'type' | 'options'> & {
+    devServer?: Omit<DevServerConfig, 'port' | 'type' | 'options'> & {
         port?: number;
-        server: ServerConfiguration;
+        server?: ServerConfiguration;
     };
     verbose?: boolean;
     webpack: (
@@ -263,8 +263,8 @@ export type NormalizedClientConfig = Omit<
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
 };
 
-export type NormalizedServerConfig = Omit<ServerConfig, 'serverPort'> & {
-    serverPort?: number;
+export type NormalizedServerConfig = Omit<ServerConfig, 'port'> & {
+    port?: number;
     verbose?: boolean;
 };
 
