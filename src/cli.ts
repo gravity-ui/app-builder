@@ -41,11 +41,9 @@ process.on('unhandledRejection', (reason) => {
 
     // reason can be anything, it can be a message, an object, ANYTHING!
     // we convert it to an error object
-    if (!(reason instanceof Error)) {
-        reason = new Error(util.format(reason));
-    }
+    const error = reason instanceof Error ? reason : new Error(util.format(reason));
 
-    logger.panic('UNHANDLED REJECTION', reason as Error);
+    logger.panic('UNHANDLED REJECTION', error);
 });
 
 process.on('uncaughtException', (error) => {
