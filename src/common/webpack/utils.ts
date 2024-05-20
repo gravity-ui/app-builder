@@ -5,6 +5,8 @@ import {prettyTime} from '../logger/pretty-time';
 import type webpack from 'webpack';
 import type {Logger} from '../logger';
 
+import type * as Webpack from 'webpack';
+
 export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
     return async (err?: Error | null, stats?: webpack.Stats) => {
         if (err) {
@@ -89,3 +91,17 @@ function readJsonConfig(pathname: string) {
         throw new Error(`Couldn't read config ${pathname}`);
     }
 }
+
+export const findMdxRuleInConfig = (storybookConfig: Webpack.Configuration) => {
+    const mdxRule = storybookConfig.module?.rules?.find((rule) => {
+        const test = (rule as {test: RegExp}).test;
+
+        if (!test) {
+            return false;
+        }
+
+        return test.test('.mdx');
+    });
+
+    return mdxRule;
+};

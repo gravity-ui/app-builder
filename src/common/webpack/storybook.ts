@@ -10,6 +10,7 @@ import {isLibraryConfig} from '../models';
 import type {HelperOptions} from './config';
 import type {ClientConfig} from '../models';
 import type * as Webpack from 'webpack';
+import {findMdxRuleInConfig} from './utils';
 
 type Mode = `${WebpackMode}`;
 
@@ -32,6 +33,8 @@ export async function configureServiceWebpackConfig(
 
     const webpackConfig = await configureWebpackConfigForStorybook(mode, options);
 
+    const mdxRule = findMdxRuleInConfig(storybookConfig);
+
     return {
         ...storybookConfig,
         plugins: [...(storybookConfig.plugins ?? []), ...webpackConfig.plugins],
@@ -53,7 +56,10 @@ export async function configureServiceWebpackConfig(
         },
         module: {
             ...storybookConfig.module,
-            rules: webpackConfig.module.rules,
+            rules:
+                mdxRule && webpackConfig.module?.rules
+                    ? [mdxRule, ...webpackConfig.module.rules]
+                    : webpackConfig.module.rules,
         },
     };
 }

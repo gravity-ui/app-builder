@@ -636,7 +636,7 @@ function createFallbackRules({isEnvProduction}: HelperOptions) {
             generator: {
                 filename: 'assets/[name].[contenthash:8][ext]',
             },
-            exclude: [/\.[jt]sx?$/, /\.json$/, /\.[cm]js$/, /\.ejs$/],
+            exclude: [/\.[jt]sx?$/, /\.json$/, /\.[cm]js$/, /\.ejs$/, /\.mdx$/],
         },
     ];
 
