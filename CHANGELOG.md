@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.5](https://github.com/gravity-ui/app-builder/compare/v0.9.4...v0.9.5) (2024-05-22)
+
+
+### Bug Fixes
+
+* **storybook:** preserve storybook module rules ([#141](https://github.com/gravity-ui/app-builder/issues/141)) ([5e09118](https://github.com/gravity-ui/app-builder/commit/5e09118ae19f836a57c0434682c7afb2ffcf395f))
+
 ## [0.9.4](https://github.com/gravity-ui/app-builder/compare/v0.9.3...v0.9.4) (2024-04-26)
 
 
