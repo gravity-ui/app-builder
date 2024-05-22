@@ -3,7 +3,7 @@ import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import MiniCSSExtractPlugin from 'mini-css-extract-plugin';
 import OptimizeCSSAssetsPlugin from 'css-minimizer-webpack-plugin';
 
-import {WebpackMode, configureModuleRules, configureResolve} from './config';
+import {WebpackMode, configureModuleRules, configureOptimization, configureResolve} from './config';
 import {getProjectConfig, normalizeConfig} from '../config';
 import {isLibraryConfig} from '../models';
 
@@ -30,7 +30,11 @@ export async function configureServiceWebpackConfig(
         options = serviceConfig.client;
     }
 
-    const webpackConfig = await configureWebpackConfigForStorybook(mode, options);
+    const webpackConfig = await configureWebpackConfigForStorybook(
+        mode,
+        options,
+        storybookConfig.module?.rules,
+    );
 
     return {
         ...storybookConfig,
@@ -50,17 +54,27 @@ export async function configureServiceWebpackConfig(
                 ...(storybookConfig.resolve?.extensions ?? []),
                 ...(webpackConfig.resolve.extensions || []),
             ],
+            fallback: {
+                ...storybookConfig.resolve?.fallback,
+                ...webpackConfig.resolve.fallback,
+            },
         },
         module: {
             ...storybookConfig.module,
             rules: webpackConfig.module.rules,
         },
+        optimization: {
+            ...storybookConfig.optimization,
+            ...webpackConfig.optimization,
+        },
     };
 }
 
+type ModuleRule = NonNullable<NonNullable<Webpack.Configuration['module']>['rules']>[number];
 export async function configureWebpackConfigForStorybook(
     mode: Mode,
     userConfig: ClientConfig = {},
+    storybookModuleRules: ModuleRule[] = [],
 ) {
     const isEnvDevelopment = mode === WebpackMode.Dev;
     const isEnvProduction = mode === WebpackMode.Prod;
@@ -81,10 +95,19 @@ export async function configureWebpackConfigForStorybook(
 
     return {
         module: {
-            rules: configureModuleRules(helperOptions),
+            rules: configureModuleRules(
+                helperOptions,
+                storybookModuleRules.filter((rule) => rule !== '...') as Exclude<
+                    ModuleRule,
+                    '...'
+                >[],
+            ),
         },
         resolve: configureResolve(helperOptions),
         plugins: configurePlugins(helperOptions),
+        optimization: {
+            minimizer: configureOptimization(helperOptions).minimizer,
+        },
     };
 }
 
@@ -114,7 +137,7 @@ function configurePlugins({isEnvDevelopment, isEnvProduction, config}: HelperOpt
         );
     }
 
-    if (isEnvDevelopment) {
+    if (isEnvDevelopment && !config.disableReactRefresh) {
         plugins.push(new ReactRefreshWebpackPlugin());
     }
 

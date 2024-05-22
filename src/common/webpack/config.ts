@@ -111,7 +111,10 @@ export async function webpackConfigFactory(
     return webpackConfig;
 }
 
-export function configureModuleRules(helperOptions: HelperOptions) {
+export function configureModuleRules(
+    helperOptions: HelperOptions,
+    additionalRules: NonNullable<webpack.RuleSetRule['oneOf']> = [],
+) {
     const jsLoader = createJavaScriptLoader(helperOptions);
     return [
         ...createSourceMapRules(!helperOptions.config.disableSourceMapGeneration),
@@ -124,6 +127,7 @@ export function configureModuleRules(helperOptions: HelperOptions) {
                 createIconsRule(helperOptions), // workaround for https://github.com/webpack/webpack/issues/9309
                 createIconsRule(helperOptions, jsLoader),
                 ...createAssetsRules(helperOptions),
+                ...additionalRules,
                 ...createFallbackRules(helperOptions),
             ],
         },
@@ -246,12 +250,11 @@ export function configureResolve({
     config,
     tsLinkedPackages,
 }: HelperOptions): webpack.ResolveOptions {
-    let alias: Record<string, string> = config.alias || {};
+    const alias: Record<string, string> = {...config.alias};
 
-    alias = Object.entries(alias).reduce<Record<string, string>>((result, [key, value]) => {
-        result[key] = path.resolve(paths.app, value);
-        return result;
-    }, {});
+    for (const [key, value] of Object.entries(alias)) {
+        alias[key] = path.resolve(paths.app, value);
+    }
 
     if (isEnvProduction && config.reactProfiling) {
         alias['react-dom$'] = 'react-dom/profiling';
@@ -887,7 +890,8 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
     return plugins;
 }
 
-function configureOptimization({config}: HelperOptions): webpack.Configuration['optimization'] {
+type Optimization = NonNullable<webpack.Configuration['optimization']>;
+export function configureOptimization({config}: HelperOptions): Optimization {
     const configVendors = config.vendors ?? [];
 
     let vendorsList = [
@@ -912,7 +916,7 @@ function configureOptimization({config}: HelperOptions): webpack.Configuration['
 
     const useVendorsList = vendorsList.length > 0;
 
-    const optimization: webpack.Configuration['optimization'] = {
+    const optimization: Optimization = {
         splitChunks: {
             chunks: 'all',
             cacheGroups: {
