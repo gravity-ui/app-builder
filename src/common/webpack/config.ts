@@ -489,6 +489,11 @@ function getCssLoaders({isEnvDevelopment, isEnvProduction, config}: HelperOption
             esModule: false,
             sourceMap: !config.disableSourceMapGeneration,
             importLoaders: 2,
+            modules: {
+                auto: true,
+                localIdentName: '[name]__[local]--[hash:base64:5]',
+                exportLocalsConvention: 'camelCase',
+            },
         },
     });
 
