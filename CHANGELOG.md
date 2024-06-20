@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/gravity-ui/app-builder/compare/v0.9.5...v0.10.0) (2024-06-20)
+
+
+### Features
+
+* make css-modules class names human-readable ([#143](https://github.com/gravity-ui/app-builder/issues/143)) ([e324a8b](https://github.com/gravity-ui/app-builder/commit/e324a8bf094b4c5a0b5692333925b0361e2e2fe1))
+
 ## [0.9.5](https://github.com/gravity-ui/app-builder/compare/v0.9.4...v0.9.5) (2024-05-22)
 
 
