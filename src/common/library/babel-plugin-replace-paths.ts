@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import {declare} from '@babel/helper-plugin-utils';
 
 const svgPathRe = /^\.\.\/(.*)\/assets\/(.*)\.svg$/;

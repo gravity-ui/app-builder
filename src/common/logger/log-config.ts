@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import {colors} from './colors';
 
 export function logConfig(caption: string, config: unknown) {

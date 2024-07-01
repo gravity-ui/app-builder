@@ -101,6 +101,14 @@ export async function getProjectConfig(
         cfg = explorer.search();
     }
 
+    const config = {verbose: false, ...(await cfg?.config)};
+    if (isLibraryConfig(config)) {
+        return normalizeConfig({
+            ...config,
+            ...omitUndefined({verbose: argv.verbose}),
+        });
+    }
+
     const client: ClientConfig = {
         analyzeBundle: argv.analyzeBundle,
         disableForkTsChecker: argv.disableForkTsChecker,
@@ -114,14 +122,6 @@ export async function getProjectConfig(
         inspect: argv.inspect,
         inspectBrk: argv.inspectBrk,
     };
-
-    const config = {verbose: false, ...(await cfg?.config)};
-    if (isLibraryConfig(config)) {
-        return normalizeConfig({
-            ...config,
-            ...omitUndefined({verbose: argv.verbose}),
-        });
-    }
 
     const projectConfig: ServiceConfig = {
         ...config,
@@ -153,22 +153,41 @@ export function normalizeConfig(
 
 export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 'build' | string) {
     if (isServiceConfig(userConfig)) {
-        const config = _.cloneDeep(userConfig);
-        const client = typeof config.client === 'object' ? config.client : (config.client = {});
-        await normalizeClientConfig(client, mode);
-        (client as NormalizedClientConfig).verbose = userConfig.verbose;
+        const clientConfig = typeof userConfig.client === 'object' ? userConfig.client : {};
+        const client = await normalizeClientConfig(clientConfig, mode);
+        client.verbose = userConfig.verbose;
 
-        const server = typeof config.server === 'object' ? config.server : (config.server = {});
-        server.watch = server.watch && remapPaths(server.watch);
-        (server as NormalizedServerConfig).verbose = userConfig.verbose;
-
+        const serverConfig = typeof userConfig.server === 'object' ? userConfig.server : {};
+        const server: NormalizedServerConfig = {
+            ...serverConfig,
+            watch: serverConfig.watch && remapPaths(serverConfig.watch),
+            verbose: userConfig.verbose,
+            port: undefined,
+            inspect: undefined,
+            inspectBrk: undefined,
+        };
         if (mode === 'dev') {
-            if (server.port === true) {
+            if (serverConfig.port === true) {
                 server.port = await getPort({port: 3000});
+            } else {
+                server.port = serverConfig.port;
+            }
+
+            if (serverConfig.inspect !== undefined) {
+                server.inspect = serverConfig.inspect === true ? 9229 : serverConfig.inspect;
+            }
+            if (serverConfig.inspectBrk !== undefined) {
+                server.inspectBrk =
+                    serverConfig.inspectBrk === true ? 9229 : serverConfig.inspectBrk;
             }
         }
+        const config: NormalizedServiceConfig = {
+            ...userConfig,
+            client,
+            server,
+        };
 
-        return config as NormalizedServiceConfig;
+        return config;
     }
 
     const config = _.cloneDeep(userConfig);
@@ -177,25 +196,34 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
 }
 
 async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build' | string) {
-    client.newJsxTransform = client.newJsxTransform ?? true;
-    client.publicPathPrefix = client.publicPathPrefix || '';
-    client.modules = client.modules && remapPaths(client.modules);
-    client.includes = client.includes && remapPaths(client.includes);
-    client.images = client.images && remapPaths(client.images);
-    client.hiddenSourceMap = client.hiddenSourceMap ?? true;
-    client.svgr = client.svgr ?? {};
-    client.entryFilter = client.entryFilter && splitPaths(client.entryFilter);
-    client.webpack = typeof client.webpack === 'function' ? client.webpack : (config) => config;
-    client.babel = typeof client.babel === 'function' ? client.babel : (config) => config;
+    const normalizedConfig: NormalizedClientConfig = {
+        ...client,
+        forkTsChecker: client.disableForkTsChecker ? false : client.forkTsChecker,
+        newJsxTransform: client.newJsxTransform ?? true,
+        publicPathPrefix: client.publicPathPrefix || '',
+        modules: client.modules && remapPaths(client.modules),
+        includes: client.includes && remapPaths(client.includes),
+        images: client.images && remapPaths(client.images),
+        hiddenSourceMap: client.hiddenSourceMap ?? true,
+        svgr: client.svgr ?? {},
+        entryFilter: client.entryFilter && splitPaths(client.entryFilter),
+        webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
+        babel: typeof client.babel === 'function' ? client.babel : (config) => config,
+        devServer: undefined,
+        lazyCompilation: undefined,
+    };
 
     if (mode === 'dev') {
         if (client.lazyCompilation) {
             if (client.lazyCompilation === true) {
-                client.lazyCompilation = {
+                normalizedConfig.lazyCompilation = {
                     port: await getPort({port: 6000}),
                 };
-            } else if (!client.lazyCompilation.port) {
-                client.lazyCompilation.port = await getPort({port: 6000});
+            } else {
+                normalizedConfig.lazyCompilation = client.lazyCompilation;
+            }
+            if (!normalizedConfig.lazyCompilation.port) {
+                normalizedConfig.lazyCompilation.port = await getPort({port: 6000});
             }
         }
 
@@ -210,7 +238,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
             : {port: undefined, ipc: client.devServer?.ipc};
 
         const {type, options, ...other} = client.devServer ?? {};
-        (client as NormalizedClientConfig).devServer = {
+        normalizedConfig.devServer = {
             ...other,
             ...devServer,
             server: {
@@ -218,9 +246,8 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
                 options,
             },
         };
-        delete client.cdn;
-    } else {
-        delete client.devServer;
-        delete client.lazyCompilation;
+        delete normalizedConfig.cdn;
     }
+
+    return normalizedConfig;
 }

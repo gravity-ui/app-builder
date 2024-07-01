@@ -34,11 +34,11 @@ export class ProgressPlugin extends webpack.ProgressPlugin {
             this._state.start = process.hrtime.bigint();
         });
 
-        hook(compiler, 'invalid', (fileName: string, changeTime: number) => {
+        hook(compiler, 'invalid', (fileName, changeTime) => {
             this._logger.verbose(`Invalidate file: ${fileName} at ${changeTime}`);
         });
 
-        hook(compiler, 'done', (stats: webpack.Stats) => {
+        hook(compiler, 'done', (stats) => {
             const time = this._state.start ? ' in ' + elapsedTime(this._state.start) : '';
 
             const hasErrors = stats.hasErrors();
@@ -51,10 +51,11 @@ export class ProgressPlugin extends webpack.ProgressPlugin {
     }
 }
 
-function hook(
+function hook<HookName extends keyof webpack.Compiler['hooks']>(
     compiler: webpack.Compiler,
-    hookName: keyof webpack.Compiler['hooks'],
-    callback: (...args: any[]) => any,
+    hookName: HookName,
+    callback: Parameters<webpack.Compiler['hooks'][HookName]['tap']>[1],
 ) {
-    compiler.hooks[hookName].tap(`app-builder: ${hookName}`, callback);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    compiler.hooks[hookName].tap(`app-builder: ${hookName}`, callback as any);
 }
