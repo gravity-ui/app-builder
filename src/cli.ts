@@ -9,7 +9,7 @@ import {createCli} from './create-cli';
 
 export type {ProjectConfig} from './common/models';
 
-const MIN_NODE_VERSION = '14.15.0';
+const MIN_NODE_VERSION = '18.0.0';
 
 const {version} = process;
 

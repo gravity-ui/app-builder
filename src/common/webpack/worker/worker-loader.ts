@@ -96,7 +96,11 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
 
         const cache = workerCompiler.getCache(pluginId);
         const cacheIdent = request;
-        const cacheETag = cache.getLazyHashedEtag(compilation.assets[filename]!);
+        const objectToHash = compilation.assets[filename];
+        if (!objectToHash) {
+            throw new Error(`Asset ${filename} not found in compilation`);
+        }
+        const cacheETag = cache.getLazyHashedEtag(objectToHash);
 
         return cache.get<Cache>(cacheIdent, cacheETag, (getCacheError, cacheContent) => {
             if (getCacheError) {

@@ -40,7 +40,7 @@ export function compile(
 
     const parsedConfig = ts.getParsedCommandLineOfConfigFile(
         configPath,
-        {noEmitOnError: true, ...optionsToExtend},
+        {noEmit: false, noEmitOnError: true, ...optionsToExtend},
         parseConfigFileHost,
     );
 

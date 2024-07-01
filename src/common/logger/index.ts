@@ -2,8 +2,6 @@ import {colors} from './colors';
 import {elapsedTime} from './pretty-time';
 import stripAnsi from 'strip-ansi';
 
-import type {ExecException} from 'child_process';
-
 const allColors = [
     colors.cyan.bold,
     colors.blue.bold,
@@ -108,21 +106,22 @@ export class Logger implements BaseLogger {
         this.printLn(this.colors.red(...args));
     };
 
-    logError = (errorMeta: string, error?: Error | ExecException | null) => {
+    logError = (errorMeta: string, error?: unknown) => {
         this.error(errorMeta);
-        if (error) {
-            const {name, message, stack} = error;
-
-            this.error(name);
-            this.error(message);
-
-            if (stack) {
-                this.error(stack);
+        if (error && typeof error === 'object') {
+            if ('name' in error && typeof error.name === 'string') {
+                this.error(error.name);
+            }
+            if ('message' in error && typeof error.message === 'string') {
+                this.error(error.message);
+            }
+            if ('stack' in error && typeof error.stack === 'string') {
+                this.error(error.stack);
             }
         }
     };
 
-    panic = (errorMeta: string, error?: Error) => {
+    panic = (errorMeta: string, error?: unknown) => {
         this.logError(errorMeta, error);
         process.exit(1);
     };

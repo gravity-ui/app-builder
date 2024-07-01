@@ -25,15 +25,6 @@ export interface Entities<T> {
     keys: string[];
 }
 
-export interface LinkedPackage {
-    name: string;
-    location: string;
-    nodeModules: string[];
-    package?: string;
-    restorePackageFrom?: string;
-    typescript?: boolean;
-}
-
 interface DevServerConfig {
     ipc?: string;
     port?: number | true;
@@ -228,8 +219,8 @@ export interface ServerConfig {
     port?: number | true;
     watch?: string[];
     watchThrottle?: number;
-    inspect?: number;
-    inspectBrk?: number;
+    inspect?: number | true;
+    inspectBrk?: number | true;
 }
 export interface ServiceConfig {
     target?: 'client' | 'server';
@@ -241,7 +232,12 @@ export interface ServiceConfig {
 
 export type NormalizedClientConfig = Omit<
     ClientConfig,
-    'publicPathPrefix' | 'hiddenSourceMap' | 'svgr' | 'lazyCompilation' | 'devServer'
+    | 'publicPathPrefix'
+    | 'hiddenSourceMap'
+    | 'svgr'
+    | 'lazyCompilation'
+    | 'devServer'
+    | 'disableForkTsChecker'
 > & {
     publicPathPrefix: string;
     hiddenSourceMap: boolean;
@@ -263,9 +259,11 @@ export type NormalizedClientConfig = Omit<
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
 };
 
-export type NormalizedServerConfig = Omit<ServerConfig, 'port'> & {
+export type NormalizedServerConfig = Omit<ServerConfig, 'port' | 'inspect' | 'inspectBrk'> & {
     port?: number;
     verbose?: boolean;
+    inspect?: number;
+    inspectBrk?: number;
 };
 
 export type NormalizedServiceConfig = Omit<ServiceConfig, 'client' | 'server'> & {
@@ -273,10 +271,8 @@ export type NormalizedServiceConfig = Omit<ServiceConfig, 'client' | 'server'> &
     server: NormalizedServerConfig;
 };
 
-export type ProjectConfig = {
-    // TODO: config extension support
-    // extends?: Array<string | [appBuilderConfigPackage: string, options: unknown]>;
-} & (ServiceConfig | LibraryConfig);
+export type ProjectConfig = ServiceConfig | LibraryConfig;
+export type NormalizedConfig = NormalizedServiceConfig | LibraryConfig;
 
 export type AppBuilderConfigPackage = (options?: unknown) => ProjectConfig;
 
@@ -284,7 +280,7 @@ export type ProjectFileConfig =
     | ProjectConfig
     | ((
           mode: 'dev' | 'build',
-          env?: Record<string, any>,
+          env?: Record<string, string | boolean | {} | undefined>,
       ) => ProjectConfig | Promise<ProjectConfig>);
 
 export function isServiceConfig(config: ProjectConfig): config is ServiceConfig {

@@ -6,7 +6,7 @@ function getOption<T>(value: T, defaultValue: T) {
     return value;
 }
 
-module.exports = function (_context: unknown, options: Record<string, any> = {}) {
+module.exports = function (_context: unknown, options: Record<string, unknown> = {}) {
     const env = process.env.BABEL_ENV || process.env.NODE_ENV || 'development';
     const isEnvDevelopment = env === 'development';
     const isEnvProduction = env === 'production';

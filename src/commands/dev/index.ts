@@ -59,7 +59,7 @@ export default async function (config: NormalizedServiceConfig) {
         const {watchServerCompilation} = await import('./server.js');
         serverCompilation = await watchServerCompilation(config);
         serverCompilation.onMessage((msg) => {
-            if (msg.type === 'Emitted') {
+            if (typeof msg === 'object' && 'type' in msg && msg.type === 'Emitted') {
                 serverCompiled = true;
                 startNodemon();
             }
@@ -91,7 +91,7 @@ export default async function (config: NormalizedServiceConfig) {
     });
 
     onExit((_code, signal) => {
-        serverCompilation?.stop(signal as any);
+        serverCompilation?.stop(signal);
         clientCompilation?.stop();
     });
 }
