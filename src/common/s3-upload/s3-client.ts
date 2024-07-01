@@ -109,11 +109,10 @@ async function detectContentTypeFromBuffer(buffer: Buffer) {
 
 function detectContentTypeFromExt(filePath: string) {
     // Compressed file Content-type must be the same as original file Content-type
-    if (filePath.endsWith('.br') || filePath.endsWith('.gz')) {
-        filePath = filePath.slice(0, -3);
-    }
+    const filename =
+        filePath.endsWith('.br') || filePath.endsWith('.gz') ? filePath.slice(0, -3) : filePath;
 
-    let contentType = mime.lookup(filePath);
+    let contentType = mime.lookup(filename);
 
     if (!contentType) {
         throw Error(`Cannot detect content type for file ${filePath}`);

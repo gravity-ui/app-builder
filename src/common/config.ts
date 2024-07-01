@@ -101,6 +101,14 @@ export async function getProjectConfig(
         cfg = explorer.search();
     }
 
+    const config = {verbose: false, ...(await cfg?.config)};
+    if (isLibraryConfig(config)) {
+        return normalizeConfig({
+            ...config,
+            ...omitUndefined({verbose: argv.verbose}),
+        });
+    }
+
     const client: ClientConfig = {
         analyzeBundle: argv.analyzeBundle,
         disableForkTsChecker: argv.disableForkTsChecker,
@@ -114,14 +122,6 @@ export async function getProjectConfig(
         inspect: argv.inspect,
         inspectBrk: argv.inspectBrk,
     };
-
-    const config = {verbose: false, ...(await cfg?.config)};
-    if (isLibraryConfig(config)) {
-        return normalizeConfig({
-            ...config,
-            ...omitUndefined({verbose: argv.verbose}),
-        });
-    }
 
     const projectConfig: ServiceConfig = {
         ...config,
@@ -163,12 +163,22 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
             watch: serverConfig.watch && remapPaths(serverConfig.watch),
             verbose: userConfig.verbose,
             port: undefined,
+            inspect: undefined,
+            inspectBrk: undefined,
         };
         if (mode === 'dev') {
             if (serverConfig.port === true) {
                 server.port = await getPort({port: 3000});
             } else {
                 server.port = serverConfig.port;
+            }
+
+            if (serverConfig.inspect !== undefined) {
+                server.inspect = serverConfig.inspect === true ? 9229 : serverConfig.inspect;
+            }
+            if (serverConfig.inspectBrk !== undefined) {
+                server.inspectBrk =
+                    serverConfig.inspectBrk === true ? 9229 : serverConfig.inspectBrk;
             }
         }
         const config: NormalizedServiceConfig = {
@@ -188,6 +198,7 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
 async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build' | string) {
     const normalizedConfig: NormalizedClientConfig = {
         ...client,
+        forkTsChecker: client.disableForkTsChecker ? false : client.forkTsChecker,
         newJsxTransform: client.newJsxTransform ?? true,
         publicPathPrefix: client.publicPathPrefix || '',
         modules: client.modules && remapPaths(client.modules),

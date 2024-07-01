@@ -91,7 +91,7 @@ export class ControllableScript {
             });
         });
     }
-    onMessage(callback: (msg: any) => void): void {
+    onMessage(callback: (msg: Serializable) => void): void {
         if (!this.process) {
             throw new Error(`Trying to attach message handler before process started`);
         }

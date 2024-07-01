@@ -11,7 +11,7 @@ import type {ProjectConfig} from './common/models';
 export type CliArgs = Awaited<ReturnType<typeof createCli>>;
 
 export function createCli(argv: string[]) {
-    const cli = yargs(argv).parserConfiguration({
+    const cli = yargs().parserConfiguration({
         'boolean-negation': false,
     });
 
@@ -42,19 +42,17 @@ export function createCli(argv: string[]) {
             describe: 'Configuration file to use',
         })
         .option('env', {
-            describe: 'Environment passed to the configuration when it is a function.',
+            describe:
+                'Environment passed to the configuration when it is a function. Ex. --env foo.bar=1 --env foo.baz=2 ',
             type: 'array',
             string: true,
             coerce: (args: string[]) => {
                 if (!args) {
                     return {};
                 }
-                return args.reduce(
+                // [foo.bar=1, foo.baz, bar=2, baz=] => {foo: {bar: 1, baz: true}, bar: 2, baz: undefined}
+                return args.reduce<Record<string, string | boolean | {} | undefined>>(
                     (values, value) => {
-                        if (value.endsWith('=')) {
-                            value = value.concat('""');
-                        }
-
                         // This ensures we're only splitting by the first `=`
                         const [allKeys, val] = value.split(/[=](.+)/, 2);
                         if (typeof allKeys === 'string') {
@@ -63,29 +61,28 @@ export function createCli(argv: string[]) {
                             let prevRef = values;
 
                             splitKeys.forEach((someKey, index) => {
-                                if (!prevRef[someKey]) {
-                                    prevRef[someKey] = {};
-                                }
-
-                                if (typeof prevRef[someKey] === 'string') {
-                                    prevRef[someKey] = {};
-                                }
-
                                 if (index === splitKeys.length - 1) {
                                     if (typeof val === 'string') {
                                         prevRef[someKey] = val;
+                                    } else if (someKey.endsWith('=')) {
+                                        prevRef[someKey.slice(0, -1)] = undefined;
                                     } else {
                                         prevRef[someKey] = true;
                                     }
-                                }
+                                } else {
+                                    let nextRef = prevRef[someKey];
+                                    if (!nextRef || typeof nextRef !== 'object') {
+                                        nextRef = prevRef[someKey] = {};
+                                    }
 
-                                prevRef = prevRef[someKey];
+                                    prevRef = nextRef;
+                                }
                             });
                         }
 
                         return values;
                     },
-                    {} as Record<string, any>,
+                    {},
                 );
             },
         })
@@ -102,14 +99,14 @@ export function createCli(argv: string[]) {
                         group: 'Server',
                         type: 'number',
                         describe: 'Opens a port for debugging',
-                        coerce: (arg) => (arg === undefined ? null : arg),
+                        coerce: (arg) => (arg === undefined ? true : arg),
                     })
                     .option('inspect-brk', {
                         group: 'Server',
                         type: 'number',
                         describe:
                             'Opens a port for debugging. Will block until debugger is attached',
-                        coerce: (arg) => (arg === undefined ? null : arg),
+                        coerce: (arg) => (arg === undefined ? true : arg),
                     })
                     .option('entry-filter', {
                         group: 'Client',
@@ -146,15 +143,6 @@ export function createCli(argv: string[]) {
                         );
                     }
                     process.env.NODE_ENV = process.env.NODE_ENV || 'development';
-
-                    if (args.server) {
-                        if (args.server.inspect !== undefined) {
-                            args.server.inspect = args.server.inspect || 9229;
-                        }
-                        if (args.server.inspectBrk !== undefined) {
-                            args.server.inspectBrk = args.server.inspectBrk || 9229;
-                        }
-                    }
 
                     cmd(args);
                     // Return an empty promise to prevent handlerP from exiting early.
@@ -260,12 +248,12 @@ function resolveLocalCommand(command: string): ((...args: Array<unknown>) => voi
         if (cmd.__esModule) {
             cmd = cmd.default;
         }
-        if (cmd instanceof Function) {
+        if (typeof cmd === 'function') {
             return cmd;
         }
 
         return logger.panic(`Handler for command "${command}" is not a function.`);
     } catch (err) {
-        return logger.panic(`There was a problem loading the "${command}" command.`, err as any);
+        return logger.panic(`There was a problem loading the "${command}" command.`, err);
     }
 }

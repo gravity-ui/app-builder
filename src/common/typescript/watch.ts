@@ -28,6 +28,7 @@ export function watch(
     const host = ts.createWatchCompilerHost(
         configPath,
         {
+            noEmit: false,
             noEmitOnError: false,
             inlineSourceMap: enableSourceMap,
             inlineSources: enableSourceMap,
@@ -59,7 +60,7 @@ export function watch(
     onHostEvent(
         host,
         'afterProgramCreate',
-        (program: Typescript.EmitAndSemanticDiagnosticsBuilderProgram) => {
+        (program) => {
             logger.verbose('We finished making the program! Emitting...');
             const transformPathsToLocalModules = createTransformPathsToLocalModules(ts);
             program.emit(undefined, undefined, undefined, undefined, {

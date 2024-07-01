@@ -199,6 +199,7 @@ function updateImportTypeNode(
     return context.factory.updateImportTypeNode(
         node,
         context.factory.createLiteralTypeNode(context.factory.createStringLiteral(resolvedPath)),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         node.attributes || (node.assertions as any),
         node.qualifier,
         node.typeArguments,

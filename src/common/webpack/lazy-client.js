@@ -53,18 +53,19 @@ exports.keepAlive = function (options) {
         updateEventSource();
     }
     if (!active && !module.hot) {
+        // eslint-disable-next-line no-console
         console.log('Hot Module Replacement is not enabled. Waiting for process restart...');
     }
 
     return function () {
         errorHandlers.delete(onError);
         setTimeout(function () {
-            const value = activeKeys.get(data);
-            if (value === 1) {
+            const valueToReduce = activeKeys.get(data);
+            if (valueToReduce === 1) {
                 activeKeys.delete(data);
                 updateEventSource();
             } else {
-                activeKeys.set(data, value - 1);
+                activeKeys.set(data, valueToReduce - 1);
             }
         }, 1000);
     };

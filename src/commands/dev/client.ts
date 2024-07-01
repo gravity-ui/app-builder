@@ -111,7 +111,7 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
     try {
         await server.start();
     } catch (e) {
-        logger.logError(e as any);
+        logger.logError('Cannot start webpack dev server', e);
     }
 
     if (options.ipc && typeof options.ipc === 'string') {

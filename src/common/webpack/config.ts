@@ -21,14 +21,14 @@ import type CssMinimizerWebpackPlugin from 'css-minimizer-webpack-plugin';
 import type * as Babel from '@babel/core';
 
 import paths from '../paths';
-import tempData from '../tempData';
 import {babelPreset} from '../babel';
-import type {LinkedPackage, NormalizedClientConfig} from '../models';
+import type {NormalizedClientConfig} from '../models';
 import type {Logger} from '../logger';
 import {ProgressPlugin} from './progress-plugin';
 import {resolveTsconfigPathsToAlias} from './utils';
 import {S3UploadPlugin} from '../s3-upload';
 import {logConfig} from '../logger/log-config';
+import {resolveTypescript} from '../typescript/utils';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -39,11 +39,6 @@ export interface HelperOptions {
     isEnvDevelopment: boolean;
     isEnvProduction: boolean;
     configType: `${WebpackMode}`;
-    updateIncludes?: (
-        values: string[],
-        options?: {includeRootAssets?: boolean; includeRootStyles?: boolean},
-    ) => string[];
-    tsLinkedPackages?: LinkedPackage[];
 }
 
 export const enum WebpackMode {
@@ -59,15 +54,11 @@ export async function webpackConfigFactory(
     const isEnvDevelopment = webpackMode === WebpackMode.Dev;
     const isEnvProduction = webpackMode === WebpackMode.Prod;
 
-    const {updateIncludes, tsLinkedPackages} = updateIncludesFactory();
-
     const helperOptions: HelperOptions = {
         config,
         logger,
         isEnvDevelopment,
         isEnvProduction,
-        updateIncludes,
-        tsLinkedPackages,
         configType: webpackMode,
     };
 
@@ -134,55 +125,6 @@ export function configureModuleRules(
     ];
 }
 
-function updateIncludesFactory() {
-    const {linkedPackages} = tempData.getSettings();
-    const linkedPackagesArr = linkedPackages
-        ? linkedPackages.keys.map((key) => linkedPackages.data[key]!)
-        : [];
-
-    if (linkedPackagesArr.length === 0) {
-        return {};
-    }
-
-    const tsLinkedPackages = linkedPackagesArr.filter(({typescript}) => typescript);
-    const linkedPackagesJsIncludes = linkedPackagesArr.map((data) => `${data.package}/src`);
-    const linkedPackagesRootAssetsIncludes = linkedPackagesArr.map(
-        (data) => `${data.package}/assets`,
-    );
-    const linkedPackagesRootStylesIncludes = linkedPackagesArr.map(
-        (data) => `${data.package}/styles`,
-    );
-
-    return {
-        updateIncludes: (
-            includes: string[],
-            options?: {includeRootAssets?: boolean; includeRootStyles?: boolean},
-        ) => {
-            let result = includes.filter((pathname) =>
-                _.every(
-                    linkedPackagesArr,
-                    (linkedPackage) =>
-                        // eslint-disable-next-line security/detect-non-literal-regexp
-                        !new RegExp(linkedPackage.name).test(pathname),
-                ),
-            );
-
-            result = [...result, ...linkedPackagesJsIncludes];
-
-            if (options?.includeRootAssets) {
-                result = [...result, ...linkedPackagesRootAssetsIncludes];
-            }
-
-            if (options?.includeRootStyles) {
-                result = [...result, ...linkedPackagesRootStylesIncludes];
-            }
-
-            return result;
-        },
-        tsLinkedPackages,
-    };
-}
-
 function configureDevTool({isEnvProduction, config}: HelperOptions) {
     let format: webpack.Configuration['devtool'] = 'cheap-module-source-map';
     if (isEnvProduction) {
@@ -245,11 +187,7 @@ function configureExperiments({
     };
 }
 
-export function configureResolve({
-    isEnvProduction,
-    config,
-    tsLinkedPackages,
-}: HelperOptions): webpack.ResolveOptions {
+export function configureResolve({isEnvProduction, config}: HelperOptions): webpack.ResolveOptions {
     const alias: Record<string, string> = {...config.alias};
 
     for (const [key, value] of Object.entries(alias)) {
@@ -259,12 +197,6 @@ export function configureResolve({
     if (isEnvProduction && config.reactProfiling) {
         alias['react-dom$'] = 'react-dom/profiling';
         alias['scheduler/tracing'] = 'scheduler/tracing-profiling';
-    }
-
-    if (tsLinkedPackages) {
-        tsLinkedPackages.forEach(({name}) => {
-            alias[`${name}$`] = `${name}/src`;
-        });
     }
 
     const {aliases, modules = []} =
@@ -379,16 +311,16 @@ function createJavaScriptLoader({
 }
 
 function createJavaScriptRule(
-    {updateIncludes = _.identity, config, isEnvProduction}: HelperOptions,
+    {config, isEnvProduction}: HelperOptions,
     jsLoader: webpack.RuleSetUseItem,
 ): webpack.RuleSetRule {
-    const include = updateIncludes([
+    const include = [
         paths.appClient,
         ...(config.monaco && isEnvProduction
             ? [path.resolve(paths.appNodeModules, 'monaco-editor/esm/vs')]
             : []),
         ...(config.includes || []),
-    ]);
+    ];
 
     return {
         test: [/\.[jt]sx?$/, /\.[cm]js$/],
@@ -559,16 +491,10 @@ function createIconsRule(
     };
 }
 
-function createAssetsRules({
-    updateIncludes = _.identity,
-    isEnvProduction,
-    config,
-}: HelperOptions): webpack.RuleSetRule[] {
+function createAssetsRules({isEnvProduction, config}: HelperOptions): webpack.RuleSetRule[] {
     const imagesRule = {
         test: /\.(ico|bmp|gif|jpe?g|png|svg)$/,
-        include: updateIncludes([paths.appClient, ...(config.images || [])], {
-            includeRootAssets: true,
-        }),
+        include: [paths.appClient, ...(config.images || [])],
         type: 'asset',
         parser: {
             dataUrlCondition: {
@@ -602,9 +528,7 @@ function createAssetsRules({
             {
                 test: /\.(ico|bmp|gif|jpe?g|png|svg)$/,
                 issuer: /\.s?css$/,
-                include: updateIncludes([paths.appClient, ...(config.images || [])], {
-                    includeRootAssets: true,
-                }),
+                include: [paths.appClient, ...(config.images || [])],
                 type: 'asset',
                 parser: {
                     dataUrlCondition: {
@@ -768,14 +692,12 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         plugins.push(new CircularDependencyPlugin(circularPluginOptions));
     }
 
-    if (!config.disableForkTsChecker && config.forkTsChecker !== false) {
+    if (config.forkTsChecker !== false) {
         plugins.push(
             new ForkTsCheckerWebpackPlugin({
                 ...config.forkTsChecker,
                 typescript: {
-                    typescriptPath: require.resolve(
-                        path.resolve(paths.appNodeModules, 'typescript'),
-                    ),
+                    typescriptPath: resolveTypescript(),
                     configFile: path.resolve(paths.app, 'src/ui/tsconfig.json'),
                     diagnosticOptions: {
                         syntactic: true,
