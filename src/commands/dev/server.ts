@@ -7,7 +7,7 @@ import paths from '../../common/paths';
 
 import type {NormalizedServiceConfig} from '../../common/models';
 
-export function watchServerCompilation(config: NormalizedServiceConfig) {
+export async function watchServerCompilation(config: NormalizedServiceConfig) {
     const serverPath = path.resolve(paths.appDist, 'server');
     rimraf.sync(serverPath);
 
@@ -45,7 +45,7 @@ export function watchServerCompilation(config: NormalizedServiceConfig) {
         null,
     );
 
-    build.start();
+    await build.start();
 
     return build;
 }

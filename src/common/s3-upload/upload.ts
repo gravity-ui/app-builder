@@ -1,7 +1,5 @@
 import * as path from 'node:path';
 
-import PQueue from 'p-queue';
-
 import logger from '../logger/index.js';
 import {getS3Client} from './s3-client.js';
 import {brotli, gzip} from './compress.js';
@@ -25,9 +23,11 @@ export interface UploadFilesOptions {
     logger?: Logger;
 }
 
-export function uploadFiles(files: string[], config: UploadFilesOptions) {
+export async function uploadFiles(files: string[], config: UploadFilesOptions) {
     const s3Client = getS3Client(config.s3);
     const log = config.logger ?? logger;
+
+    const {default: PQueue} = await import('p-queue');
 
     const queue = new PQueue({
         concurrency: config.concurrency ?? 512,
@@ -115,7 +115,11 @@ export function uploadFiles(files: string[], config: UploadFilesOptions) {
     }
 
     function compress(sourcePath: string) {
-        return [queue.add(() => gzip(sourcePath)), queue.add(() => brotli(sourcePath))];
+        // throwOnTimeout is only used to get the correct type and does not change behavior since we are not setting a timeout.
+        return [
+            queue.add(() => gzip(sourcePath), {throwOnTimeout: true}),
+            queue.add(() => brotli(sourcePath), {throwOnTimeout: true}),
+        ];
     }
 
     function fileProcessor(options: UploadOptions) {

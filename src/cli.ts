@@ -9,7 +9,7 @@ import {createCli} from './create-cli';
 
 export type {ProjectConfig} from './common/models';
 
-const MIN_NODE_VERSION = '14.15.0';
+const MIN_NODE_VERSION = '18.0.0';
 
 const {version} = process;
 
@@ -41,11 +41,9 @@ process.on('unhandledRejection', (reason) => {
 
     // reason can be anything, it can be a message, an object, ANYTHING!
     // we convert it to an error object
-    if (!(reason instanceof Error)) {
-        reason = new Error(util.format(reason));
-    }
+    const error = reason instanceof Error ? reason : new Error(util.format(reason));
 
-    logger.panic('UNHANDLED REJECTION', reason as Error);
+    logger.panic('UNHANDLED REJECTION', error);
 });
 
 process.on('uncaughtException', (error) => {
