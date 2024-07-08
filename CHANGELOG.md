@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/gravity-ui/app-builder/compare/v0.11.0...v0.11.1) (2024-07-08)
+
+
+### Bug Fixes
+
+* incorrect import from @sentry/webpack-plugin ([#146](https://github.com/gravity-ui/app-builder/issues/146)) ([5685222](https://github.com/gravity-ui/app-builder/commit/5685222b8aa0d8a0d3a543adf386c63fd7dd73b3))
+
 ## [0.11.0](https://github.com/gravity-ui/app-builder/compare/v0.10.0...v0.11.0) (2024-07-04)
 
 
