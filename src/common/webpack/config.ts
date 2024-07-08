@@ -723,7 +723,8 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         );
 
         if (config.sentryConfig) {
-            const sentryPlugin: typeof sentryWebpackPlugin = require('@sentry/webpack-plugin');
+            const sentryPlugin: typeof sentryWebpackPlugin =
+                require('@sentry/webpack-plugin').sentryWebpackPlugin;
             plugins.push(sentryPlugin({...config.sentryConfig}));
         }
 
