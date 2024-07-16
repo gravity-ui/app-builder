@@ -38,6 +38,8 @@ export async function configureServiceWebpackConfig(
 
     return {
         ...storybookConfig,
+        // default storybook devtool value is incompatible with CssMinimizerWebpackPlugin
+        devtool: 'source-map',
         plugins: [...(storybookConfig.plugins ?? []), ...webpackConfig.plugins],
         resolve: {
             ...storybookConfig.resolve,
