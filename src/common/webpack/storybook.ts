@@ -36,10 +36,16 @@ export async function configureServiceWebpackConfig(
         storybookConfig.module?.rules,
     );
 
+    let devtool = storybookConfig.devtool;
+    // storybook uses `cheap-module-source-map` and it's incompatible with `CssMinimizerWebpackPlugin`
+    // also don't change devtool if it's disabled
+    if (mode === WebpackMode.Prod && devtool) {
+        devtool = 'source-map';
+    }
+
     return {
         ...storybookConfig,
-        // default storybook devtool value is incompatible with CssMinimizerWebpackPlugin
-        devtool: 'source-map',
+        devtool,
         plugins: [...(storybookConfig.plugins ?? []), ...webpackConfig.plugins],
         resolve: {
             ...storybookConfig.resolve,
