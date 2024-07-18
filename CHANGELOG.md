@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.2](https://github.com/gravity-ui/app-builder/compare/v0.11.1...v0.11.2) (2024-07-17)
+
+
+### Bug Fixes
+
+* **storybook:** generate valid source-maps ([#148](https://github.com/gravity-ui/app-builder/issues/148)) ([91e4dcc](https://github.com/gravity-ui/app-builder/commit/91e4dccc03b235dd65a7fb92e15cd4aa3d817a2a))
+
 ## [0.11.1](https://github.com/gravity-ui/app-builder/compare/v0.11.0...v0.11.1) (2024-07-08)
 
 
