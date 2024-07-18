@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.3](https://github.com/gravity-ui/app-builder/compare/v0.11.2...v0.11.3) (2024-07-18)
+
+
+### Bug Fixes
+
+* **worker-lodaer:** correctly return errors from loader ([#151](https://github.com/gravity-ui/app-builder/issues/151)) ([0042132](https://github.com/gravity-ui/app-builder/commit/00421325fe317ad6538bb72f22bec60fd3b51e6e))
+
 ## [0.11.2](https://github.com/gravity-ui/app-builder/compare/v0.11.1...v0.11.2) (2024-07-17)
 
 
