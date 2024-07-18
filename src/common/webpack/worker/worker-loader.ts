@@ -72,14 +72,16 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
 
     const cb = this.async();
     workerCompiler.compile((err, compilation) => {
-        if (!compilation) {
-            return undefined;
+        if (compilation) {
+            workerCompiler.parentCompilation?.children.push(compilation);
         }
-
-        workerCompiler.parentCompilation?.children.push(compilation);
 
         if (err) {
             return cb(err);
+        }
+
+        if (!compilation) {
+            return cb(new Error('Child compilation failed'));
         }
 
         if (compilation.errors && compilation.errors.length) {
@@ -98,7 +100,7 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
         const cacheIdent = request;
         const objectToHash = compilation.assets[filename];
         if (!objectToHash) {
-            throw new Error(`Asset ${filename} not found in compilation`);
+            return cb(new Error(`Asset ${filename} not found in compilation`));
         }
         const cacheETag = cache.getLazyHashedEtag(objectToHash);
 
