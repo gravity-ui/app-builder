@@ -244,8 +244,8 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 
 - `monaco` (`object`) — use [monaco-editor-webpack-plugin](https://github.com/microsoft/monaco-editor/tree/main/webpack-plugin#monaco-editor-webpack-loader-plugin)
 
-  - `fileName` (`string`) — custom filename template for worker scripts
-  - `languages` (`string[]`) - include only a subset of the languages supported.
+  - `fileName` (`string`) — custom filename template for worker scripts.
+  - `languages` (`string[]`) - include only a subset of the languages supported. If you don't need support for all languages, set needed languages explicitly, since it may significantly affect build time.
   - `features` (`string[]`) - include only a subset of the editor features.
   - `customLanguages` (`IFeatureDefinition[]`) - include custom languages (outside of the ones shipped with the `monaco-editor`).
 
