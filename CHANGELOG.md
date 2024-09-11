@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/gravity-ui/app-builder/compare/v0.11.3...v0.12.0) (2024-09-11)
+
+
+### Features
+
+* **Client:** add react-refresh plugin options to config ([#154](https://github.com/gravity-ui/app-builder/issues/154)) ([7b8c1af](https://github.com/gravity-ui/app-builder/commit/7b8c1af7794ed0dbe4edda9cef26f8d656397d81))
+
 ## [0.11.3](https://github.com/gravity-ui/app-builder/compare/v0.11.2...v0.11.3) (2024-07-18)
 
 
