@@ -145,8 +145,8 @@ function configurePlugins({isEnvDevelopment, isEnvProduction, config}: HelperOpt
         );
     }
 
-    if (isEnvDevelopment && !config.disableReactRefresh) {
-        plugins.push(new ReactRefreshWebpackPlugin());
+    if (isEnvDevelopment && config.reactRefresh !== false) {
+        plugins.push(new ReactRefreshWebpackPlugin(config.reactRefresh({})));
     }
 
     if (isEnvProduction) {

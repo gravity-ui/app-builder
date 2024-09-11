@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 import * as path from 'node:path';
 import _ from 'lodash';
 
@@ -199,6 +200,9 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
     const normalizedConfig: NormalizedClientConfig = {
         ...client,
         forkTsChecker: client.disableForkTsChecker ? false : client.forkTsChecker,
+        reactRefresh: client.disableReactRefresh
+            ? false
+            : client.reactRefresh ?? ((options) => options),
         newJsxTransform: client.newJsxTransform ?? true,
         publicPathPrefix: client.publicPathPrefix || '',
         modules: client.modules && remapPaths(client.modules),

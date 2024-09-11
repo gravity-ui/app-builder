@@ -205,7 +205,7 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   - `options` (`import('https').ServerOptions`) — allow to provide your own certificate.
 - `watchOptions` — a set of options used to customize watch mode, [more](https://webpack.js.org/configuration/watch/#watchoptions)
   - `watchPackages` (`boolean`) - watch all changes in `node_modules`.
-- `disableReactRefresh` (`boolean`) — disable `react-refresh` in dev mode.
+- `reactRefresh` (`false | (options: ReactRefreshPluginOptions) => ReactRefreshPluginOptions`) — disable or configure `react-refresh` in dev mode, [more](https://github.com/pmmmwh/react-refresh-webpack-plugin/blob/main/docs/API.md#options)
 - `detectCircularDependencies` (`true | CircularDependenciesOptions`) - detect modules with circular dependencies, [more](https://github.com/aackerman/circular-dependency-plugin)
 - `lazyCompilation` (`true | LazyCompilationConfig`) — enable experimental [lazy compilation](https://webpack.js.org/configuration/experiments/#experimentslazycompilation) feature
   - `true` — enable feature
