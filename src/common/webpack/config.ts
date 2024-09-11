@@ -268,7 +268,7 @@ function createJavaScriptLoader({
     config,
 }: HelperOptions): webpack.RuleSetUseItem {
     const plugins: Babel.PluginItem[] = [];
-    if (isEnvDevelopment && !config.disableReactRefresh) {
+    if (isEnvDevelopment && config.reactRefresh !== false) {
         plugins.push([
             require.resolve('react-refresh/babel'),
             config.devServer?.webSocketPath
@@ -670,14 +670,16 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         );
     }
 
-    if (isEnvDevelopment && !config.disableReactRefresh) {
+    if (isEnvDevelopment && config.reactRefresh !== false) {
         const {webSocketPath = path.normalize(`/${config.publicPathPrefix}/build/sockjs-node`)} =
             config.devServer || {};
         plugins.push(
-            new ReactRefreshWebpackPlugin({
-                overlay: {sockPath: webSocketPath},
-                exclude: [/node_modules/, /\.worker\.[jt]sx?$/],
-            }),
+            new ReactRefreshWebpackPlugin(
+                config.reactRefresh({
+                    overlay: {sockPath: webSocketPath},
+                    exclude: [/node_modules/, /\.worker\.[jt]sx?$/],
+                }),
+            ),
         );
     }
 

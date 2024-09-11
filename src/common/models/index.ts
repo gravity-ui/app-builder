@@ -19,6 +19,7 @@ import type {SentryWebpackPluginOptions} from '@sentry/webpack-plugin';
 import type {WebpackMode} from '../webpack/config';
 import type {UploadOptions} from '../s3-upload/upload';
 import type {TerserOptions} from 'terser-webpack-plugin';
+import type {ReactRefreshPluginOptions} from '@pmmmwh/react-refresh-webpack-plugin/types/lib/types';
 
 export interface Entities<T> {
     data: Record<string, T>;
@@ -141,9 +142,13 @@ export interface ClientConfig {
     statoscopeConfig?: Partial<StatoscopeOptions>;
     reactProfiling?: boolean;
     /**
-     *  Disable react-refresh in dev mode
+     * Disable react-refresh in dev mode
+     *
+     * @deprecated use `reactRefresh: false` instead
      */
     disableReactRefresh?: boolean;
+    /** Disable or configure react-refresh in dev mode */
+    reactRefresh?: false | ((options: ReactRefreshPluginOptions) => ReactRefreshPluginOptions);
     /**
      * Detect modules with circular dependencies
      */
@@ -238,6 +243,7 @@ export type NormalizedClientConfig = Omit<
     | 'lazyCompilation'
     | 'devServer'
     | 'disableForkTsChecker'
+    | 'disableReactRefresh'
 > & {
     publicPathPrefix: string;
     hiddenSourceMap: boolean;
@@ -257,6 +263,7 @@ export type NormalizedClientConfig = Omit<
         config: Babel.TransformOptions,
         options: {configType: `${WebpackMode}`},
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
+    reactRefresh: NonNullable<ClientConfig['reactRefresh']>;
 };
 
 export type NormalizedServerConfig = Omit<ServerConfig, 'port' | 'inspect' | 'inspectBrk'> & {
