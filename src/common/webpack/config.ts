@@ -603,6 +603,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
     const {isEnvDevelopment, isEnvProduction, config} = options;
     const excludeFromClean = config.excludeFromClean || [];
 
+    const manifestFile = 'assets-manifest.json';
     const plugins: webpack.Configuration['plugins'] = [
         new CleanWebpackPlugin({
             verbose: config.verbose,
@@ -616,6 +617,18 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
             writeToFileEmit: true,
             publicPath: '',
         }),
+        new WebpackAssetsManifest(
+            isEnvProduction
+                ? {
+                      entrypoints: true,
+                      output: manifestFile,
+                  }
+                : {
+                      entrypoints: true,
+                      writeToDisk: true,
+                      output: path.resolve(paths.appBuild, manifestFile),
+                  },
+        ),
         createMomentTimezoneDataPlugin(config.momentTz),
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
@@ -756,22 +769,6 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
             );
         }
     }
-
-    const manifestFile = 'assets-manifest.json';
-    plugins.push(
-        new WebpackAssetsManifest(
-            isEnvProduction
-                ? {
-                      entrypoints: true,
-                      output: manifestFile,
-                  }
-                : {
-                      entrypoints: true,
-                      writeToDisk: true,
-                      output: path.resolve(paths.appBuild, manifestFile),
-                  },
-        ),
-    );
 
     if (config.cdn) {
         let credentialsGlobal;

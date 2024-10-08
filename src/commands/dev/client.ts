@@ -3,6 +3,8 @@ import * as fs from 'node:fs';
 import webpack from 'webpack';
 import WebpackDevServer from 'webpack-dev-server';
 import {getCompilerHooks} from 'webpack-manifest-plugin';
+import WebpackAssetsManifest from 'webpack-assets-manifest';
+import {deferredPromise} from '../../common/utils';
 
 import paths from '../../common/paths';
 import {Logger} from '../../common/logger';
@@ -13,11 +15,16 @@ import type {NormalizedServiceConfig} from '../../common/models';
 
 export async function watchClientCompilation(
     config: NormalizedServiceConfig,
-    onCompilationEnd: () => void,
+    onManifestReady: () => void,
 ) {
     const clientCompilation = await buildWebpackServer(config);
-    const {afterEmit} = getCompilerHooks(clientCompilation.compiler as webpack.Compiler);
-    afterEmit.tap('app-builder: afterEmit', onCompilationEnd);
+
+    const compiler = clientCompilation.compiler;
+    if ('compilers' in compiler) {
+        throw new Error('Unexpected multi compiler');
+    }
+    subscribeToManifestReadyEvent(compiler, onManifestReady);
+
     return clientCompilation;
 }
 
@@ -119,4 +126,25 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
     }
 
     return server;
+}
+
+function subscribeToManifestReadyEvent(compiler: webpack.Compiler, onManifestReady: () => void) {
+    const promises: Promise<unknown>[] = [];
+
+    const assetsManifestPlugin = compiler.options.plugins.find(
+        (plugin) => plugin instanceof WebpackAssetsManifest,
+    );
+
+    if (assetsManifestPlugin) {
+        const assetsManifestReady = deferredPromise();
+        promises.push(assetsManifestReady.promise);
+        assetsManifestPlugin.hooks.done.tap('app-builder', assetsManifestReady.resolve);
+    }
+
+    const manifestReady = deferredPromise();
+    promises.push(manifestReady.promise);
+    const {afterEmit} = getCompilerHooks(compiler);
+    afterEmit.tap('app-builder', manifestReady.resolve);
+
+    Promise.all(promises).then(() => onManifestReady());
 }
