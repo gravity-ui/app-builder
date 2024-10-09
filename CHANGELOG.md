@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1](https://github.com/gravity-ui/app-builder/compare/v0.12.0...v0.12.1) (2024-10-09)
+
+
+### Bug Fixes
+
+* **dev:** wait for both manifest plugins to emit files ([#157](https://github.com/gravity-ui/app-builder/issues/157)) ([a87b9e5](https://github.com/gravity-ui/app-builder/commit/a87b9e5b4a709e7c8b946ad24e48f8257f3da1f7))
+
 ## [0.12.0](https://github.com/gravity-ui/app-builder/compare/v0.11.3...v0.12.0) (2024-09-11)
 
 
