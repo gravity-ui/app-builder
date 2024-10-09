@@ -23,3 +23,14 @@ export async function getPort({port}: {port: number}) {
     const {default: getPortDefault, portNumbers} = await import('get-port');
     return getPortDefault({port: portNumbers(port, port + 100)});
 }
+
+export function deferredPromise<T>() {
+    let resolve: (value?: T) => void;
+    let reject: (reason?: unknown) => void;
+    const promise = new Promise<T | undefined>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    // @ts-expect-error Promise callback executes synchronously, so resolve and reject are initialized here
+    return {promise, resolve, reject};
+}
