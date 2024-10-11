@@ -138,8 +138,8 @@ function configureWatchOptions({config}: HelperOptions): webpack.Configuration['
     const watchOptions = {
         ...config.watchOptions,
         followSymlinks:
-            config.watchOptions?.followSymlinks ??
-            (!config.symlinks && config.watchOptions?.watchPackages)
+            (config.watchOptions?.followSymlinks ??
+            (!config.symlinks && config.watchOptions?.watchPackages))
                 ? true
                 : undefined,
     };
@@ -381,7 +381,7 @@ function createSassStylesRule(options: HelperOptions): webpack.RuleSetRule {
         options: {
             sourceMap: true, // must be always true for work with resolve-url-loader
             sassOptions: {
-                includePaths: [paths.appClient],
+                loadPaths: [paths.appClient],
             },
         },
     });
