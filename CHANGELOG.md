@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/gravity-ui/app-builder/compare/v0.12.1...v0.13.0) (2024-10-11)
+
+
+### Features
+
+* update dependencies ([#160](https://github.com/gravity-ui/app-builder/issues/160)) ([148aac0](https://github.com/gravity-ui/app-builder/commit/148aac021ef105979a4b78169b7a9bec8ca859bd))
+
 ## [0.12.1](https://github.com/gravity-ui/app-builder/compare/v0.12.0...v0.12.1) (2024-10-09)
 
 
