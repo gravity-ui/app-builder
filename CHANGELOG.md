@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/gravity-ui/app-builder/compare/v0.13.0...v0.13.1) (2024-10-24)
+
+
+### Bug Fixes
+
+* **css-loader:** correctly set importLoaders ([#163](https://github.com/gravity-ui/app-builder/issues/163)) ([e28e573](https://github.com/gravity-ui/app-builder/commit/e28e573640c295232d2fadabb811ac3c83021f87))
+
 ## [0.13.0](https://github.com/gravity-ui/app-builder/compare/v0.12.1...v0.13.0) (2024-10-11)
 
 
