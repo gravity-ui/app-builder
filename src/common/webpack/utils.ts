@@ -89,3 +89,31 @@ function readJsonConfig(pathname: string) {
         throw new Error(`Couldn't read config ${pathname}`);
     }
 }
+
+function isCssLoader(
+    rule: webpack.RuleSetUseItem,
+): rule is Exclude<webpack.RuleSetUseItem, string | Function> {
+    return Boolean(
+        typeof rule !== 'string' && 'loader' in rule && rule.loader?.includes('/css-loader/'),
+    );
+}
+
+/**
+ * Set correct `importLoaders` value, based on total loaders array
+ */
+export function setImportLoaders(loaders: webpack.RuleSetUseItem[]) {
+    const cssLoaderIndex = loaders.findIndex(isCssLoader);
+
+    if (cssLoaderIndex === -1) {
+        return;
+    }
+
+    const cssLoader = loaders[cssLoaderIndex];
+    const importLoaders = loaders.length - (cssLoaderIndex + 1);
+
+    if (cssLoader && isCssLoader(cssLoader)) {
+        if (cssLoader.options && typeof cssLoader.options !== 'string') {
+            cssLoader.options.importLoaders = importLoaders;
+        }
+    }
+}

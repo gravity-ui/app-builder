@@ -2,7 +2,6 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import * as webpack from 'webpack';
-import _ from 'lodash';
 import {CleanWebpackPlugin} from 'clean-webpack-plugin';
 import {WebpackManifestPlugin} from 'webpack-manifest-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
@@ -25,7 +24,7 @@ import {babelPreset} from '../babel';
 import type {NormalizedClientConfig} from '../models';
 import type {Logger} from '../logger';
 import {ProgressPlugin} from './progress-plugin';
-import {resolveTsconfigPathsToAlias} from './utils';
+import {resolveTsconfigPathsToAlias, setImportLoaders} from './utils';
 import {S3UploadPlugin} from '../s3-upload';
 import {logConfig} from '../logger/log-config';
 import {resolveTypescript} from '../typescript/utils';
@@ -386,6 +385,8 @@ function createSassStylesRule(options: HelperOptions): webpack.RuleSetRule {
         },
     });
 
+    setImportLoaders(loaders);
+
     return {
         test: /\.scss$/,
         sideEffects: options.isEnvProduction ? true : undefined,
@@ -395,6 +396,9 @@ function createSassStylesRule(options: HelperOptions): webpack.RuleSetRule {
 
 function createStylesRule(options: HelperOptions): webpack.RuleSetRule {
     const loaders = getCssLoaders(options);
+
+    setImportLoaders(loaders);
+
     return {
         test: /\.css$/,
         sideEffects: options.isEnvProduction ? true : undefined,
