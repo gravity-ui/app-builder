@@ -367,24 +367,23 @@ function createWorkerRule(options: HelperOptions): webpack.RuleSetRule {
 }
 
 function createSassStylesRule(options: HelperOptions): webpack.RuleSetRule {
-    const loaders = getCssLoaders(options);
-
-    loaders.push({
-        loader: require.resolve('resolve-url-loader'),
-        options: {
-            sourceMap: !options.config.disableSourceMapGeneration,
-        },
-    });
-
-    loaders.push({
-        loader: require.resolve('sass-loader'),
-        options: {
-            sourceMap: true, // must be always true for work with resolve-url-loader
-            sassOptions: {
-                loadPaths: [paths.appClient],
+    const loaders = getCssLoaders(options, [
+        {
+            loader: require.resolve('resolve-url-loader'),
+            options: {
+                sourceMap: !options.config.disableSourceMapGeneration,
             },
         },
-    });
+        {
+            loader: require.resolve('sass-loader'),
+            options: {
+                sourceMap: true, // must be always true for work with resolve-url-loader
+                sassOptions: {
+                    loadPaths: [paths.appClient],
+                },
+            },
+        },
+    ]);
 
     return {
         test: /\.scss$/,
@@ -402,32 +401,11 @@ function createStylesRule(options: HelperOptions): webpack.RuleSetRule {
     };
 }
 
-function getCssLoaders({isEnvDevelopment, isEnvProduction, config}: HelperOptions) {
+function getCssLoaders(
+    {isEnvDevelopment, isEnvProduction, config}: HelperOptions,
+    additionalRules?: webpack.RuleSetUseItem[],
+) {
     const loaders: webpack.RuleSetUseItem[] = [];
-
-    if (isEnvProduction) {
-        loaders.push(MiniCSSExtractPlugin.loader);
-    }
-
-    if (isEnvDevelopment) {
-        loaders.push({
-            loader: require.resolve('style-loader'),
-        });
-    }
-
-    loaders.push({
-        loader: require.resolve('css-loader'),
-        options: {
-            esModule: false,
-            sourceMap: !config.disableSourceMapGeneration,
-            importLoaders: 2,
-            modules: {
-                auto: true,
-                localIdentName: '[name]__[local]--[hash:base64:5]',
-                exportLocalsConvention: 'camelCase',
-            },
-        },
-    });
 
     if (!config.transformCssWithLightningCss) {
         loaders.push({
@@ -443,6 +421,36 @@ function getCssLoaders({isEnvDevelopment, isEnvProduction, config}: HelperOption
             },
         });
     }
+
+    if (Array.isArray(additionalRules) && additionalRules.length > 0) {
+        loaders.push(...additionalRules);
+    }
+
+    const importLoaders = loaders.length;
+    loaders.unshift({
+        loader: require.resolve('css-loader'),
+        options: {
+            esModule: false,
+            sourceMap: !config.disableSourceMapGeneration,
+            importLoaders,
+            modules: {
+                auto: true,
+                localIdentName: '[name]__[local]--[hash:base64:5]',
+                exportLocalsConvention: 'camelCase',
+            },
+        },
+    });
+
+    if (isEnvProduction) {
+        loaders.unshift(MiniCSSExtractPlugin.loader);
+    }
+
+    if (isEnvDevelopment) {
+        loaders.unshift({
+            loader: require.resolve('style-loader'),
+        });
+    }
+
     return loaders;
 }
 
