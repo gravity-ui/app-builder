@@ -3,7 +3,13 @@ import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import MiniCSSExtractPlugin from 'mini-css-extract-plugin';
 import OptimizeCSSAssetsPlugin from 'css-minimizer-webpack-plugin';
 
-import {WebpackMode, configureModuleRules, configureOptimization, configureResolve} from './config';
+import {
+    BundleType,
+    WebpackMode,
+    configureModuleRules,
+    configureOptimization,
+    configureResolve,
+} from './config';
 import {getProjectConfig, normalizeConfig} from '../config';
 import {isLibraryConfig} from '../models';
 
@@ -114,7 +120,7 @@ export async function configureWebpackConfigForStorybook(
         resolve: configureResolve(helperOptions),
         plugins: configurePlugins(helperOptions),
         optimization: {
-            minimizer: configureOptimization(helperOptions).minimizer,
+            minimizer: configureOptimization(helperOptions, BundleType.Browser).minimizer,
         },
     };
 }

@@ -66,10 +66,10 @@ export default async function (config: NormalizedServiceConfig) {
         });
     }
 
-    let clientCompilation: WebpackDevServer | undefined;
+    let clientCompilations: WebpackDevServer[] | undefined;
     if (shouldCompileClient) {
         const {watchClientCompilation} = await import('./client.js');
-        clientCompilation = await watchClientCompilation(config, () => {
+        clientCompilations = await watchClientCompilation(config, () => {
             logger.success('Manifest was compiled successfully');
             clientCompiled = true;
             startNodemon();
@@ -79,19 +79,30 @@ export default async function (config: NormalizedServiceConfig) {
     process.on('SIGINT', async () => {
         logger.success('\nCleaning up...');
         await serverCompilation?.stop('SIGINT');
-        await clientCompilation?.stop();
+
+        if (clientCompilations) {
+            await Promise.all(clientCompilations.map((compilation) => compilation.stop()));
+        }
+
         process.exit(1);
     });
 
     process.on('SIGTERM', async () => {
         logger.success('\nCleaning up...');
         await serverCompilation?.stop('SIGTERM');
-        await clientCompilation?.stop();
+
+        if (clientCompilations) {
+            await Promise.all(clientCompilations.map((compilation) => compilation.stop()));
+        }
+
         process.exit(1);
     });
 
     onExit((_code, signal) => {
         serverCompilation?.stop(signal);
-        clientCompilation?.stop();
+
+        if (clientCompilations) {
+            clientCompilations.map((compilation) => compilation.stop());
+        }
     });
 }

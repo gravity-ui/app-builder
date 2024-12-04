@@ -8,7 +8,7 @@ import {deferredPromise} from '../../common/utils';
 
 import paths from '../../common/paths';
 import {Logger} from '../../common/logger';
-import {WebpackMode, webpackConfigFactory} from '../../common/webpack/config';
+import {BundleType, WebpackMode, webpackConfigFactory} from '../../common/webpack/config';
 
 import type {Configuration, HttpProxyMiddlewareOptionsFilter} from 'webpack-dev-server';
 import type {NormalizedServiceConfig} from '../../common/models';
@@ -17,19 +17,48 @@ export async function watchClientCompilation(
     config: NormalizedServiceConfig,
     onManifestReady: () => void,
 ) {
-    const clientCompilation = await buildWebpackServer(config);
+    const targets = [BundleType.Browser, Boolean(config.client.ssr) && BundleType.Ssr].filter(
+        Boolean,
+    ) as BundleType[];
+    const clientCompilations = await Promise.all(
+        targets.map((targetBundleType) => buildWebpackServer(config, targetBundleType)),
+    );
+    const targetsToFullfill = targets.reduce<Partial<Record<BundleType, boolean>>>(
+        (all, targetBundleType) => {
+            all[targetBundleType] = false;
 
-    const compiler = clientCompilation.compiler;
-    if ('compilers' in compiler) {
-        throw new Error('Unexpected multi compiler');
+            return all;
+        },
+        {},
+    );
+
+    function manifestReadyHandlerFactory(expectedBundleType: BundleType) {
+        return function () {
+            targetsToFullfill[expectedBundleType] = true;
+
+            if (targets.every((target) => targetsToFullfill[target])) {
+                onManifestReady();
+            }
+        };
     }
-    subscribeToManifestReadyEvent(compiler, onManifestReady);
 
-    return clientCompilation;
+    targets.forEach((targetBundleType, index) => {
+        const clientCompilation = clientCompilations[index]!;
+        const compiler = clientCompilation.compiler;
+
+        if ('compilers' in compiler) {
+            throw new Error('Unexpected multi compiler');
+        }
+
+        subscribeToManifestReadyEvent(compiler, manifestReadyHandlerFactory(targetBundleType));
+    });
+
+    return clientCompilations;
 }
 
-async function buildWebpackServer(config: NormalizedServiceConfig) {
+async function buildWebpackServer(config: NormalizedServiceConfig, bundleType: BundleType) {
     const logger = new Logger('webpack', config.verbose);
+    const isSsr = bundleType === BundleType.Ssr;
 
     const {
         webSocketPath = path.normalize(`/${config.client.publicPathPrefix}/build/sockjs-node`),
@@ -38,81 +67,112 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
     } = config.client.devServer || {};
 
     const normalizedConfig = {...config.client, devServer: {...devServer, webSocketPath}};
-    const webpackConfig = await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger});
+    const webpackConfig = await webpackConfigFactory(
+        WebpackMode.Dev,
+        normalizedConfig,
+        {logger},
+        bundleType,
+    );
 
     const publicPath = path.normalize(config.client.publicPathPrefix + '/build/');
-    const staticFolder = path.resolve(paths.appDist, 'public');
-    const options: Configuration = {
-        static: staticFolder,
-        devMiddleware: {
-            publicPath,
-            stats: 'errors-warnings',
-            writeToDisk,
-        },
-        liveReload: false,
-        hot: true,
-        client: {
-            logging: config.verbose ? 'log' : 'error',
-            webSocketURL: {pathname: webSocketPath},
-            overlay: {
-                runtimeErrors: config.verbose,
-                warnings: config.verbose,
+    const staticFolder = isSsr ? paths.appSsrBuild : path.resolve(paths.appDist, 'public');
+    const options: Configuration = {};
+
+    if (isSsr) {
+        const ssrOptions: Configuration = {
+            devMiddleware: {
+                writeToDisk: true,
+                serverSideRender: true,
+                publicPath,
             },
-        },
-        webSocketServer: {
-            options: {
-                path: webSocketPath,
-            },
-        },
-        host: '0.0.0.0',
-        allowedHosts: 'all',
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-            'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization',
-        },
-        ...devServer,
-    };
-
-    const listenOn = options.port || options.ipc;
-    if (!listenOn) {
-        options.ipc = path.resolve(paths.appDist, 'run/client.sock');
-    }
-
-    const proxy = options.proxy || [];
-    if (config.client.lazyCompilation) {
-        proxy.push({
-            context: ['/build/lazy'],
-            target: `http://localhost:${config.client.lazyCompilation.port}`,
-            pathRewrite: {'^/build/lazy': ''},
-        });
-    }
-
-    if (config.server.port) {
-        // if server port is specified, proxy to it
-        const filter: HttpProxyMiddlewareOptionsFilter = (pathname, req) => {
-            // do not proxy build files
-            if (pathname.startsWith(publicPath)) {
-                return false;
-            }
-
-            // do not proxy static files
-            const filepath = path.resolve(staticFolder, pathname.replace(/^\//, ''));
-            if (req.method === 'GET' && fs.existsSync(filepath) && fs.statSync(filepath).isFile()) {
-                return false;
-            }
-
-            return true;
+            host: 'localhost',
+            port: 0,
+            hot: false,
+            static: staticFolder,
+            client: false,
+            webSocketServer: false,
         };
-        proxy.push({
-            context: (...args) => filter(...args),
-            target: `http://localhost:${config.server.port}`,
-        });
+
+        Object.assign(options, ssrOptions);
+    } else {
+        const clientOptions: Configuration = {
+            static: staticFolder,
+            devMiddleware: {
+                publicPath,
+                stats: 'errors-warnings',
+                writeToDisk,
+            },
+            liveReload: false,
+            hot: true,
+            client: {
+                logging: config.verbose ? 'log' : 'error',
+                webSocketURL: {pathname: webSocketPath},
+                overlay: {
+                    runtimeErrors: config.verbose,
+                    warnings: config.verbose,
+                },
+            },
+            webSocketServer: {
+                options: {
+                    path: webSocketPath,
+                },
+            },
+            host: '0.0.0.0',
+            allowedHosts: 'all',
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+                'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization',
+            },
+            ...devServer,
+        };
+
+        Object.assign(options, clientOptions);
+
+        const listenOn = options.port || options.ipc;
+        if (!listenOn) {
+            options.ipc = path.resolve(paths.appDist, 'run/client.sock');
+        }
+
+        const proxy = options.proxy || [];
+        if (config.client.lazyCompilation) {
+            proxy.push({
+                context: ['/build/lazy'],
+                target: `http://localhost:${config.client.lazyCompilation.port}`,
+                pathRewrite: {'^/build/lazy': ''},
+            });
+        }
+
+        if (config.server.port) {
+            // if server port is specified, proxy to it
+            const filter: HttpProxyMiddlewareOptionsFilter = (pathname, req) => {
+                // do not proxy build files
+                if (pathname.startsWith(publicPath)) {
+                    return false;
+                }
+
+                // do not proxy static files
+                const filepath = path.resolve(staticFolder, pathname.replace(/^\//, ''));
+                if (
+                    req.method === 'GET' &&
+                    fs.existsSync(filepath) &&
+                    fs.statSync(filepath).isFile()
+                ) {
+                    return false;
+                }
+
+                return true;
+            };
+            proxy.push({
+                context: (...args) => filter(...args),
+                target: `http://localhost:${config.server.port}`,
+            });
+        }
+
+        options.proxy = proxy;
     }
 
-    options.proxy = proxy;
-
-    const compiler = webpack(webpackConfig);
+    const compiler = webpack(webpackConfig, console.error);
     const server = new WebpackDevServer(options, compiler);
 
     try {

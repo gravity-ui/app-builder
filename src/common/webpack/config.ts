@@ -83,6 +83,7 @@ export async function webpackConfigFactory(
         optimization: configureOptimization(helperOptions, bundleType),
         externals: config.externals,
         node: config.node,
+        watch: true,
         watchOptions: configureWatchOptions(helperOptions),
         ignoreWarnings: [/Failed to parse source map/],
         infrastructureLogging: config.verbose
@@ -244,13 +245,15 @@ function addEntry(entry: webpack.EntryObject, file: string): webpack.EntryObject
 function configureEntry({config}: HelperOptions, bundleType: BundleType): webpack.EntryObject {
     let entries = fs.readdirSync(paths.appEntry).filter((file) => /\.[jt]sx?$/.test(file));
 
-    if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
+    if (
+        bundleType === BundleType.Browser &&
+        Array.isArray(config.entryFilter) &&
+        config.entryFilter.length
+    ) {
         entries = entries.filter((entry) =>
             config.entryFilter?.includes(entry.split('.')[0] ?? ''),
         );
-    }
-
-    if (bundleType === BundleType.Ssr && Array.isArray(config.ssr?.entryFilter)) {
+    } else if (bundleType === BundleType.Ssr && Array.isArray(config.ssr?.entryFilter)) {
         entries = entries.filter((entry) =>
             config.ssr?.entryFilter?.includes(entry.split('.')[0] ?? ''),
         );
@@ -278,6 +281,12 @@ function configureOutput(
 ): webpack.Configuration['output'] {
     return {
         ...getFileNames({isEnvDevelopment, ...rest}),
+        library:
+            bundleType === BundleType.Ssr
+                ? {
+                      type: 'commonjs-module',
+                  }
+                : undefined,
         path: bundleType === BundleType.Browser ? paths.appBuild : paths.appSsrBuild,
         pathinfo: isEnvDevelopment,
     };

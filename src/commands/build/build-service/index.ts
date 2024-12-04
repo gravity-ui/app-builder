@@ -6,7 +6,7 @@ export default function (config: NormalizedServiceConfig) {
     const shouldCompileClient = shouldCompileTarget(config.target, 'client');
     const shouldCompileServer = shouldCompileTarget(config.target, 'server');
 
-    const compilations: Promise<void>[] = [];
+    const compilations: Promise<void[] | void>[] = [];
     if (shouldCompileClient) {
         compilations.push(
             (async () => {
