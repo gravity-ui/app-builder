@@ -205,6 +205,16 @@ export interface ClientConfig {
      * Modify or return a custom [Terser options](https://github.com/terser/terser#minify-options).
      */
     terser?: (options: TerserOptions) => TerserOptions;
+    /**
+     * Configuration for SSR bundle
+     */
+    ssr?: {
+        /**
+         * Overrides default ssr externals
+         */
+        externals?: Configuration['externals'];
+        entryFilter?: string[];
+    };
 }
 
 export interface CdnUploadConfig {

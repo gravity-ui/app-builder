@@ -46,10 +46,16 @@ export const enum WebpackMode {
     Dev = 'development',
 }
 
+export const enum BundleType {
+    Browser = 'browser',
+    Ssr = 'ssr',
+}
+
 export async function webpackConfigFactory(
     webpackMode: WebpackMode,
     config: NormalizedClientConfig,
     {logger}: {logger?: Logger} = {},
+    bundleType: BundleType = BundleType.Browser,
 ): Promise<webpack.Configuration> {
     const isEnvDevelopment = webpackMode === WebpackMode.Dev;
     const isEnvProduction = webpackMode === WebpackMode.Prod;
@@ -67,14 +73,14 @@ export async function webpackConfigFactory(
         context: paths.app,
         bail: isEnvProduction,
         devtool: configureDevTool(helperOptions),
-        entry: configureEntry(helperOptions),
-        output: configureOutput(helperOptions),
+        entry: configureEntry(helperOptions, bundleType),
+        output: configureOutput(helperOptions, bundleType),
         resolve: configureResolve(helperOptions),
         module: {
             rules: configureModuleRules(helperOptions),
         },
         plugins: configurePlugins(helperOptions),
-        optimization: configureOptimization(helperOptions),
+        optimization: configureOptimization(helperOptions, bundleType),
         externals: config.externals,
         node: config.node,
         watchOptions: configureWatchOptions(helperOptions),
@@ -92,6 +98,16 @@ export async function webpackConfigFactory(
         },
         cache: config.cache,
     };
+
+    if (bundleType === BundleType.Ssr) {
+        webpackConfig.target = 'node';
+        webpackConfig.externals = config.ssr?.externals
+            ? config.ssr?.externals
+            : {
+                  react: 'commonjs react',
+                  'react-dom': 'commonjs react-dom',
+              };
+    }
 
     webpackConfig = await config.webpack(webpackConfig, {configType: webpackMode});
 
@@ -225,12 +241,18 @@ function addEntry(entry: webpack.EntryObject, file: string): webpack.EntryObject
     };
 }
 
-function configureEntry({config}: HelperOptions): webpack.EntryObject {
+function configureEntry({config}: HelperOptions, bundleType: BundleType): webpack.EntryObject {
     let entries = fs.readdirSync(paths.appEntry).filter((file) => /\.[jt]sx?$/.test(file));
 
     if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
         entries = entries.filter((entry) =>
             config.entryFilter?.includes(entry.split('.')[0] ?? ''),
+        );
+    }
+
+    if (bundleType === BundleType.Ssr && Array.isArray(config.ssr?.entryFilter)) {
+        entries = entries.filter((entry) =>
+            config.ssr?.entryFilter?.includes(entry.split('.')[0] ?? ''),
         );
     }
 
@@ -250,13 +272,13 @@ function getFileNames({isEnvProduction}: HelperOptions) {
     };
 }
 
-function configureOutput({
-    isEnvDevelopment,
-    ...rest
-}: HelperOptions): webpack.Configuration['output'] {
+function configureOutput(
+    {isEnvDevelopment, ...rest}: HelperOptions,
+    bundleType: BundleType,
+): webpack.Configuration['output'] {
     return {
         ...getFileNames({isEnvDevelopment, ...rest}),
-        path: paths.appBuild,
+        path: bundleType === BundleType.Browser ? paths.appBuild : paths.appSsrBuild,
         pathinfo: isEnvDevelopment,
     };
 }
@@ -826,7 +848,10 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
 }
 
 type Optimization = NonNullable<webpack.Configuration['optimization']>;
-export function configureOptimization({config}: HelperOptions): Optimization {
+export function configureOptimization(
+    {config}: HelperOptions,
+    bundleType: BundleType,
+): Optimization {
     const configVendors = config.vendors ?? [];
 
     let vendorsList = [
@@ -852,76 +877,82 @@ export function configureOptimization({config}: HelperOptions): Optimization {
     const useVendorsList = vendorsList.length > 0;
 
     const optimization: Optimization = {
-        splitChunks: {
-            chunks: 'all',
-            cacheGroups: {
-                ...(useVendorsList
-                    ? {
-                          defaultVendors: {
-                              name: 'vendors',
-                              // eslint-disable-next-line security/detect-non-literal-regexp
-                              test: new RegExp(
-                                  `([\\\\/])node_modules\\1(${vendorsList.join('|')})\\1`,
-                              ),
-                              priority: Infinity,
+        splitChunks:
+            bundleType === BundleType.Browser
+                ? {
+                      chunks: 'all',
+                      cacheGroups: {
+                          ...(useVendorsList
+                              ? {
+                                    defaultVendors: {
+                                        name: 'vendors',
+                                        // eslint-disable-next-line security/detect-non-literal-regexp
+                                        test: new RegExp(
+                                            `([\\\\/])node_modules\\1(${vendorsList.join('|')})\\1`,
+                                        ),
+                                        priority: Infinity,
+                                    },
+                                }
+                              : undefined),
+                          css: {
+                              type: 'css/mini-extract',
+                              enforce: true,
+                              minChunks: 2,
+                              reuseExistingChunk: true,
                           },
-                      }
-                    : undefined),
-                css: {
-                    type: 'css/mini-extract',
-                    enforce: true,
-                    minChunks: 2,
-                    reuseExistingChunk: true,
-                },
-            },
-        },
-        runtimeChunk: 'single',
-        minimizer: [
-            (compiler) => {
-                // CssMinimizerWebpackPlugin works with MiniCSSExtractPlugin, so only relevant for production builds.
-                // Lazy load the CssMinimizerPlugin plugin
-                const CssMinimizerPlugin: typeof CssMinimizerWebpackPlugin = require('css-minimizer-webpack-plugin');
+                      },
+                  }
+                : false,
+        runtimeChunk: bundleType === BundleType.Browser ? 'single' : 'multiple',
+        minimizer:
+            bundleType === BundleType.Browser
+                ? [
+                      (compiler) => {
+                          // CssMinimizerWebpackPlugin works with MiniCSSExtractPlugin, so only relevant for production builds.
+                          // Lazy load the CssMinimizerPlugin plugin
+                          const CssMinimizerPlugin: typeof CssMinimizerWebpackPlugin = require('css-minimizer-webpack-plugin');
 
-                if (config.transformCssWithLightningCss) {
-                    const lightningCss = require('lightningcss');
-                    const browserslist = require('browserslist');
+                          if (config.transformCssWithLightningCss) {
+                              const lightningCss = require('lightningcss');
+                              const browserslist = require('browserslist');
 
-                    new CssMinimizerPlugin<Partial<Lightningcss.BundleOptions<{}>>>({
-                        minify: CssMinimizerPlugin.lightningCssMinify,
-                        minimizerOptions: {
-                            targets: lightningCss.browserslistToTargets(browserslist()),
-                        },
-                    }).apply(compiler);
-                } else {
-                    new CssMinimizerPlugin({
-                        minimizerOptions: {
-                            preset: [
-                                'default',
-                                {
-                                    svgo: false,
-                                },
-                            ],
-                        },
-                    }).apply(compiler);
-                }
-            },
-            (compiler) => {
-                // Lazy load the Terser plugin
-                const TerserPlugin: typeof TerserWebpackPlugin = require('terser-webpack-plugin');
-                let terserOptions: TerserWebpackPlugin.TerserOptions = {
-                    compress: {
-                        passes: 2,
-                    },
-                    safari10: config.safari10,
-                    mangle: !config.reactProfiling,
-                };
-                const {terser} = config;
-                if (typeof terser === 'function') {
-                    terserOptions = terser(terserOptions);
-                }
-                new TerserPlugin({terserOptions}).apply(compiler);
-            },
-        ],
+                              new CssMinimizerPlugin<Partial<Lightningcss.BundleOptions<{}>>>({
+                                  minify: CssMinimizerPlugin.lightningCssMinify,
+                                  minimizerOptions: {
+                                      targets: lightningCss.browserslistToTargets(browserslist()),
+                                  },
+                              }).apply(compiler);
+                          } else {
+                              new CssMinimizerPlugin({
+                                  minimizerOptions: {
+                                      preset: [
+                                          'default',
+                                          {
+                                              svgo: false,
+                                          },
+                                      ],
+                                  },
+                              }).apply(compiler);
+                          }
+                      },
+                      (compiler) => {
+                          // Lazy load the Terser plugin
+                          const TerserPlugin: typeof TerserWebpackPlugin = require('terser-webpack-plugin');
+                          let terserOptions: TerserWebpackPlugin.TerserOptions = {
+                              compress: {
+                                  passes: 2,
+                              },
+                              safari10: config.safari10,
+                              mangle: !config.reactProfiling,
+                          };
+                          const {terser} = config;
+                          if (typeof terser === 'function') {
+                              terserOptions = terser(terserOptions);
+                          }
+                          new TerserPlugin({terserOptions}).apply(compiler);
+                      },
+                  ]
+                : undefined,
     };
 
     return optimization;
