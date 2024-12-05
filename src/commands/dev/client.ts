@@ -172,7 +172,11 @@ async function buildWebpackServer(config: NormalizedServiceConfig, bundleType: B
         options.proxy = proxy;
     }
 
-    const compiler = webpack(webpackConfig, console.error);
+    const compiler = webpack(webpackConfig, (err) => {
+        if (err) {
+            logger.error(err.message);
+        }
+    });
     const server = new WebpackDevServer(options, compiler);
 
     try {
