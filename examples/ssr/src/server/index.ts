@@ -1,3 +1,4 @@
+import {randomUUID} from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as url from 'node:url';
@@ -23,8 +24,12 @@ const app = express();
 app.use(cookieParser());
 app.use('/build', express.static(path.join(__dirname, '../public/build')));
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 app.get('/', async (req, res) => {
-    const {render} = await import('../ssr/' + ssrManifest['main.mjs']);
+    const {render} = await import(
+        '../ssr/' + ssrManifest['main.mjs'] + (isProduction ? '' : `?q=${randomUUID()}`)
+    );
     const theme = getUserTheme(req);
     const {pipe} = ReactDOM.renderToPipeableStream(render({links, theme}), {
         bootstrapScripts: manifest.entrypoints.main.assets.js.map((v: string) => `/build/${v}`),

@@ -5,7 +5,6 @@ import {Button, Icon, ThemeProvider} from '@gravity-ui/uikit';
 import {getRootClassName} from '@gravity-ui/uikit/server';
 
 import {InfoButtons} from '@/containers/InfoButtons/InfoButtons';
-
 import {useThemeStore} from '@/store/theme';
 import type {Theme} from '@/store/theme';
 import {block} from '@/utils/cn';
@@ -24,7 +23,7 @@ export function App({links, theme: serverTheme}: {links: Link[]; theme?: Theme})
             <head>
                 <meta charSet="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <title>My app</title>
+                <title>Gravity UI app-builder example</title>
                 {links.map((link, index) => (
                     <link key={index} {...link} />
                 ))}
