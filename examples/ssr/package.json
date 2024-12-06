@@ -1,0 +1,41 @@
+{
+  "name": "ssr",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "app-builder dev",
+    "build": "app-builder build",
+    "start": "NODE_ENV=production node dist/server",
+    "lint": "npm run lint:code && npm run lint:styles",
+    "lint:code": "eslint --ext .js,.jsx,.ts,.tsx .",
+    "lint:styles": "stylelint \"src/ui/**/*.scss\""
+  },
+  "keywords": [],
+  "license": "MIT",
+  "devDependencies": {
+    "@gravity-ui/app-builder": "../..",
+    "@gravity-ui/eslint-config": "^3.2.0",
+    "@gravity-ui/prettier-config": "^1.1.0",
+    "@gravity-ui/stylelint-config": "^4.0.1",
+    "@gravity-ui/tsconfig": "^1.0.0",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/express": "^5",
+    "@types/react": "^18.3.2",
+    "@types/react-dom": "^18.3.0",
+    "eslint": "^8",
+    "prettier": "^3.2.5",
+    "stylelint": "^15",
+    "typescript": "~5.6.3"
+  },
+  "dependencies": {
+    "@bem-react/classname": "^1.6.0",
+    "@gravity-ui/icons": "^2.11.0",
+    "@gravity-ui/uikit": "^6.37.0",
+    "cookie-parser": "^1.4.7",
+    "express": "^5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.2"
+  }
+}
