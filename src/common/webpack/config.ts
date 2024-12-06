@@ -14,6 +14,7 @@ import MomentTimezoneDataPlugin from 'moment-timezone-data-webpack-plugin';
 import StatoscopeWebpackPlugin from '@statoscope/webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
 import type {sentryWebpackPlugin} from '@sentry/webpack-plugin';
+import nodeExternals from 'webpack-node-externals';
 
 import type TerserWebpackPlugin from 'terser-webpack-plugin';
 import type * as Lightningcss from 'lightningcss';
@@ -39,6 +40,9 @@ export interface HelperOptions {
     isEnvDevelopment: boolean;
     isEnvProduction: boolean;
     configType: `${WebpackMode}`;
+    buildDirectory: string;
+    entriesDirectory: string;
+    isSsr: boolean;
 }
 
 export const enum WebpackMode {
@@ -49,7 +53,7 @@ export const enum WebpackMode {
 export async function webpackConfigFactory(
     webpackMode: WebpackMode,
     config: NormalizedClientConfig,
-    {logger}: {logger?: Logger} = {},
+    {logger, isSsr = false}: {logger?: Logger; isSsr?: boolean} = {},
 ): Promise<webpack.Configuration> {
     const isEnvDevelopment = webpackMode === WebpackMode.Dev;
     const isEnvProduction = webpackMode === WebpackMode.Prod;
@@ -60,12 +64,27 @@ export async function webpackConfigFactory(
         isEnvDevelopment,
         isEnvProduction,
         configType: webpackMode,
+        buildDirectory: isSsr ? paths.appSsrBuild : paths.appBuild,
+        entriesDirectory: isSsr ? paths.appSsrEntry : paths.appEntry,
+        isSsr,
     };
+
+    let externals = config.externals;
+    if (isSsr) {
+        externals =
+            config.ssr?.noExternal === true
+                ? undefined
+                : nodeExternals({
+                      allowlist: config.ssr?.noExternal,
+                      importType: config.ssr?.moduleType === 'esm' ? 'module' : 'commonjs',
+                  });
+    }
 
     let webpackConfig: webpack.Configuration = {
         mode: webpackMode,
         context: paths.app,
         bail: isEnvProduction,
+        target: isSsr ? 'node' : undefined,
         devtool: configureDevTool(helperOptions),
         entry: configureEntry(helperOptions),
         output: configureOutput(helperOptions),
@@ -75,7 +94,7 @@ export async function webpackConfigFactory(
         },
         plugins: configurePlugins(helperOptions),
         optimization: configureOptimization(helperOptions),
-        externals: config.externals,
+        externals,
         node: config.node,
         watchOptions: configureWatchOptions(helperOptions),
         ignoreWarnings: [/Failed to parse source map/],
@@ -152,7 +171,12 @@ function configureWatchOptions({config}: HelperOptions): webpack.Configuration['
 function configureExperiments({
     config,
     isEnvProduction,
+    isSsr,
 }: HelperOptions): webpack.Configuration['experiments'] {
+    if (isSsr) {
+        return config.ssr?.moduleType === 'esm' ? {outputModule: true} : undefined;
+    }
+
     if (isEnvProduction) {
         return undefined;
     }
@@ -217,15 +241,14 @@ function createEntryArray(entry: string) {
 }
 
 function addEntry(entry: webpack.EntryObject, file: string): webpack.EntryObject {
-    const newEntry = path.resolve(paths.appEntry, file);
     return {
         ...entry,
-        [path.parse(file).name]: createEntryArray(newEntry),
+        [path.parse(file).name]: createEntryArray(file),
     };
 }
 
-function configureEntry({config}: HelperOptions): webpack.EntryObject {
-    let entries = fs.readdirSync(paths.appEntry).filter((file) => /\.[jt]sx?$/.test(file));
+function configureEntry({config, entriesDirectory}: HelperOptions): webpack.EntryObject {
+    let entries = fs.readdirSync(entriesDirectory).filter((file) => /\.[jt]sx?$/.test(file));
 
     if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
         entries = entries.filter((entry) =>
@@ -234,29 +257,41 @@ function configureEntry({config}: HelperOptions): webpack.EntryObject {
     }
 
     if (!entries.length) {
-        throw new Error('No entries were found after applying UI_CORE_ENTRY_FILTER');
+        throw new Error('No entries were found after applying entry filter');
     }
 
-    return entries.reduce((entry, file) => addEntry(entry, file), {});
+    return entries.reduce(
+        (entry, file) => addEntry(entry, path.resolve(entriesDirectory, file)),
+        {},
+    );
 }
 
-function getFileNames({isEnvProduction}: HelperOptions) {
+function getFileNames({isEnvProduction, isSsr, config}: HelperOptions) {
+    let ext = 'js';
+    if (isSsr) {
+        ext = config.ssr?.moduleType === 'esm' ? 'mjs' : 'cjs';
+    }
     return {
-        filename: isEnvProduction ? 'js/[name].[contenthash:8].js' : 'js/[name].js',
+        filename: isEnvProduction ? `js/[name].[contenthash:8].${ext}` : `js/[name].${ext}`,
         chunkFilename: isEnvProduction
             ? 'js/[name].[contenthash:8].chunk.js'
             : 'js/[name].chunk.js',
     };
 }
 
-function configureOutput({
-    isEnvDevelopment,
-    ...rest
-}: HelperOptions): webpack.Configuration['output'] {
+function configureOutput(options: HelperOptions): webpack.Configuration['output'] {
+    let ssrOptions: webpack.Configuration['output'];
+    if (options.isSsr) {
+        ssrOptions = {
+            library: {type: options.config.ssr?.moduleType === 'esm' ? 'module' : 'commonjs2'},
+            chunkFormat: false,
+        };
+    }
     return {
-        ...getFileNames({isEnvDevelopment, ...rest}),
-        path: paths.appBuild,
-        pathinfo: isEnvDevelopment,
+        ...getFileNames(options),
+        path: options.buildDirectory,
+        pathinfo: options.isEnvDevelopment,
+        ...ssrOptions,
     };
 }
 
@@ -265,27 +300,29 @@ function createJavaScriptLoader({
     isEnvDevelopment,
     configType,
     config,
+    isSsr,
 }: HelperOptions): webpack.RuleSetUseItem {
     const plugins: Babel.PluginItem[] = [];
-    if (isEnvDevelopment && config.reactRefresh !== false) {
-        plugins.push([
-            require.resolve('react-refresh/babel'),
-            config.devServer?.webSocketPath
-                ? {
-                      overlay: {
-                          sockPath: config.devServer.webSocketPath,
-                      },
-                  }
-                : undefined,
-        ]);
+    if (!isSsr) {
+        if (isEnvDevelopment && config.reactRefresh !== false) {
+            plugins.push([
+                require.resolve('react-refresh/babel'),
+                config.devServer?.webSocketPath
+                    ? {
+                          overlay: {
+                              sockPath: config.devServer.webSocketPath,
+                          },
+                      }
+                    : undefined,
+            ]);
+        }
+        if (isEnvProduction) {
+            plugins.push([
+                require.resolve('babel-plugin-import'),
+                {libraryName: 'lodash', libraryDirectory: '', camel2DashComponentName: false},
+            ]);
+        }
     }
-    if (isEnvProduction) {
-        plugins.push([
-            require.resolve('babel-plugin-import'),
-            {libraryName: 'lodash', libraryDirectory: '', camel2DashComponentName: false},
-        ]);
-    }
-
     const transformOptions = config.babel(
         {
             presets: [babelPreset(config)],
@@ -401,7 +438,7 @@ function createStylesRule(options: HelperOptions): webpack.RuleSetRule {
 }
 
 function getCssLoaders(
-    {isEnvDevelopment, isEnvProduction, config}: HelperOptions,
+    {isEnvDevelopment, isEnvProduction, config, isSsr}: HelperOptions,
     additionalRules?: webpack.RuleSetUseItem[],
 ) {
     const loaders: webpack.RuleSetUseItem[] = [];
@@ -429,32 +466,36 @@ function getCssLoaders(
     loaders.unshift({
         loader: require.resolve('css-loader'),
         options: {
-            esModule: false,
             sourceMap: !config.disableSourceMapGeneration,
             importLoaders,
             modules: {
                 auto: true,
                 localIdentName: '[name]__[local]--[hash:base64:5]',
                 exportLocalsConvention: 'camelCase',
+                exportOnlyLocals: isSsr,
             },
         },
     });
 
     if (isEnvProduction) {
-        loaders.unshift(MiniCSSExtractPlugin.loader);
+        loaders.unshift({loader: MiniCSSExtractPlugin.loader, options: {emit: !isSsr}});
     }
 
     if (isEnvDevelopment) {
-        loaders.unshift({
-            loader: require.resolve('style-loader'),
-        });
+        if (isSsr) {
+            loaders.unshift({loader: MiniCSSExtractPlugin.loader, options: {emit: false}});
+        } else {
+            loaders.unshift({
+                loader: require.resolve('style-loader'),
+            });
+        }
     }
 
     return loaders;
 }
 
 function createIconsRule(
-    {isEnvProduction, config}: HelperOptions,
+    {isEnvProduction, config, isSsr}: HelperOptions,
     jsLoader?: webpack.RuleSetUseItem,
 ): webpack.RuleSetRule {
     const iconIncludes = config.icons || [];
@@ -493,12 +534,13 @@ function createIconsRule(
                   generator: {
                       filename: 'assets/images/[name].[contenthash:8][ext]',
                       publicPath: isEnvProduction ? '../' : undefined,
+                      emit: !isSsr,
                   },
               }),
     };
 }
 
-function createAssetsRules({isEnvProduction, config}: HelperOptions): webpack.RuleSetRule[] {
+function createAssetsRules({isEnvProduction, config, isSsr}: HelperOptions): webpack.RuleSetRule[] {
     const imagesRule = {
         test: /\.(ico|bmp|gif|jpe?g|png|svg)$/,
         include: [paths.appClient, ...(config.images || [])],
@@ -510,6 +552,7 @@ function createAssetsRules({isEnvProduction, config}: HelperOptions): webpack.Ru
         },
         generator: {
             filename: 'assets/images/[name].[contenthash:8][ext]',
+            emit: !isSsr,
         },
     };
     const fontsRule = {
@@ -523,6 +566,7 @@ function createAssetsRules({isEnvProduction, config}: HelperOptions): webpack.Ru
         },
         generator: {
             filename: 'assets/fonts/[name].[contenthash:8][ext]',
+            emit: !isSsr,
         },
     };
 
@@ -545,6 +589,7 @@ function createAssetsRules({isEnvProduction, config}: HelperOptions): webpack.Ru
                 generator: {
                     filename: 'assets/images/[name].[contenthash:8][ext]',
                     publicPath: '../',
+                    emit: !isSsr,
                 },
             },
             {
@@ -560,6 +605,7 @@ function createAssetsRules({isEnvProduction, config}: HelperOptions): webpack.Ru
                 generator: {
                     filename: 'assets/fonts/[name].[contenthash:8][ext]',
                     publicPath: '../',
+                    emit: !isSsr,
                 },
             },
         );
@@ -568,12 +614,13 @@ function createAssetsRules({isEnvProduction, config}: HelperOptions): webpack.Ru
     return rules;
 }
 
-function createFallbackRules({isEnvProduction}: HelperOptions) {
+function createFallbackRules({isEnvProduction, isSsr}: HelperOptions) {
     const rules: webpack.RuleSetRule[] = [
         {
             type: 'asset/resource',
             generator: {
                 filename: 'assets/[name].[contenthash:8][ext]',
+                emit: !isSsr,
             },
             exclude: [/\.[jt]sx?$/, /\.json$/, /\.[cm]js$/, /\.ejs$/],
         },
@@ -589,6 +636,7 @@ function createFallbackRules({isEnvProduction}: HelperOptions) {
             generator: {
                 filename: 'assets/[name].[contenthash:8][ext]',
                 publicPath: '../',
+                emit: !isSsr,
             },
         });
     }
@@ -607,7 +655,7 @@ function createMomentTimezoneDataPlugin(options: NormalizedClientConfig['momentT
 }
 
 function configurePlugins(options: HelperOptions): webpack.Configuration['plugins'] {
-    const {isEnvDevelopment, isEnvProduction, config} = options;
+    const {isEnvDevelopment, isEnvProduction, config, isSsr} = options;
     const excludeFromClean = config.excludeFromClean || [];
 
     const manifestFile = 'assets-manifest.json';
@@ -633,10 +681,9 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
                 : {
                       entrypoints: true,
                       writeToDisk: true,
-                      output: path.resolve(paths.appBuild, manifestFile),
+                      output: path.resolve(options.buildDirectory, manifestFile),
                   },
         ),
-        createMomentTimezoneDataPlugin(config.momentTz),
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
             ...config.definitions,
@@ -649,31 +696,68 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         plugins.push(new webpack.debug.ProfilingPlugin());
     }
 
-    const contextReplacement = config.contextReplacement || {};
-
-    plugins.push(
-        new webpack.ContextReplacementPlugin(
-            /moment[\\/]locale$/,
-            // eslint-disable-next-line security/detect-non-literal-regexp
-            new RegExp(`^\\./(${(contextReplacement.locale || ['ru']).join('|')})$`),
-        ),
-    );
-
-    plugins.push(
-        new webpack.ContextReplacementPlugin(
-            /dayjs[\\/]locale$/,
-            // eslint-disable-next-line security/detect-non-literal-regexp
-            new RegExp(`^\\./(${(contextReplacement.locale || ['ru']).join('|')})\\.js$`),
-        ),
-    );
-
-    if (contextReplacement['highlight.js']) {
+    if (config.forkTsChecker !== false) {
         plugins.push(
-            new webpack.ContextReplacementPlugin(
-                /highlight\.js[\\/]lib[\\/]languages$/,
-                // eslint-disable-next-line security/detect-non-literal-regexp
-                new RegExp(`^\\./(${contextReplacement['highlight.js'].join('|')})$`),
-            ),
+            new ForkTsCheckerWebpackPlugin({
+                ...config.forkTsChecker,
+                typescript: {
+                    typescriptPath: resolveTypescript(),
+                    configFile: path.resolve(paths.appClient, 'tsconfig.json'),
+                    diagnosticOptions: {
+                        syntactic: true,
+                    },
+                    mode: 'write-references',
+                    ...config.forkTsChecker?.typescript,
+                },
+            }),
+        );
+    }
+
+    if (config.detectCircularDependencies) {
+        let circularPluginOptions: CircularDependencyPlugin.Options = {
+            exclude: /node_modules/,
+            allowAsyncCycles: true,
+        };
+        if (typeof config.detectCircularDependencies === 'object') {
+            circularPluginOptions = config.detectCircularDependencies;
+        }
+        plugins.push(new CircularDependencyPlugin(circularPluginOptions));
+    }
+
+    if (isEnvProduction) {
+        if (config.analyzeBundle === 'true') {
+            plugins.push(
+                new BundleAnalyzerPlugin({
+                    openAnalyzer: false,
+                    analyzerMode: 'static',
+                    reportFilename: 'stats.html',
+                }),
+            );
+        }
+
+        if (config.analyzeBundle === 'statoscope') {
+            const customStatoscopeConfig = config.statoscopeConfig || {};
+
+            plugins.push(
+                new StatoscopeWebpackPlugin({
+                    saveReportTo: path.resolve(options.buildDirectory, 'report.html'),
+                    saveStatsTo: path.resolve(options.buildDirectory, 'stats.json'),
+                    open: false,
+                    statsOptions: {
+                        all: true,
+                    },
+                    ...customStatoscopeConfig,
+                }),
+            );
+        }
+    }
+    if (isEnvProduction || isSsr) {
+        plugins.push(
+            new MiniCSSExtractPlugin({
+                filename: 'css/[name].[contenthash:8].css',
+                chunkFilename: 'css/[name].[contenthash:8].chunk.css',
+                ignoreOrder: true,
+            }),
         );
     }
 
@@ -690,134 +774,106 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         );
     }
 
-    if (isEnvDevelopment && config.reactRefresh !== false) {
-        const {webSocketPath = path.normalize(`/${config.publicPathPrefix}/build/sockjs-node`)} =
-            config.devServer || {};
+    if (!isSsr) {
+        const contextReplacement = config.contextReplacement || {};
+        plugins.push(createMomentTimezoneDataPlugin(config.momentTz));
         plugins.push(
-            new ReactRefreshWebpackPlugin(
-                config.reactRefresh({
-                    overlay: {sockPath: webSocketPath},
-                    exclude: [/node_modules/, /\.worker\.[jt]sx?$/],
-                }),
+            new webpack.ContextReplacementPlugin(
+                /moment[\\/]locale$/,
+                // eslint-disable-next-line security/detect-non-literal-regexp
+                new RegExp(`^\\./(${(contextReplacement.locale || ['ru']).join('|')})$`),
             ),
         );
-    }
 
-    if (config.detectCircularDependencies) {
-        let circularPluginOptions: CircularDependencyPlugin.Options = {
-            exclude: /node_modules/,
-            allowAsyncCycles: true,
-        };
-        if (typeof config.detectCircularDependencies === 'object') {
-            circularPluginOptions = config.detectCircularDependencies;
-        }
-        plugins.push(new CircularDependencyPlugin(circularPluginOptions));
-    }
-
-    if (config.forkTsChecker !== false) {
         plugins.push(
-            new ForkTsCheckerWebpackPlugin({
-                ...config.forkTsChecker,
-                typescript: {
-                    typescriptPath: resolveTypescript(),
-                    configFile: path.resolve(paths.app, 'src/ui/tsconfig.json'),
-                    diagnosticOptions: {
-                        syntactic: true,
-                    },
-                    mode: 'write-references',
-                    ...config.forkTsChecker?.typescript,
-                },
-            }),
-        );
-    }
-
-    if (config.polyfill?.process) {
-        plugins.push(new webpack.ProvidePlugin({process: 'process/browser.js'}));
-    }
-
-    if (isEnvProduction) {
-        plugins.push(
-            new MiniCSSExtractPlugin({
-                filename: 'css/[name].[contenthash:8].css',
-                chunkFilename: 'css/[name].[contenthash:8].chunk.css',
-                ignoreOrder: true,
-            }),
+            new webpack.ContextReplacementPlugin(
+                /dayjs[\\/]locale$/,
+                // eslint-disable-next-line security/detect-non-literal-regexp
+                new RegExp(`^\\./(${(contextReplacement.locale || ['ru']).join('|')})\\.js$`),
+            ),
         );
 
-        if (config.sentryConfig) {
-            const sentryPlugin: typeof sentryWebpackPlugin =
-                require('@sentry/webpack-plugin').sentryWebpackPlugin;
-            plugins.push(sentryPlugin({...config.sentryConfig}));
-        }
-
-        if (config.analyzeBundle === 'true') {
+        if (contextReplacement['highlight.js']) {
             plugins.push(
-                new BundleAnalyzerPlugin({
-                    openAnalyzer: false,
-                    analyzerMode: 'static',
-                    reportFilename: 'stats.html',
-                }),
+                new webpack.ContextReplacementPlugin(
+                    /highlight\.js[\\/]lib[\\/]languages$/,
+                    // eslint-disable-next-line security/detect-non-literal-regexp
+                    new RegExp(`^\\./(${contextReplacement['highlight.js'].join('|')})$`),
+                ),
             );
         }
 
-        if (config.analyzeBundle === 'statoscope') {
-            const customStatoscopeConfig = config.statoscopeConfig || {};
-
+        if (isEnvDevelopment && config.reactRefresh !== false) {
+            const {
+                webSocketPath = path.normalize(`/${config.publicPathPrefix}/build/sockjs-node`),
+            } = config.devServer || {};
             plugins.push(
-                new StatoscopeWebpackPlugin({
-                    saveReportTo: path.resolve(paths.appBuild, 'report.html'),
-                    saveStatsTo: path.resolve(paths.appBuild, 'stats.json'),
-                    open: false,
-                    statsOptions: {
-                        all: true,
-                    },
-                    ...customStatoscopeConfig,
-                }),
+                new ReactRefreshWebpackPlugin(
+                    config.reactRefresh({
+                        overlay: {sockPath: webSocketPath},
+                        exclude: [/node_modules/, /\.worker\.[jt]sx?$/],
+                    }),
+                ),
             );
         }
-    }
 
-    if (config.cdn) {
-        let credentialsGlobal;
-        if (process.env.FRONTEND_S3_ACCESS_KEY_ID && process.env.FRONTEND_S3_SECRET_ACCESS_KEY) {
-            credentialsGlobal = {
-                accessKeyId: process.env.FRONTEND_S3_ACCESS_KEY_ID,
-                secretAccessKey: process.env.FRONTEND_S3_SECRET_ACCESS_KEY,
-            };
+        if (config.polyfill?.process) {
+            plugins.push(new webpack.ProvidePlugin({process: 'process/browser.js'}));
         }
-        const cdns = Array.isArray(config.cdn) ? config.cdn : [config.cdn];
-        for (let index = 0; index < cdns.length; index++) {
-            const cdn = cdns[index];
-            if (!cdn) {
-                continue;
+
+        if (isEnvProduction) {
+            if (config.sentryConfig) {
+                const sentryPlugin: typeof sentryWebpackPlugin =
+                    require('@sentry/webpack-plugin').sentryWebpackPlugin;
+                plugins.push(sentryPlugin({...config.sentryConfig}));
             }
-            let credentials = credentialsGlobal;
-            const accessKeyId = process.env[`FRONTEND_S3_ACCESS_KEY_ID_${index}`];
-            const secretAccessKey = process.env[`FRONTEND_S3_SECRET_ACCESS_KEY_${index}`];
-            if (accessKeyId && secretAccessKey) {
-                credentials = {
-                    accessKeyId,
-                    secretAccessKey,
+        }
+
+        if (config.cdn) {
+            let credentialsGlobal;
+            if (
+                process.env.FRONTEND_S3_ACCESS_KEY_ID &&
+                process.env.FRONTEND_S3_SECRET_ACCESS_KEY
+            ) {
+                credentialsGlobal = {
+                    accessKeyId: process.env.FRONTEND_S3_ACCESS_KEY_ID,
+                    secretAccessKey: process.env.FRONTEND_S3_SECRET_ACCESS_KEY,
                 };
             }
-            plugins.push(
-                new S3UploadPlugin({
-                    exclude: config.hiddenSourceMap ? /\.map$/ : undefined,
-                    compress: cdn.compress,
-                    s3ClientOptions: {
-                        region: cdn.region,
-                        endpoint: cdn.endpoint,
-                        credentials,
-                    },
-                    s3UploadOptions: {
-                        bucket: cdn.bucket,
-                        targetPath: cdn.prefix,
-                        cacheControl: cdn.cacheControl,
-                    },
-                    additionalPattern: cdn.additionalPattern,
-                    logger: options.logger,
-                }),
-            );
+            const cdns = Array.isArray(config.cdn) ? config.cdn : [config.cdn];
+            for (let index = 0; index < cdns.length; index++) {
+                const cdn = cdns[index];
+                if (!cdn) {
+                    continue;
+                }
+                let credentials = credentialsGlobal;
+                const accessKeyId = process.env[`FRONTEND_S3_ACCESS_KEY_ID_${index}`];
+                const secretAccessKey = process.env[`FRONTEND_S3_SECRET_ACCESS_KEY_${index}`];
+                if (accessKeyId && secretAccessKey) {
+                    credentials = {
+                        accessKeyId,
+                        secretAccessKey,
+                    };
+                }
+                plugins.push(
+                    new S3UploadPlugin({
+                        exclude: config.hiddenSourceMap ? /\.map$/ : undefined,
+                        compress: cdn.compress,
+                        s3ClientOptions: {
+                            region: cdn.region,
+                            endpoint: cdn.endpoint,
+                            credentials,
+                        },
+                        s3UploadOptions: {
+                            bucket: cdn.bucket,
+                            targetPath: cdn.prefix,
+                            cacheControl: cdn.cacheControl,
+                        },
+                        additionalPattern: cdn.additionalPattern,
+                        logger: options.logger,
+                    }),
+                );
+            }
         }
     }
 
@@ -825,7 +881,11 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
 }
 
 type Optimization = NonNullable<webpack.Configuration['optimization']>;
-export function configureOptimization({config}: HelperOptions): Optimization {
+export function configureOptimization({config, isSsr}: HelperOptions): Optimization {
+    if (isSsr) {
+        return {};
+    }
+
     const configVendors = config.vendors ?? [];
 
     let vendorsList = [

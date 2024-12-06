@@ -13,6 +13,8 @@ export default {
     appDist: resolveApp('dist'),
     appRun: resolveApp('dist/run'),
     appBuild: resolveApp('dist/public/build'),
+    appSsrEntry: resolveApp('src/ui/ssr'),
+    appSsrBuild: resolveApp('dist/ssr'),
     src: resolveApp('src'),
     libBuild: resolveApp('build'),
     libBuildEsm: resolveApp('build/esm'),

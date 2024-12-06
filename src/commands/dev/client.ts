@@ -20,9 +20,6 @@ export async function watchClientCompilation(
     const clientCompilation = await buildWebpackServer(config);
 
     const compiler = clientCompilation.compiler;
-    if ('compilers' in compiler) {
-        throw new Error('Unexpected multi compiler');
-    }
     subscribeToManifestReadyEvent(compiler, onManifestReady);
 
     return clientCompilation;
@@ -38,7 +35,16 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
     } = config.client.devServer || {};
 
     const normalizedConfig = {...config.client, devServer: {...devServer, webSocketPath}};
-    const webpackConfig = await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger});
+    const webpackConfigs = [
+        await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger}),
+    ];
+    const isSsr = Boolean(normalizedConfig.ssr);
+    if (isSsr) {
+        const logger = new Logger('webpack(SSR)', config.verbose);
+        webpackConfigs.push(
+            await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger, isSsr}),
+        );
+    }
 
     const publicPath = path.normalize(config.client.publicPathPrefix + '/build/');
     const staticFolder = path.resolve(paths.appDist, 'public');
@@ -47,7 +53,18 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
         devMiddleware: {
             publicPath,
             stats: 'errors-warnings',
-            writeToDisk,
+            writeToDisk: (target) => {
+                if (writeToDisk === true) {
+                    return true;
+                }
+                if (isSsr && target.startsWith(paths.appSsrBuild)) {
+                    return true;
+                }
+                if (typeof writeToDisk === 'function') {
+                    return writeToDisk(target);
+                }
+                return false;
+            },
         },
         liveReload: false,
         hot: true,
@@ -112,7 +129,7 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
 
     options.proxy = proxy;
 
-    const compiler = webpack(webpackConfig);
+    const compiler = webpack(webpackConfigs);
     const server = new WebpackDevServer(options, compiler);
 
     try {
@@ -128,23 +145,41 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
     return server;
 }
 
-function subscribeToManifestReadyEvent(compiler: webpack.Compiler, onManifestReady: () => void) {
+function subscribeToManifestReadyEvent(
+    webpackCompiler: webpack.Compiler | webpack.MultiCompiler,
+    onManifestReady: () => void,
+) {
     const promises: Promise<unknown>[] = [];
 
-    const assetsManifestPlugin = compiler.options.plugins.find(
-        (plugin) => plugin instanceof WebpackAssetsManifest,
-    );
+    const options = Array.isArray(webpackCompiler.options)
+        ? webpackCompiler.options
+        : [webpackCompiler.options];
+    const compilers =
+        'compilers' in webpackCompiler ? webpackCompiler.compilers : [webpackCompiler];
 
-    if (assetsManifestPlugin) {
-        const assetsManifestReady = deferredPromise();
-        promises.push(assetsManifestReady.promise);
-        assetsManifestPlugin.hooks.done.tap('app-builder', assetsManifestReady.resolve);
+    for (let i = 0; i < options.length; i++) {
+        const config = options[i];
+        const compiler = compilers[i];
+
+        if (!config || !compiler) {
+            throw new Error('Something goes wrong!');
+        }
+
+        const assetsManifestPlugin = config.plugins.find(
+            (plugin) => plugin instanceof WebpackAssetsManifest,
+        );
+
+        if (assetsManifestPlugin) {
+            const assetsManifestReady = deferredPromise();
+            promises.push(assetsManifestReady.promise);
+            assetsManifestPlugin.hooks.done.tap('app-builder', assetsManifestReady.resolve);
+        }
+
+        const manifestReady = deferredPromise();
+        promises.push(manifestReady.promise);
+        const {afterEmit} = getCompilerHooks(compiler);
+        afterEmit.tap('app-builder', manifestReady.resolve);
     }
-
-    const manifestReady = deferredPromise();
-    promises.push(manifestReady.promise);
-    const {afterEmit} = getCompilerHooks(compiler);
-    afterEmit.tap('app-builder', manifestReady.resolve);
 
     Promise.all(promises).then(() => onManifestReady());
 }

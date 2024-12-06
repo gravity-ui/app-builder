@@ -129,6 +129,7 @@
     "webpack-bundle-analyzer": "^4.10.2",
     "webpack-dev-server": "^5.1.0",
     "webpack-manifest-plugin": "^5.0.0",
+    "webpack-node-externals": "^3.0.0",
     "worker-loader": "^3.0.8",
     "yargs": "^17.7.2"
   },
@@ -152,6 +153,7 @@
     "@types/webpack-assets-manifest": "^5.1.4",
     "@types/webpack-bundle-analyzer": "^4.7.0",
     "@types/webpack-manifest-plugin": "^3.0.8",
+    "@types/webpack-node-externals": "^3.0.4",
     "@types/yargs": "17.0.11",
     "babel-plugin-tester": "^11.0.4",
     "eslint": "^8.57.0",

@@ -26,6 +26,7 @@ export default async function (config: NormalizedServiceConfig) {
     let needToStartNodemon = shouldCompileServer;
 
     const serverPath = path.resolve(paths.appDist, 'server');
+    const ssrPath = path.resolve(paths.appDist, 'ssr');
     const {inspect, inspectBrk} = config.server;
 
     const startNodemon = () => {
@@ -45,10 +46,10 @@ export default async function (config: NormalizedServiceConfig) {
                 script: `${serverPath}/index.js`,
                 args: ['--dev', config.server.port ? `--port=${config.server.port}` : ''],
                 env: {
-                    ...(config.server.port ? {APP_PORT: config.server.port} : undefined),
+                    ...(config.server.port ? {APP_PORT: `${config.server.port}`} : undefined),
                 },
                 nodeArgs,
-                watch: [serverPath, ...serverWatch],
+                watch: [serverPath, ssrPath, ...serverWatch],
                 delay,
             });
 
