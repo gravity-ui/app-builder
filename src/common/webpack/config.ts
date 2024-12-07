@@ -482,8 +482,8 @@ function getCssLoaders(
     }
 
     if (isEnvDevelopment) {
-        if (isSsr) {
-            loaders.unshift({loader: MiniCSSExtractPlugin.loader, options: {emit: false}});
+        if (isSsr || config.ssr) {
+            loaders.unshift({loader: MiniCSSExtractPlugin.loader, options: {emit: !isSsr}});
         } else {
             loaders.unshift({
                 loader: require.resolve('style-loader'),
@@ -751,11 +751,13 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
             );
         }
     }
-    if (isEnvProduction || isSsr) {
+    if (isEnvProduction || isSsr || config.ssr) {
         plugins.push(
             new MiniCSSExtractPlugin({
-                filename: 'css/[name].[contenthash:8].css',
-                chunkFilename: 'css/[name].[contenthash:8].chunk.css',
+                filename: isEnvProduction ? 'css/[name].[contenthash:8].css' : 'css/[name].css',
+                chunkFilename: isEnvProduction
+                    ? 'css/[name].[contenthash:8].chunk.css'
+                    : 'css/[name].chunk.css',
                 ignoreOrder: true,
             }),
         );
