@@ -25,7 +25,7 @@ import {babelPreset} from '../babel';
 import type {NormalizedClientConfig} from '../models';
 import type {Logger} from '../logger';
 import {ProgressPlugin} from './progress-plugin';
-import {resolveTsconfigPathsToAlias} from './utils';
+import {resolveTsConfigPathsToAlias} from './utils';
 import {S3UploadPlugin} from '../s3-upload';
 import {logConfig} from '../logger/log-config';
 import {resolveTypescript} from '../typescript/utils';
@@ -199,8 +199,7 @@ export function configureResolve({isEnvProduction, config}: HelperOptions): webp
         alias['scheduler/tracing'] = 'scheduler/tracing-profiling';
     }
 
-    const {aliases, modules = []} =
-        resolveTsconfigPathsToAlias(path.resolve(paths.appClient, 'tsconfig.json')) || {};
+    const {aliases, modules = []} = resolveTsConfigPathsToAlias(paths.appClient);
     return {
         alias: {
             ...aliases,
