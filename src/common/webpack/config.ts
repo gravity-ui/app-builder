@@ -112,7 +112,7 @@ export async function webpackConfigFactory(
         cache: config.cache,
     };
 
-    webpackConfig = await config.webpack(webpackConfig, {configType: webpackMode});
+    webpackConfig = await config.webpack(webpackConfig, {configType: webpackMode, isSsr});
 
     if (config.debugWebpack) {
         logConfig('Preview webpack config', webpackConfig);
@@ -325,7 +325,7 @@ function createJavaScriptLoader({
     }
     const transformOptions = config.babel(
         {
-            presets: [babelPreset(config)],
+            presets: [babelPreset({newJsxTransform: config.newJsxTransform, isSsr})],
             plugins,
         },
         {configType},

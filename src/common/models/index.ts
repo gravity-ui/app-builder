@@ -192,7 +192,7 @@ export interface ClientConfig {
      */
     webpack?: (
         config: Configuration,
-        options: {configType: `${WebpackMode}`},
+        options: {configType: `${WebpackMode}`; isSsr?: boolean},
     ) => Configuration | Promise<Configuration>;
     /**
      * Modify or return a custom Babel config.
