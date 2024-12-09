@@ -1,6 +1,7 @@
 import * as path from 'node:path';
-import * as fs from 'node:fs';
+import * as ts from 'typescript';
 import {prettyTime} from '../logger/pretty-time';
+import {getTsProjectConfig} from '../typescript/utils';
 
 import type webpack from 'webpack';
 import type {Logger} from '../logger';
@@ -47,18 +48,25 @@ export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?:
 }
 
 const endStarRe = /\/?\*$/;
-export function resolveTsconfigPathsToAlias(tsConfigPath: string) {
-    if (!fs.existsSync(tsConfigPath) || !fs.statSync(tsConfigPath).isFile) {
-        return undefined;
+export function resolveTsConfigPathsToAlias(projectPath: string, filename = 'tsconfig.json') {
+    let parsed;
+    try {
+        parsed = getTsProjectConfig(ts, projectPath, filename);
+    } catch {
+        return {};
     }
 
-    const {paths = {}, baseUrl} = readJsonConfig(tsConfigPath).compilerOptions || {};
+    if (parsed.errors.length > 0) {
+        return {};
+    }
+
+    const {paths = {}, baseUrl} = parsed.options;
 
     if (!baseUrl) {
-        return undefined;
+        return {};
     }
 
-    const basePath = path.resolve(path.dirname(tsConfigPath), baseUrl);
+    const basePath = path.resolve(path.dirname(projectPath), baseUrl);
     const aliases: Record<string, string[]> = {};
     const modules: string[] = [basePath];
     for (const [key, value] of Object.entries(paths)) {
@@ -77,15 +85,4 @@ export function resolveTsconfigPathsToAlias(tsConfigPath: string) {
     }
 
     return {aliases, modules};
-}
-
-function readJsonConfig(pathname: string) {
-    try {
-        const json = fs.readFileSync(pathname, 'utf-8');
-        return {
-            ...JSON.parse(json),
-        };
-    } catch {
-        throw new Error(`Couldn't read config ${pathname}`);
-    }
 }

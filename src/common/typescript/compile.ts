@@ -1,6 +1,6 @@
 import type Typescript from 'typescript';
 import type {Logger} from '../logger';
-import {displayFilename, getProjectConfig} from './utils';
+import {displayFilename, getTsProjectConfig} from './utils';
 import {createTransformPathsToLocalModules} from './transformers';
 import {elapsedTime} from '../logger/pretty-time';
 import {formatDiagnosticBrief} from './diagnostic';
@@ -21,32 +21,12 @@ export function compile(
     logger.message(`Typescript v${ts.version}`);
 
     logger.verbose(`Searching for the ${configFileName} in ${projectPath}`);
-    const configPath = getProjectConfig(ts, projectPath, configFileName);
+    const parsedConfig = getTsProjectConfig(ts, projectPath, configFileName, {
+        noEmit: false,
+        noEmitOnError: true,
+        ...optionsToExtend,
+    });
 
-    const formatHost = {
-        getCanonicalFileName: (path: string) => path,
-        getCurrentDirectory: ts.sys.getCurrentDirectory,
-        getNewLine: () => ts.sys.newLine,
-    };
-
-    const parseConfigFileHost: Typescript.ParseConfigFileHost = {
-        getCurrentDirectory: ts.sys.getCurrentDirectory,
-        useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
-        readDirectory: ts.sys.readDirectory,
-        fileExists: ts.sys.fileExists,
-        readFile: ts.sys.readFile,
-        onUnRecoverableConfigFileDiagnostic: reportDiagnostic,
-    };
-
-    const parsedConfig = ts.getParsedCommandLineOfConfigFile(
-        configPath,
-        {noEmit: false, noEmitOnError: true, ...optionsToExtend},
-        parseConfigFileHost,
-    );
-
-    if (!parsedConfig) {
-        throw new Error(`Invalid '${configFileName}'`);
-    }
     logger.verbose('Config found and parsed');
 
     logger.verbose("We're about to create the program");
@@ -80,6 +60,12 @@ export function compile(
     } else {
         logger.success(`Compiled successfully in ${elapsedTime(start)}`);
     }
+
+    const formatHost = {
+        getCanonicalFileName: (path: string) => path,
+        getCurrentDirectory: ts.sys.getCurrentDirectory,
+        getNewLine: () => ts.sys.newLine,
+    };
 
     function reportDiagnostic(diagnostic: Typescript.Diagnostic) {
         if (logger.isVerbose) {

@@ -4,7 +4,7 @@ import paths from '../paths';
 import type Typescript from 'typescript';
 import type {Logger} from '../logger';
 
-export function getProjectConfig(
+export function getTsProjectConfigPath(
     ts: typeof Typescript,
     projectPath: string,
     filename = 'tsconfig.json',
@@ -15,6 +15,36 @@ export function getProjectConfig(
     }
 
     return configPath;
+}
+export function getTsProjectConfig(
+    ts: typeof Typescript,
+    projectPath: string,
+    filename = 'tsconfig.json',
+    optionsToExtend?: Typescript.CompilerOptions,
+) {
+    const configPath = getTsProjectConfigPath(ts, projectPath, filename);
+
+    const parseConfigFileHost: Typescript.ParseConfigFileHost = {
+        getCurrentDirectory: ts.sys.getCurrentDirectory,
+        useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
+        readDirectory: ts.sys.readDirectory,
+        fileExists: ts.sys.fileExists,
+        readFile: ts.sys.readFile,
+        // this is required in types but not used
+        onUnRecoverableConfigFileDiagnostic: () => {},
+    };
+
+    const parsedConfig = ts.getParsedCommandLineOfConfigFile(
+        configPath,
+        optionsToExtend,
+        parseConfigFileHost,
+    );
+
+    if (!parsedConfig) {
+        throw new Error(`Invalid config file '${configPath}'`);
+    }
+
+    return parsedConfig;
 }
 
 export function displayFilename(

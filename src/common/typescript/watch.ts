@@ -1,7 +1,7 @@
 import type Typescript from 'typescript';
 import type {Logger} from '../logger';
 import {createTransformPathsToLocalModules} from './transformers';
-import {displayFilename, getProjectConfig, onHostEvent} from './utils';
+import {displayFilename, getTsProjectConfigPath, onHostEvent} from './utils';
 import {formatDiagnosticBrief} from './diagnostic';
 
 export function watch(
@@ -15,7 +15,7 @@ export function watch(
 ) {
     logger.message('Start compilation in watch mode');
     logger.message(`Typescript v${ts.version}`);
-    const configPath = getProjectConfig(ts, projectPath);
+    const configPath = getTsProjectConfigPath(ts, projectPath);
 
     const createProgram = ts.createEmitAndSemanticDiagnosticsBuilderProgram;
 
