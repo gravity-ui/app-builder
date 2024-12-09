@@ -686,6 +686,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         ),
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+            'process.env.IS_SSR': JSON.stringify(isSsr),
             ...config.definitions,
         }),
     ];
