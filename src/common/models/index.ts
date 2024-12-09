@@ -199,7 +199,7 @@ export interface ClientConfig {
      */
     babel?: (
         config: Babel.TransformOptions,
-        options: {configType: `${WebpackMode}`},
+        options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
     /**
      * Modify or return a custom [Terser options](https://github.com/terser/terser#minify-options).
@@ -260,12 +260,12 @@ export type NormalizedClientConfig = Omit<
     verbose?: boolean;
     webpack: (
         config: Configuration,
-        options: {configType: `${WebpackMode}`},
+        options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => Configuration | Promise<Configuration>;
     debugWebpack?: boolean;
     babel: (
         config: Babel.TransformOptions,
-        options: {configType: `${WebpackMode}`},
+        options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
     reactRefresh: NonNullable<ClientConfig['reactRefresh']>;
 };

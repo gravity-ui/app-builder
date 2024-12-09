@@ -323,12 +323,13 @@ function createJavaScriptLoader({
             ]);
         }
     }
+
     const transformOptions = config.babel(
         {
             presets: [babelPreset({newJsxTransform: config.newJsxTransform, isSsr})],
             plugins,
         },
-        {configType},
+        {configType, isSsr},
     );
 
     return {
