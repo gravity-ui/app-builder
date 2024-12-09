@@ -467,6 +467,12 @@ function getCssLoaders(
     loaders.unshift({
         loader: require.resolve('css-loader'),
         options: {
+            url: {
+                filter: (url: string) => {
+                    // ignore data uri
+                    return !url.startsWith('data:');
+                },
+            },
             sourceMap: !config.disableSourceMapGeneration,
             importLoaders,
             modules: {
@@ -535,7 +541,7 @@ function createIconsRule(
                   generator: {
                       filename: 'assets/images/[name].[contenthash:8][ext]',
                       publicPath: isEnvProduction ? '../' : undefined,
-                      emit: isSsr ? false : undefined,
+                      emit: !isSsr,
                   },
               }),
     };
@@ -553,7 +559,7 @@ function createAssetsRules({isEnvProduction, config, isSsr}: HelperOptions): web
         },
         generator: {
             filename: 'assets/images/[name].[contenthash:8][ext]',
-            emit: isSsr ? false : undefined,
+            emit: !isSsr,
         },
     };
     const fontsRule = {
@@ -567,7 +573,7 @@ function createAssetsRules({isEnvProduction, config, isSsr}: HelperOptions): web
         },
         generator: {
             filename: 'assets/fonts/[name].[contenthash:8][ext]',
-            emit: isSsr ? false : undefined,
+            emit: !isSsr,
         },
     };
 
@@ -590,7 +596,7 @@ function createAssetsRules({isEnvProduction, config, isSsr}: HelperOptions): web
                 generator: {
                     filename: 'assets/images/[name].[contenthash:8][ext]',
                     publicPath: '../',
-                    emit: isSsr ? false : undefined,
+                    emit: !isSsr,
                 },
             },
             {
@@ -606,7 +612,7 @@ function createAssetsRules({isEnvProduction, config, isSsr}: HelperOptions): web
                 generator: {
                     filename: 'assets/fonts/[name].[contenthash:8][ext]',
                     publicPath: '../',
-                    emit: isSsr ? false : undefined,
+                    emit: !isSsr,
                 },
             },
         );
@@ -621,7 +627,7 @@ function createFallbackRules({isEnvProduction, isSsr}: HelperOptions) {
             type: 'asset/resource',
             generator: {
                 filename: 'assets/[name].[contenthash:8][ext]',
-                emit: isSsr ? false : undefined,
+                emit: !isSsr,
             },
             exclude: [/\.[jt]sx?$/, /\.json$/, /\.[cm]js$/, /\.ejs$/],
         },
@@ -637,7 +643,7 @@ function createFallbackRules({isEnvProduction, isSsr}: HelperOptions) {
             generator: {
                 filename: 'assets/[name].[contenthash:8][ext]',
                 publicPath: '../',
-                emit: isSsr ? false : undefined,
+                emit: !isSsr,
             },
         });
     }
