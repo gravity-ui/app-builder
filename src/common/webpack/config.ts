@@ -765,20 +765,20 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
         );
     }
 
-    if (config.monaco) {
-        const MonacoEditorWebpackPlugin = require('monaco-editor-webpack-plugin');
-        plugins.push(
-            new MonacoEditorWebpackPlugin({
-                filename: isEnvProduction ? '[name].[hash:8].worker.js' : undefined,
-                ...config.monaco,
-                // currently, workers located on cdn are not working properly, so we are enforcing loading workers from
-                // service instead
-                publicPath: path.normalize(config.publicPathPrefix + '/build/'),
-            }),
-        );
-    }
-
     if (!isSsr) {
+        if (config.monaco) {
+            const MonacoEditorWebpackPlugin = require('monaco-editor-webpack-plugin');
+            plugins.push(
+                new MonacoEditorWebpackPlugin({
+                    filename: isEnvProduction ? '[name].[hash:8].worker.js' : undefined,
+                    ...config.monaco,
+                    // currently, workers located on cdn are not working properly, so we are enforcing loading workers from
+                    // service instead
+                    publicPath: path.normalize(config.publicPathPrefix + '/build/'),
+                }),
+            );
+        }
+
         const contextReplacement = config.contextReplacement || {};
         plugins.push(createMomentTimezoneDataPlugin(config.momentTz));
         plugins.push(
