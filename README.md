@@ -192,8 +192,11 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 - `forkTsCheker` (`false | ForkTsCheckerWebpackPluginOptions`) - config for ForkTsCheckerWebpackPlugin [more](https://github.com/TypeStrong/fork-ts-checker-webpack-plugin#options). If `false`, ForkTsCheckerWebpackPlugin will be disabled.
 - `cache` (`boolean | FileCacheOptions | MemoryCacheOptions`) — Cache the generated webpack modules and chunks to improve build speed. [more](https://webpack.js.org/configuration/cache/)
 - `babelCacheDirectory` (`boolean | string`) — Set directory for babel-loader cache (`default: node_modules/.cache/babel-loader``)
-- `babel` (`(config: babel.TransformOptions, options: {configType: 'development' | 'production'}) => babel.TransformOptions | Promise<babel.TransformOptions>`) - Allow override the default babel transform options.
-- `webpack` (`(config: webpack.Configuration, options: {configType: 'development' | 'production'}) => webpack.Configuration | Promise<webpack.Configuration>`) - Allow override the default configuration.
+- `babel` (`(config: babel.TransformOptions, options: {configType: 'development' | 'production'; isSsr: boolean}) => babel.TransformOptions | Promise<babel.TransformOptions>`) - Allow override the default babel transform options.
+- `webpack` (`(config: webpack.Configuration, options: {configType: 'development' | 'production'; isSsr: boolean}) => webpack.Configuration | Promise<webpack.Configuration>`) - Allow override the default configuration.
+- `ssr` - build SSR bundle. The SSR entries should be inside `src/ui/ssr` directory and match the client entries.
+  - `noExternal` (`string | RegExp | (string | RegExp)[] | true`) - prevent listed dependencies from being externalized for SSR. By default, all dependencies are externalized.
+  - `moduleType`: (`'commonjs' | 'esm'`) - library type for the SSR bundle, by default `commonjs`.
 
 ##### Dev build
 

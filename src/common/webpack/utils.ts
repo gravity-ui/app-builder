@@ -42,8 +42,6 @@ export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?:
                     BigInt(time) * BigInt(1_000_000),
                 )}`,
             );
-        } else {
-            logger.success(`Client was successfully compiled`);
         }
 
         if (ssrStats) {
@@ -53,8 +51,10 @@ export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?:
                     BigInt(time) * BigInt(1_000_000),
                 )}`,
             );
-        } else {
-            logger.success(`SSR: Client was successfully compiled`);
+        }
+
+        if (!clientStats && !ssrStats) {
+            logger.success(`Client was successfully compiled`);
         }
     };
 }

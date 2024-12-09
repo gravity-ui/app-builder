@@ -535,7 +535,7 @@ function createIconsRule(
                   generator: {
                       filename: 'assets/images/[name].[contenthash:8][ext]',
                       publicPath: isEnvProduction ? '../' : undefined,
-                      emit: !isSsr,
+                      emit: isSsr ? false : undefined,
                   },
               }),
     };
@@ -553,7 +553,7 @@ function createAssetsRules({isEnvProduction, config, isSsr}: HelperOptions): web
         },
         generator: {
             filename: 'assets/images/[name].[contenthash:8][ext]',
-            emit: !isSsr,
+            emit: isSsr ? false : undefined,
         },
     };
     const fontsRule = {
@@ -567,7 +567,7 @@ function createAssetsRules({isEnvProduction, config, isSsr}: HelperOptions): web
         },
         generator: {
             filename: 'assets/fonts/[name].[contenthash:8][ext]',
-            emit: !isSsr,
+            emit: isSsr ? false : undefined,
         },
     };
 
@@ -590,7 +590,7 @@ function createAssetsRules({isEnvProduction, config, isSsr}: HelperOptions): web
                 generator: {
                     filename: 'assets/images/[name].[contenthash:8][ext]',
                     publicPath: '../',
-                    emit: !isSsr,
+                    emit: isSsr ? false : undefined,
                 },
             },
             {
@@ -606,7 +606,7 @@ function createAssetsRules({isEnvProduction, config, isSsr}: HelperOptions): web
                 generator: {
                     filename: 'assets/fonts/[name].[contenthash:8][ext]',
                     publicPath: '../',
-                    emit: !isSsr,
+                    emit: isSsr ? false : undefined,
                 },
             },
         );
@@ -621,7 +621,7 @@ function createFallbackRules({isEnvProduction, isSsr}: HelperOptions) {
             type: 'asset/resource',
             generator: {
                 filename: 'assets/[name].[contenthash:8][ext]',
-                emit: !isSsr,
+                emit: isSsr ? false : undefined,
             },
             exclude: [/\.[jt]sx?$/, /\.json$/, /\.[cm]js$/, /\.ejs$/],
         },
@@ -637,7 +637,7 @@ function createFallbackRules({isEnvProduction, isSsr}: HelperOptions) {
             generator: {
                 filename: 'assets/[name].[contenthash:8][ext]',
                 publicPath: '../',
-                emit: !isSsr,
+                emit: isSsr ? false : undefined,
             },
         });
     }
