@@ -14,7 +14,6 @@ import MomentTimezoneDataPlugin from 'moment-timezone-data-webpack-plugin';
 import StatoscopeWebpackPlugin from '@statoscope/webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
 import type {sentryWebpackPlugin} from '@sentry/webpack-plugin';
-import nodeExternals from 'webpack-node-externals';
 
 import type TerserWebpackPlugin from 'terser-webpack-plugin';
 import type * as Lightningcss from 'lightningcss';
@@ -30,6 +29,7 @@ import {resolveTsConfigPathsToAlias} from './utils';
 import {S3UploadPlugin} from '../s3-upload';
 import {logConfig} from '../logger/log-config';
 import {resolveTypescript} from '../typescript/utils';
+import {nodeExternals} from './node-externals';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -75,8 +75,8 @@ export async function webpackConfigFactory(
             config.ssr?.noExternal === true
                 ? undefined
                 : nodeExternals({
-                      allowlist: config.ssr?.noExternal,
-                      importType: config.ssr?.moduleType === 'esm' ? 'module' : 'commonjs',
+                      noExternal: config.ssr?.noExternal,
+                      module: config.ssr?.moduleType === 'esm',
                   });
     }
 
