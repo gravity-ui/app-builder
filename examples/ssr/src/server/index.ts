@@ -26,12 +26,12 @@ app.use('/build', express.static(path.join(__dirname, '../public/build')));
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-app.get('/', async (req, res) => {
+app.get('*all', async (req, res) => {
     const {render} = await import(
         '../ssr/' + ssrManifest['main.mjs'] + (isProduction ? '' : `?q=${randomUUID()}`)
     );
     const theme = getUserTheme(req);
-    const {pipe} = ReactDOM.renderToPipeableStream(render({links, theme}), {
+    const {pipe} = ReactDOM.renderToPipeableStream(render({links, theme, url: req.url}), {
         bootstrapScripts: manifest.entrypoints.main.assets.js.map((v: string) => `/build/${v}`),
         bootstrapScriptContent: `window.links = ${JSON.stringify(links)};`,
         onShellReady() {

@@ -7,8 +7,8 @@ export default defineConfig(() => {
                 port: true,
             },
             ssr: {
-                noExternal: [/@gravity-ui\/.+/, /lodash/],
-                moduleType: 'esm',
+                noExternal: [/@gravity-ui\/.+/], // dependencies with ccs imports in sources or not correct esm modules should be bundled.
+                moduleType: 'esm', // default commonjs
             },
         },
         server: {

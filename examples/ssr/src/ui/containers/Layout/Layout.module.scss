@@ -1,0 +1,10 @@
+.layout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+
+    min-height: 100%;
+
+    &__navigation {
+        padding: 20px;
+    }
+}

@@ -14,7 +14,7 @@
   "keywords": [],
   "license": "MIT",
   "devDependencies": {
-    "@gravity-ui/app-builder": "../..",
+    "@gravity-ui/app-builder": "*",
     "@gravity-ui/eslint-config": "^3.2.0",
     "@gravity-ui/prettier-config": "^1.1.0",
     "@gravity-ui/stylelint-config": "^4.0.1",
@@ -30,6 +30,7 @@
     "typescript": "~5.6.3"
   },
   "dependencies": {
+    "@babel/runtime": "^7.26.0",
     "@bem-react/classname": "^1.6.0",
     "@gravity-ui/icons": "^2.11.0",
     "@gravity-ui/uikit": "^6.37.0",
@@ -37,6 +38,7 @@
     "express": "^5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-router": "^7.0.2",
     "zustand": "^5.0.2"
   }
 }
