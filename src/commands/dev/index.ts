@@ -31,6 +31,12 @@ export default async function (config: NormalizedServiceConfig) {
     const startNodemon = () => {
         if (needToStartNodemon && serverCompiled && clientCompiled) {
             logger.message('Starting application at', serverPath);
+            const nodeArgs = ['--enable-source-maps'];
+            if (inspect || inspectBrk) {
+                nodeArgs.push(
+                    `--${inspect ? 'inspect' : 'inspect-brk'}=:::${inspect || inspectBrk}`,
+                );
+            }
 
             const serverWatch = config.server.watch ?? [];
             const delay = config.server.watchThrottle;
@@ -41,10 +47,7 @@ export default async function (config: NormalizedServiceConfig) {
                 env: {
                     ...(config.server.port ? {APP_PORT: config.server.port} : undefined),
                 },
-                nodeArgs:
-                    inspect || inspectBrk
-                        ? [`--${inspect ? 'inspect' : 'inspect-brk'}=:::${inspect || inspectBrk}`]
-                        : undefined,
+                nodeArgs,
                 watch: [serverPath, ...serverWatch],
                 delay,
             });
