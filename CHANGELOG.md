@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.13.2](https://github.com/gravity-ui/app-builder/compare/v0.13.1...v0.13.2) (2024-12-27)
+
+
+### Features
+
+* **server:** enable source map support for stack traces in dev ([#172](https://github.com/gravity-ui/app-builder/issues/172)) ([079ba60](https://github.com/gravity-ui/app-builder/commit/079ba60df2aa9d5af1ab688cd76ee2ec4bc49cc5))
+
+
+### Bug Fixes
+
+* support ts configs with comments ([#167](https://github.com/gravity-ui/app-builder/issues/167)) ([e6021bc](https://github.com/gravity-ui/app-builder/commit/e6021bc6c91b6ef8a1b2d373c842df3d2d783742))
+
 ## [0.13.1](https://github.com/gravity-ui/app-builder/compare/v0.13.0...v0.13.1) (2024-10-24)
 
 
