@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/gravity-ui/app-builder/compare/v0.13.2...v0.14.0) (2025-01-14)
+
+
+### Features
+
+* support SSR ([#166](https://github.com/gravity-ui/app-builder/issues/166)) ([77292c6](https://github.com/gravity-ui/app-builder/commit/77292c6ca410d32e8e86d66c79e7d32af95a1f86))
+
 ## [0.13.2](https://github.com/gravity-ui/app-builder/compare/v0.13.1...v0.13.2) (2024-12-27)
 
 
