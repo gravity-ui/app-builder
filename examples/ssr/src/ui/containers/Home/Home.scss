@@ -1,0 +1,58 @@
+$block: '.home';
+
+#{$block} {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    box-sizing: border-box;
+    min-height: 100%;
+    padding: 20px;
+
+    &__layout {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        margin-bottom: 56px;
+    }
+
+    &__header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    &__logo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        margin-bottom: 20px;
+    }
+
+    &__gravity-logo {
+        width: 260px;
+        height: 55px;
+
+        background-image: url('../../assets/gravity-logo-light.svg');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+
+        &_dark {
+            background-image: url('../../assets/gravity-logo-dark.svg');
+        }
+    }
+
+    &__content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        margin-top: 40px;
+    }
+}

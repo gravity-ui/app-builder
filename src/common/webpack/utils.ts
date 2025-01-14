@@ -7,7 +7,7 @@ import type webpack from 'webpack';
 import type {Logger} from '../logger';
 
 export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
-    return async (err?: Error | null, stats?: webpack.Stats) => {
+    return async (err?: Error | null, stats?: webpack.MultiStats) => {
         if (err) {
             logger.panic(err.message, err);
         }
@@ -34,14 +34,26 @@ export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?:
             await onCompilationEnd();
         }
 
-        if (stats) {
-            const time = stats.endTime - stats.startTime;
+        const [clientStats, ssrStats] = stats?.stats ?? [];
+        if (clientStats) {
+            const time = clientStats.endTime - clientStats.startTime;
             logger.success(
                 `Client was successfully compiled in ${prettyTime(
                     BigInt(time) * BigInt(1_000_000),
                 )}`,
             );
-        } else {
+        }
+
+        if (ssrStats) {
+            const time = ssrStats.endTime - ssrStats.startTime;
+            logger.success(
+                `SSR: Client was successfully compiled in ${prettyTime(
+                    BigInt(time) * BigInt(1_000_000),
+                )}`,
+            );
+        }
+
+        if (!clientStats && !ssrStats) {
             logger.success(`Client was successfully compiled`);
         }
     };

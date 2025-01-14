@@ -192,19 +192,23 @@ export interface ClientConfig {
      */
     webpack?: (
         config: Configuration,
-        options: {configType: `${WebpackMode}`},
+        options: {configType: `${WebpackMode}`; isSsr?: boolean},
     ) => Configuration | Promise<Configuration>;
     /**
      * Modify or return a custom Babel config.
      */
     babel?: (
         config: Babel.TransformOptions,
-        options: {configType: `${WebpackMode}`},
+        options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
     /**
      * Modify or return a custom [Terser options](https://github.com/terser/terser#minify-options).
      */
     terser?: (options: TerserOptions) => TerserOptions;
+    ssr?: {
+        noExternal?: string | RegExp | (string | RegExp)[] | true;
+        moduleType?: 'commonjs' | 'esm';
+    };
 }
 
 export interface CdnUploadConfig {
@@ -256,12 +260,12 @@ export type NormalizedClientConfig = Omit<
     verbose?: boolean;
     webpack: (
         config: Configuration,
-        options: {configType: `${WebpackMode}`},
+        options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => Configuration | Promise<Configuration>;
     debugWebpack?: boolean;
     babel: (
         config: Babel.TransformOptions,
-        options: {configType: `${WebpackMode}`},
+        options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
     reactRefresh: NonNullable<ClientConfig['reactRefresh']>;
 };

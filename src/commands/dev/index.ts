@@ -45,7 +45,7 @@ export default async function (config: NormalizedServiceConfig) {
                 script: `${serverPath}/index.js`,
                 args: ['--dev', config.server.port ? `--port=${config.server.port}` : ''],
                 env: {
-                    ...(config.server.port ? {APP_PORT: config.server.port} : undefined),
+                    ...(config.server.port ? {APP_PORT: `${config.server.port}`} : undefined),
                 },
                 nodeArgs,
                 watch: [serverPath, ...serverWatch],

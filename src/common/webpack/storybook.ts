@@ -6,6 +6,7 @@ import OptimizeCSSAssetsPlugin from 'css-minimizer-webpack-plugin';
 import {WebpackMode, configureModuleRules, configureOptimization, configureResolve} from './config';
 import {getProjectConfig, normalizeConfig} from '../config';
 import {isLibraryConfig} from '../models';
+import paths from '../paths';
 
 import type {HelperOptions} from './config';
 import type {ClientConfig} from '../models';
@@ -99,6 +100,9 @@ export async function configureWebpackConfigForStorybook(
         isEnvProduction,
         config: config.client,
         configType: mode,
+        buildDirectory: paths.appBuild,
+        entriesDirectory: paths.appEntry,
+        isSsr: false,
     };
 
     return {
