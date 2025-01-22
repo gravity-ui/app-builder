@@ -21,6 +21,8 @@ import type {UploadOptions} from '../s3-upload/upload';
 import type {TerserOptions} from 'terser-webpack-plugin';
 import type {ReactRefreshPluginOptions} from '@pmmmwh/react-refresh-webpack-plugin/types/lib/types';
 
+type Bundler = 'webpack' | 'rspack';
+
 export interface Entities<T> {
     data: Record<string, T>;
     keys: string[];
@@ -209,6 +211,7 @@ export interface ClientConfig {
         noExternal?: string | RegExp | (string | RegExp)[] | true;
         moduleType?: 'commonjs' | 'esm';
     };
+    bundler?: Bundler;
 }
 
 export interface CdnUploadConfig {
@@ -249,6 +252,7 @@ export type NormalizedClientConfig = Omit<
     | 'disableForkTsChecker'
     | 'disableReactRefresh'
 > & {
+    bundler: Bundler;
     publicPathPrefix: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
