@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.1](https://github.com/gravity-ui/app-builder/compare/v0.14.0...v0.14.1) (2025-01-22)
+
+
+### Bug Fixes
+
+* **babel:** remove @babel/plugin-transform-class-properties from presets ([#175](https://github.com/gravity-ui/app-builder/issues/175)) ([ff0e41e](https://github.com/gravity-ui/app-builder/commit/ff0e41e3cc6eb30f95452e31442c552cf58175ef))
+
 ## [0.14.0](https://github.com/gravity-ui/app-builder/compare/v0.13.2...v0.14.0) (2025-01-14)
 
 
