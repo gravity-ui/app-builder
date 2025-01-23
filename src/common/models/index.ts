@@ -9,6 +9,7 @@ import type {
     MemoryCacheOptions,
     ResolveOptions,
 } from 'webpack';
+import type {Configuration as RspackConfiguration} from '@rspack/core';
 import type * as Babel from '@babel/core';
 import type {ServerConfiguration} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
@@ -197,6 +198,13 @@ export interface ClientConfig {
         options: {configType: `${WebpackMode}`; isSsr?: boolean},
     ) => Configuration | Promise<Configuration>;
     /**
+     * Modify or return a custom Rspack config.
+     */
+    rspack?: (
+        config: RspackConfiguration,
+        options: {configType: `${WebpackMode}`},
+    ) => RspackConfiguration | Promise<RspackConfiguration>;
+    /**
      * Modify or return a custom Babel config.
      */
     babel?: (
@@ -266,6 +274,10 @@ export type NormalizedClientConfig = Omit<
         config: Configuration,
         options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => Configuration | Promise<Configuration>;
+    rspack: (
+        config: RspackConfiguration,
+        options: {configType: `${WebpackMode}`},
+    ) => RspackConfiguration | Promise<RspackConfiguration>;
     debugWebpack?: boolean;
     babel: (
         config: Babel.TransformOptions,
