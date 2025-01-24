@@ -1,12 +1,10 @@
 import * as path from 'node:path';
 
-import webpack from 'webpack';
-import NodeTargetPlugin from 'webpack/lib/node/NodeTargetPlugin';
-import WebWorkerTemplatePlugin from 'webpack/lib/webworker/WebWorkerTemplatePlugin';
-import FetchCompileWasmPlugin from 'webpack/lib/web/FetchCompileWasmPlugin';
-import FetchCompileAsyncWasmPlugin from 'webpack/lib/web/FetchCompileAsyncWasmPlugin';
-
 import paths from '../../paths';
+import type {LoaderDefinition} from '@rspack/core';
+import {Compiler, EntryPlugin, node, rspack, web, webworker} from '@rspack/core';
+
+type PitchLoaderDefinitionFunction = Exclude<LoaderDefinition['pitch'], undefined>;
 
 const pluginId = 'APP_BUILDER_WORKER_LOADER';
 
@@ -17,7 +15,7 @@ interface Cache {
     map?: string;
 }
 
-export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
+export const pitch: PitchLoaderDefinitionFunction = function (request) {
     this.cacheable(false);
 
     if (!this._compiler || !this._compilation) {
@@ -50,23 +48,27 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
     const workerCompiler = this._compilation.createChildCompiler(
         `worker ${request}`,
         workerOptions,
+        [],
     );
 
-    new WebWorkerTemplatePlugin().apply(workerCompiler);
+    new webworker.WebWorkerTemplatePlugin().apply(workerCompiler);
 
     if (this.target !== 'webworker' && this.target !== 'web') {
-        new NodeTargetPlugin().apply(workerCompiler);
+        new node.NodeTargetPlugin().apply(workerCompiler);
     }
-    new FetchCompileWasmPlugin({
+
+    /* TODO Unsupported
+    new web.FetchCompileWasmPlugin({
         mangleImports: this._compiler.options.optimization.mangleWasmImports,
     }).apply(workerCompiler);
+    */
 
-    new FetchCompileAsyncWasmPlugin().apply(workerCompiler);
+    new web.FetchCompileAsyncWasmPlugin().apply(workerCompiler);
 
     const bundleName = path.parse(this.resourcePath).name;
 
-    new webpack.EntryPlugin(this.context, `!!${publicPath}`, bundleName).apply(workerCompiler);
-    new webpack.EntryPlugin(this.context, `!!${request}`, bundleName).apply(workerCompiler);
+    new EntryPlugin(this.context!, `!!${publicPath}`, bundleName).apply(workerCompiler);
+    new EntryPlugin(this.context!, `!!${request}`, bundleName).apply(workerCompiler);
 
     configureSourceMap(workerCompiler);
 
@@ -135,20 +137,21 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
             }
 
             const parentCompilation = workerCompiler.parentCompilation;
+
             if (parentCompilation) {
                 for (const [assetName, asset] of Object.entries(compilation.assets)) {
                     if ([filename, mapFile, licenseFile].includes(assetName)) {
                         continue;
                     }
 
-                    if (parentCompilation.assetsInfo.has(assetName)) {
+                    if (parentCompilation.getAsset(assetName)) {
                         continue;
                     }
 
                     parentCompilation.emitAsset(
                         assetName,
                         asset,
-                        compilation.assetsInfo.get(assetName),
+                        compilation.getAsset(assetName)?.info,
                     );
                 }
             }
@@ -168,7 +171,7 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
     });
 };
 
-function configureSourceMap(compiler: webpack.Compiler) {
+function configureSourceMap(compiler: Compiler) {
     const devtool = compiler.options.devtool;
     if (devtool) {
         if (devtool.includes('source-map')) {
@@ -185,7 +188,7 @@ function configureSourceMap(compiler: webpack.Compiler) {
             const inline = devtool.includes('inline');
             const cheap = devtool.includes('cheap');
             const moduleMaps = devtool.includes('module');
-            new webpack.SourceMapDevToolPlugin({
+            new rspack.SourceMapDevToolPlugin({
                 filename: inline ? null : compiler.options.output.sourceMapFilename,
                 moduleFilenameTemplate: compiler.options.output.devtoolModuleFilenameTemplate,
                 fallbackModuleFilenameTemplate:

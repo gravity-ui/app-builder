@@ -6,6 +6,7 @@ import {
     ContextReplacementPlugin,
     CssExtractRspackPlugin,
     EntryObject,
+    LazyCompilationOptions,
     ResolveOptions,
     RuleSetRule,
     RuleSetUseItem,
@@ -25,7 +26,7 @@ import paths from '../paths';
 import {babelPreset} from '../babel';
 import type {NormalizedClientConfig} from '../models';
 import type {Logger} from '../logger';
-import {ProgressPlugin} from '../webpack/progress-plugin';
+import {ProgressPlugin} from './progress-plugin';
 import {resolveTsConfigPathsToAlias} from '../webpack/utils';
 import {createS3UploadPlugins} from '../s3-upload';
 import {logConfig} from '../logger/log-config';
@@ -140,8 +141,7 @@ export function configureModuleRules(
         ...createSourceMapRules(!helperOptions.config.disableSourceMapGeneration),
         {
             oneOf: [
-                // TODO с воркерами разобраться
-                // createWorkerRule(helperOptions),
+                createWorkerRule(helperOptions),
                 createJavaScriptRule(helperOptions, jsLoader),
                 createStylesRule(helperOptions),
                 createSassStylesRule(helperOptions),
@@ -187,7 +187,7 @@ function configureExperiments({
         return undefined;
     }
 
-    let lazyCompilation;
+    let lazyCompilation: LazyCompilationOptions | undefined;
     let port;
     let entries;
 
@@ -198,6 +198,9 @@ function configureExperiments({
         }
 
         lazyCompilation = {
+            // See https://github.com/web-infra-dev/rspack/issues/8503
+            entries: entries || false,
+            imports: false,
             backend: {
                 client: require.resolve('./lazy-client.js'),
                 ...(port
@@ -208,12 +211,15 @@ function configureExperiments({
                       }
                     : {}),
             },
-            entries,
+            test(module) {
+                // make sure that lazy-client.js won't be lazy compiled)
+                return !module.nameForCondition().endsWith('lazy-client.js');
+            },
         };
     }
 
     return {
-        // TODO not working
+        // TODO not working https://github.com/web-infra-dev/rspack/issues/5658
         /*
         cache: {
             type: 'persistent',
@@ -381,8 +387,6 @@ function createSourceMapRules(shouldUseSourceMap: boolean): RuleSetRule[] {
     return [];
 }
 
-/*
-TODO
 function createWorkerRule(options: HelperOptions): RuleSetRule {
     return {
         test: /\.worker\.[jt]sx?$/,
@@ -393,7 +397,7 @@ function createWorkerRule(options: HelperOptions): RuleSetRule {
                       loader: require.resolve('./worker/worker-loader'),
                   }
                 : {
-                      loader: require.resolve('worker-loader'),
+                      loader: require.resolve('worker-rspack-loader'),
                       // currently workers located on cdn are not working properly, so we are enforcing loading workers from
                       // service instead
                       options: {
@@ -404,7 +408,6 @@ function createWorkerRule(options: HelperOptions): RuleSetRule {
         ],
     };
 }
-*/
 
 function createSassStylesRule(options: HelperOptions): RuleSetRule {
     const loaders = getCssLoaders(options, [
@@ -660,6 +663,8 @@ function configurePlugins(options: HelperOptions): Configuration['plugins'] {
     const {isEnvDevelopment, isEnvProduction, config} = options;
     const excludeFromClean = config.excludeFromClean || [];
 
+    const manifestFile = 'assets-manifest.json';
+
     const plugins: Configuration['plugins'] = [
         new CleanWebpackPlugin({
             verbose: config.verbose,
@@ -669,9 +674,16 @@ function configurePlugins(options: HelperOptions): Configuration['plugins'] {
                 ...excludeFromClean,
             ],
         }),
+        /*
         new RspackManifestPlugin({
-            fileName: 'assets-manifest.json',
             writeToFileEmit: true,
+            publicPath: '',
+        }),
+        */
+        new RspackManifestPlugin({
+            fileName: isEnvProduction ? manifestFile : path.resolve(paths.appBuild, manifestFile),
+            writeToFileEmit: true,
+            useLegacyEmit: true,
             publicPath: '',
             generate: generateManifest,
         }),
@@ -681,7 +693,7 @@ function configurePlugins(options: HelperOptions): Configuration['plugins'] {
         }),
     ];
     if (options.logger) {
-        plugins.push(new ProgressPlugin({logger: options.logger, bundler: 'rspack'}));
+        plugins.push(new ProgressPlugin({logger: options.logger}));
     }
     // TODO
     // if (process.env.WEBPACK_PROFILE === 'true') {
@@ -874,8 +886,7 @@ export function configureOptimization({config}: HelperOptions): Optimization {
             }),
             new rspack.LightningCssMinimizerRspackPlugin({
                 minimizerOptions: {
-                    // TODO
-                    // targets: browserslist(),
+                    // TODO browserlist not working
                     targets: [
                         'last 2 major versions and last 2 years and fully supports es6 and > 0.05%',
                         'not dead',
@@ -886,7 +897,7 @@ export function configureOptimization({config}: HelperOptions): Optimization {
                         'Chrome > 0 and last 2 years and > 0.05%',
                         'Safari > 0 and last 2 years and > 0.05%',
                         'Firefox > 0 and last 2 years and > 0.01%',
-                        'Safari >= 15.6 and > 0.1%',
+                        'not safari < 15.6',
                     ],
                 },
             }),
