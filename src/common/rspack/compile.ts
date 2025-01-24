@@ -3,18 +3,18 @@ import {rspack} from '@rspack/core';
 import type {NormalizedClientConfig} from '../models';
 import {Logger} from '../logger';
 import {RspackMode, rspackConfigFactory} from './config';
-import {webpackCompilerHandlerFactory} from './utils';
+import {rspackCompilerHandlerFactory} from './utils';
 
 export async function rspackCompile(config: NormalizedClientConfig): Promise<void> {
     const logger = new Logger('rspack', config.verbose);
 
-    const rspackConfigs = [await rspackConfigFactory(RspackMode.Prod, config, {logger})] as const;
+    const rspackConfigs = [await rspackConfigFactory(RspackMode.Prod, config, {logger})];
     logger.verbose('Config created');
 
     return new Promise((resolve) => {
         const compiler = rspack(
             rspackConfigs,
-            webpackCompilerHandlerFactory(logger, async () => {
+            rspackCompilerHandlerFactory(logger, async () => {
                 resolve();
             }),
         );

@@ -3,7 +3,7 @@ import {prettyTime} from '../logger/pretty-time';
 import type {MultiStats} from '@rspack/core';
 import type {Logger} from '../logger';
 
-export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
+export function rspackCompilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
     return async (err?: Error | null, stats?: MultiStats) => {
         if (err) {
             logger.panic(err.message, err);

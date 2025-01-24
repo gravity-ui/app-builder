@@ -13,7 +13,6 @@ import {
 } from '@rspack/core';
 import {CleanWebpackPlugin} from 'clean-webpack-plugin';
 import _ from 'lodash';
-import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import {BundleAnalyzerPlugin} from 'webpack-bundle-analyzer';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
 import {ManifestPluginOptions, RspackManifestPlugin} from 'rspack-manifest-plugin';
@@ -30,7 +29,6 @@ import {ProgressPlugin} from '../webpack/progress-plugin';
 import {resolveTsConfigPathsToAlias} from '../webpack/utils';
 import {createS3UploadPlugins} from '../s3-upload';
 import {logConfig} from '../logger/log-config';
-import {resolveTypescript} from '../typescript/utils';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -215,12 +213,15 @@ function configureExperiments({
     }
 
     return {
+        // TODO not working
+        /*
         cache: {
             type: 'persistent',
             snapshot: {
                 managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
             },
         },
+        */
         lazyCompilation,
     };
 }
@@ -255,9 +256,10 @@ function createEntryArray(entry: string) {
 }
 
 function addEntry(entry: EntryObject, file: string): EntryObject {
+    const newEntry = path.resolve(paths.appEntry, file);
     return {
         ...entry,
-        [path.parse(file).name]: createEntryArray(file),
+        [path.parse(file).name]: createEntryArray(newEntry),
     };
 }
 
@@ -686,23 +688,6 @@ function configurePlugins(options: HelperOptions): Configuration['plugins'] {
     //     plugins.push(new webpack.debug.ProfilingPlugin());
     // }
 
-    if (config.forkTsChecker !== false) {
-        plugins.push(
-            new ForkTsCheckerWebpackPlugin({
-                ...config.forkTsChecker,
-                typescript: {
-                    typescriptPath: resolveTypescript(),
-                    configFile: path.resolve(paths.appClient, 'tsconfig.json'),
-                    diagnosticOptions: {
-                        syntactic: true,
-                    },
-                    mode: 'write-references',
-                    ...config.forkTsChecker?.typescript,
-                },
-            }),
-        );
-    }
-
     if (config.detectCircularDependencies) {
         let circularPluginOptions: CircularDependencyPlugin.Options = {
             exclude: /node_modules/,
@@ -724,15 +709,6 @@ function configurePlugins(options: HelperOptions): Configuration['plugins'] {
                 }),
             );
         }
-        plugins.push(
-            new CssExtractRspackPlugin({
-                filename: isEnvProduction ? 'css/[name].[contenthash:8].css' : 'css/[name].css',
-                chunkFilename: isEnvProduction
-                    ? 'css/[name].[contenthash:8].chunk.css'
-                    : 'css/[name].chunk.css',
-                ignoreOrder: true,
-            }),
-        );
     }
 
     if (config.monaco) {
@@ -811,6 +787,14 @@ function configurePlugins(options: HelperOptions): Configuration['plugins'] {
     }
 
     if (isEnvProduction) {
+        plugins.push(
+            new CssExtractRspackPlugin({
+                filename: 'css/[name].[contenthash:8].css',
+                chunkFilename: 'css/[name].[contenthash:8].chunk.css',
+                ignoreOrder: true,
+            }),
+        );
+
         if (config.sentryConfig) {
             const sentryPlugin: typeof sentryWebpackPlugin =
                 require('@sentry/webpack-plugin').sentryWebpackPlugin;
@@ -902,6 +886,7 @@ export function configureOptimization({config}: HelperOptions): Optimization {
                         'Chrome > 0 and last 2 years and > 0.05%',
                         'Safari > 0 and last 2 years and > 0.05%',
                         'Firefox > 0 and last 2 years and > 0.01%',
+                        'Safari >= 15.6 and > 0.1%',
                     ],
                 },
             }),

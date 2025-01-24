@@ -5,10 +5,19 @@ import WebpackDevServer from 'webpack-dev-server';
 import {getCompilerHooks} from 'webpack-manifest-plugin';
 import WebpackAssetsManifest from 'webpack-assets-manifest';
 import {deferredPromise} from '../../common/utils';
+import {getCompilerHooks as getRspackCompilerHooks} from 'rspack-manifest-plugin';
+import {
+    Compiler as RspackCompiler,
+    Configuration as RspackConfiguration,
+    MultiCompiler as RspackMultiCompiler,
+    rspack,
+} from '@rspack/core';
+import {RspackDevServer} from '@rspack/dev-server';
 
 import paths from '../../common/paths';
 import {Logger} from '../../common/logger';
 import {WebpackMode, webpackConfigFactory} from '../../common/webpack/config';
+import {RspackMode, rspackConfigFactory} from '../../common/rspack/config';
 
 import type {Configuration, HttpProxyMiddlewareOptionsFilter} from 'webpack-dev-server';
 import type {NormalizedServiceConfig} from '../../common/models';
@@ -26,6 +35,7 @@ export async function watchClientCompilation(
 }
 
 async function buildDevServer(config: NormalizedServiceConfig) {
+    const bundler = config.client.bundler;
     const logger = new Logger('client', config.verbose);
 
     const {
@@ -35,18 +45,26 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     } = config.client.devServer || {};
 
     const normalizedConfig = {...config.client, devServer: {...devServer, webSocketPath}};
-    const webpackConfigs = [
-        await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger}),
-    ];
     const isSsr = Boolean(normalizedConfig.ssr);
-    if (isSsr) {
-        const ssrLogger = new Logger('client(SSR)', config.verbose);
-        webpackConfigs.push(
-            await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {
-                logger: ssrLogger,
-                isSsr,
-            }),
-        );
+
+    let webpackConfigs: webpack.Configuration[] = [];
+    let rspackConfigs: RspackConfiguration[] = [];
+
+    if (bundler === 'webpack') {
+        webpackConfigs = [await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger})];
+
+        if (isSsr) {
+            const ssrLogger = new Logger('webpack(SSR)', config.verbose);
+            webpackConfigs.push(
+                await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger: ssrLogger, isSsr}),
+            );
+        }
+    } else {
+        if (isSsr) {
+            throw new Error(`SSR is not supported in ${bundler}`);
+        }
+
+        rspackConfigs = [await rspackConfigFactory(RspackMode.Dev, normalizedConfig, {logger})];
     }
 
     const publicPath = path.normalize(config.client.publicPathPrefix + '/build/');
@@ -132,13 +150,20 @@ async function buildDevServer(config: NormalizedServiceConfig) {
 
     options.proxy = proxy;
 
-    const compiler = webpack(webpackConfigs);
-    const server = new WebpackDevServer(options, compiler);
+    let server: WebpackDevServer | RspackDevServer;
+
+    if (bundler === 'rspack') {
+        const compiler = rspack(rspackConfigs);
+        server = new RspackDevServer(options, compiler);
+    } else {
+        const compiler = webpack(webpackConfigs);
+        server = new WebpackDevServer(options, compiler);
+    }
 
     try {
         await server.start();
     } catch (e) {
-        logger.logError('Cannot start webpack dev server', e);
+        logger.logError(`Cannot start ${bundler} dev server`, e);
     }
 
     if (options.ipc && typeof options.ipc === 'string') {
@@ -148,17 +173,18 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     return server;
 }
 
+function isRspackCompiler(compiler: webpack.Compiler | RspackCompiler): compiler is RspackCompiler {
+    return 'rspack' in compiler;
+}
+
 function subscribeToManifestReadyEvent(
-    webpackCompiler: webpack.Compiler | webpack.MultiCompiler,
+    compiler: webpack.Compiler | webpack.MultiCompiler | RspackCompiler | RspackMultiCompiler,
     onManifestReady: () => void,
 ) {
     const promises: Promise<unknown>[] = [];
 
-    const options = Array.isArray(webpackCompiler.options)
-        ? webpackCompiler.options
-        : [webpackCompiler.options];
-    const compilers =
-        'compilers' in webpackCompiler ? webpackCompiler.compilers : [webpackCompiler];
+    const options = Array.isArray(compiler.options) ? compiler.options : [compiler.options];
+    const compilers = 'compilers' in compiler ? compiler.compilers : [compiler];
 
     for (let i = 0; i < options.length; i++) {
         const config = options[i];
@@ -168,20 +194,28 @@ function subscribeToManifestReadyEvent(
             throw new Error('Something goes wrong!');
         }
 
-        const assetsManifestPlugin = config.plugins.find(
-            (plugin) => plugin instanceof WebpackAssetsManifest,
-        );
+        if (!isRspackCompiler(compiler)) {
+            const assetsManifestPlugin = config.plugins.find(
+                (plugin) => plugin instanceof WebpackAssetsManifest,
+            );
 
-        if (assetsManifestPlugin) {
-            const assetsManifestReady = deferredPromise();
-            promises.push(assetsManifestReady.promise);
-            assetsManifestPlugin.hooks.done.tap('app-builder', assetsManifestReady.resolve);
+            if (assetsManifestPlugin) {
+                const assetsManifestReady = deferredPromise();
+                promises.push(assetsManifestReady.promise);
+                assetsManifestPlugin.hooks.done.tap('app-builder', assetsManifestReady.resolve);
+            }
         }
 
         const manifestReady = deferredPromise();
         promises.push(manifestReady.promise);
-        const {afterEmit} = getCompilerHooks(compiler);
-        afterEmit.tap('app-builder', manifestReady.resolve);
+
+        if (isRspackCompiler(compiler)) {
+            const {afterEmit} = getRspackCompilerHooks(compiler);
+            afterEmit.tap('app-builder', manifestReady.resolve);
+        } else {
+            const {afterEmit} = getCompilerHooks(compiler);
+            afterEmit.tap('app-builder', manifestReady.resolve);
+        }
     }
 
     Promise.all(promises).then(() => onManifestReady());
