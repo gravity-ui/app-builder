@@ -12,6 +12,8 @@ import {
     RuleSetUseItem,
     rspack,
 } from '@rspack/core';
+import {resolveTypescript} from '../typescript/utils';
+import {TsCheckerRspackPlugin} from 'ts-checker-rspack-plugin';
 import {CleanWebpackPlugin} from 'clean-webpack-plugin';
 import _ from 'lodash';
 import {BundleAnalyzerPlugin} from 'webpack-bundle-analyzer';
@@ -183,24 +185,20 @@ function configureExperiments({
     config,
     isEnvProduction,
 }: HelperOptions): Configuration['experiments'] {
-    if (isEnvProduction) {
-        return undefined;
-    }
-
     let lazyCompilation: LazyCompilationOptions | undefined;
     let port;
-    let entries;
+    // let entries;
 
-    if (config.lazyCompilation) {
+    if (!isEnvProduction && config.lazyCompilation) {
         if (typeof config.lazyCompilation === 'object') {
             port = config.lazyCompilation.port;
-            entries = config.lazyCompilation.entries;
+            // entries = config.lazyCompilation.entries;
         }
 
         lazyCompilation = {
             // See https://github.com/web-infra-dev/rspack/issues/8503
-            entries: entries || false,
-            imports: false,
+            entries: false,
+            imports: true,
             backend: {
                 client: require.resolve('./lazy-client.js'),
                 ...(port
@@ -700,6 +698,23 @@ function configurePlugins(options: HelperOptions): Configuration['plugins'] {
     //     plugins.push(new webpack.debug.ProfilingPlugin());
     // }
 
+    if (config.forkTsChecker !== false) {
+        plugins.push(
+            new TsCheckerRspackPlugin({
+                ...config.forkTsChecker,
+                typescript: {
+                    typescriptPath: resolveTypescript(),
+                    configFile: path.resolve(paths.appClient, 'tsconfig.json'),
+                    diagnosticOptions: {
+                        syntactic: true,
+                    },
+                    mode: 'write-references',
+                    ...config.forkTsChecker?.typescript,
+                },
+            }),
+        );
+    }
+
     if (config.detectCircularDependencies) {
         let circularPluginOptions: CircularDependencyPlugin.Options = {
             exclude: /node_modules/,
@@ -846,6 +861,7 @@ export function configureOptimization({config}: HelperOptions): Optimization {
     }
 
     const useVendorsList = vendorsList.length > 0;
+    const browserslist = require('browserslist');
 
     const optimization: Optimization = {
         splitChunks: {
@@ -886,19 +902,7 @@ export function configureOptimization({config}: HelperOptions): Optimization {
             }),
             new rspack.LightningCssMinimizerRspackPlugin({
                 minimizerOptions: {
-                    // TODO browserlist not working
-                    targets: [
-                        'last 2 major versions and last 2 years and fully supports es6 and > 0.05%',
-                        'not dead',
-                        'not op_mini all',
-                        'not and_qq > 0',
-                        'not and_uc > 0',
-                        'Firefox ESR',
-                        'Chrome > 0 and last 2 years and > 0.05%',
-                        'Safari > 0 and last 2 years and > 0.05%',
-                        'Firefox > 0 and last 2 years and > 0.01%',
-                        'not safari < 15.6',
-                    ],
+                    targets: browserslist(),
                 },
             }),
         ],

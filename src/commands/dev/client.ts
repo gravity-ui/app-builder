@@ -87,7 +87,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
                 return false;
             },
         },
-        liveReload: false,
+        liveReload: true,
         hot: true,
         client: {
             logging: config.verbose ? 'log' : 'error',
