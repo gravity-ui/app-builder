@@ -15,7 +15,6 @@ import {
 import {resolveTypescript} from '../typescript/utils';
 import {TsCheckerRspackPlugin} from 'ts-checker-rspack-plugin';
 import {CleanWebpackPlugin} from 'clean-webpack-plugin';
-import _ from 'lodash';
 import {BundleAnalyzerPlugin} from 'webpack-bundle-analyzer';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
 import {ManifestPluginOptions, RspackManifestPlugin} from 'rspack-manifest-plugin';
@@ -96,6 +95,9 @@ export async function rspackConfigFactory(
         configType: rspackMode,
     };
 
+    // Cache is required for lazy compilation
+    const cache = Boolean(config.cache) || (isEnvDevelopment && Boolean(config.lazyCompilation));
+
     let rspackConfig: Configuration = {
         mode: rspackMode,
         context: paths.app,
@@ -122,7 +124,7 @@ export async function rspackConfigFactory(
             : undefined,
 
         experiments: configureExperiments(helperOptions),
-        cache: Boolean(config.cache),
+        cache,
     };
 
     rspackConfig = await config.rspack(rspackConfig, {configType: rspackMode});
@@ -139,6 +141,7 @@ export function configureModuleRules(
     additionalRules: NonNullable<RuleSetRule['oneOf']> = [],
 ) {
     const jsLoader = createJavaScriptLoader(helperOptions);
+
     return [
         ...createSourceMapRules(!helperOptions.config.disableSourceMapGeneration),
         {
@@ -187,15 +190,14 @@ function configureExperiments({
 }: HelperOptions): Configuration['experiments'] {
     let lazyCompilation: LazyCompilationOptions | undefined;
     let port;
-    // let entries;
 
     if (!isEnvProduction && config.lazyCompilation) {
         if (typeof config.lazyCompilation === 'object') {
             port = config.lazyCompilation.port;
-            // entries = config.lazyCompilation.entries;
         }
 
         lazyCompilation = {
+            // Lazy compilation works without problems only with lazy imports
             // See https://github.com/web-infra-dev/rspack/issues/8503
             entries: false,
             imports: true,
@@ -217,15 +219,12 @@ function configureExperiments({
     }
 
     return {
-        // TODO not working https://github.com/web-infra-dev/rspack/issues/5658
-        /*
         cache: {
             type: 'persistent',
             snapshot: {
                 managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
             },
         },
-        */
         lazyCompilation,
     };
 }
@@ -330,7 +329,12 @@ function createJavaScriptLoader({
 
     const transformOptions = config.babel(
         {
-            presets: [babelPreset({newJsxTransform: config.newJsxTransform, isSsr: false})],
+            presets: [
+                babelPreset({
+                    newJsxTransform: config.newJsxTransform,
+                    isSsr: false,
+                }),
+            ],
             plugins,
         },
         {configType, isSsr: false},
@@ -421,6 +425,7 @@ function createSassStylesRule(options: HelperOptions): RuleSetRule {
                 sourceMap: true, // must be always true for work with resolve-url-loader
                 sassOptions: {
                     loadPaths: [paths.appClient],
+                    silenceDeprecations: ['legacy-js-api', 'mixed-decls'],
                 },
             },
         },
@@ -693,7 +698,7 @@ function configurePlugins(options: HelperOptions): Configuration['plugins'] {
     if (options.logger) {
         plugins.push(new ProgressPlugin({logger: options.logger}));
     }
-    // TODO
+    // TODO use rspack tracing
     // if (process.env.WEBPACK_PROFILE === 'true') {
     //     plugins.push(new webpack.debug.ProfilingPlugin());
     // }
@@ -861,7 +866,6 @@ export function configureOptimization({config}: HelperOptions): Optimization {
     }
 
     const useVendorsList = vendorsList.length > 0;
-    const browserslist = require('browserslist');
 
     const optimization: Optimization = {
         splitChunks: {
@@ -902,7 +906,8 @@ export function configureOptimization({config}: HelperOptions): Optimization {
             }),
             new rspack.LightningCssMinimizerRspackPlugin({
                 minimizerOptions: {
-                    targets: browserslist(),
+                    // Plugin will read the browserslist itself and generate targets
+                    targets: [],
                 },
             }),
         ],

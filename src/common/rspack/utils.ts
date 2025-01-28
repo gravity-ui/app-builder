@@ -33,7 +33,7 @@ export function rspackCompilerHandlerFactory(logger: Logger, onCompilationEnd?: 
 
         const [clientStats] = stats?.stats ?? [];
         if (clientStats) {
-            const time = clientStats.endTime || 0 - (clientStats.startTime || 0);
+            const time = (clientStats.endTime || 0) - (clientStats.startTime || 0);
             logger.success(
                 `Client was successfully compiled in ${prettyTime(
                     BigInt(time) * BigInt(1_000_000),

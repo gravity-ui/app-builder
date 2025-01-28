@@ -87,7 +87,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
                 return false;
             },
         },
-        liveReload: true,
+        liveReload: false,
         hot: true,
         client: {
             logging: config.verbose ? 'log' : 'error',
@@ -153,7 +153,8 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     let server: WebpackDevServer | RspackDevServer;
 
     if (bundler === 'rspack') {
-        const compiler = rspack(rspackConfigs);
+        // Rspack multicompiler dont work with lazy compilation
+        const compiler = rspack(rspackConfigs[0]!);
         server = new RspackDevServer(options, compiler);
     } else {
         const compiler = webpack(webpackConfigs);
