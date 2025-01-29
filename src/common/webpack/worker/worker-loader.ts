@@ -1,10 +1,6 @@
 import * as path from 'node:path';
 
-import webpack from 'webpack';
-import NodeTargetPlugin from 'webpack/lib/node/NodeTargetPlugin';
-import WebWorkerTemplatePlugin from 'webpack/lib/webworker/WebWorkerTemplatePlugin';
-import FetchCompileWasmPlugin from 'webpack/lib/web/FetchCompileWasmPlugin';
-import FetchCompileAsyncWasmPlugin from 'webpack/lib/web/FetchCompileAsyncWasmPlugin';
+import type * as Webpack from 'webpack';
 
 import paths from '../../paths';
 
@@ -17,14 +13,14 @@ interface Cache {
     map?: string;
 }
 
-export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
+export const pitch: Webpack.PitchLoaderDefinitionFunction = function (request) {
     this.cacheable(false);
 
     if (!this._compiler || !this._compilation) {
         throw new Error('Something went wrong');
     }
 
-    const compilerOptions = this._compiler.options;
+    const {options: compilerOptions, webpack} = this._compiler;
 
     const logger = this.getLogger(pluginId);
     if (compilerOptions.output.globalObject === 'window') {
@@ -52,21 +48,33 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
         workerOptions,
     );
 
+    const {
+        EntryPlugin,
+        node: {NodeTargetPlugin},
+        web: {FetchCompileWasmPlugin, FetchCompileAsyncWasmPlugin},
+        webworker: {WebWorkerTemplatePlugin},
+    } = webpack;
+
     new WebWorkerTemplatePlugin().apply(workerCompiler);
 
     if (this.target !== 'webworker' && this.target !== 'web') {
         new NodeTargetPlugin().apply(workerCompiler);
     }
-    new FetchCompileWasmPlugin({
-        mangleImports: this._compiler.options.optimization.mangleWasmImports,
-    }).apply(workerCompiler);
 
-    new FetchCompileAsyncWasmPlugin().apply(workerCompiler);
+    if (FetchCompileWasmPlugin) {
+        new FetchCompileWasmPlugin({
+            mangleImports: this._compiler.options.optimization.mangleWasmImports,
+        }).apply(workerCompiler);
+    }
+
+    if (FetchCompileAsyncWasmPlugin) {
+        new FetchCompileAsyncWasmPlugin().apply(workerCompiler);
+    }
 
     const bundleName = path.parse(this.resourcePath).name;
 
-    new webpack.EntryPlugin(this.context, `!!${publicPath}`, bundleName).apply(workerCompiler);
-    new webpack.EntryPlugin(this.context, `!!${request}`, bundleName).apply(workerCompiler);
+    new EntryPlugin(this.context, `!!${publicPath}`, bundleName).apply(workerCompiler);
+    new EntryPlugin(this.context, `!!${request}`, bundleName).apply(workerCompiler);
 
     configureSourceMap(workerCompiler);
 
@@ -141,14 +149,14 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
                         continue;
                     }
 
-                    if (parentCompilation.assetsInfo.has(assetName)) {
+                    if (parentCompilation.getAsset(assetName)) {
                         continue;
                     }
 
                     parentCompilation.emitAsset(
                         assetName,
                         asset,
-                        compilation.assetsInfo.get(assetName),
+                        compilation.getAsset(assetName)?.info,
                     );
                 }
             }
@@ -168,7 +176,7 @@ export const pitch: webpack.PitchLoaderDefinitionFunction = function (request) {
     });
 };
 
-function configureSourceMap(compiler: webpack.Compiler) {
+function configureSourceMap(compiler: Webpack.Compiler) {
     const devtool = compiler.options.devtool;
     if (devtool) {
         if (devtool.includes('source-map')) {
@@ -185,7 +193,7 @@ function configureSourceMap(compiler: webpack.Compiler) {
             const inline = devtool.includes('inline');
             const cheap = devtool.includes('cheap');
             const moduleMaps = devtool.includes('module');
-            new webpack.SourceMapDevToolPlugin({
+            new compiler.webpack.SourceMapDevToolPlugin({
                 filename: inline ? null : compiler.options.output.sourceMapFilename,
                 moduleFilenameTemplate: compiler.options.output.devtoolModuleFilenameTemplate,
                 fallbackModuleFilenameTemplate:
