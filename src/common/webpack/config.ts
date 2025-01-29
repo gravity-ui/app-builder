@@ -1,8 +1,6 @@
-/* eslint-disable complexity */
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import * as webpack from 'webpack';
-import _ from 'lodash';
 import {CleanWebpackPlugin} from 'clean-webpack-plugin';
 import {WebpackManifestPlugin} from 'webpack-manifest-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';

@@ -17,7 +17,7 @@ export async function watchClientCompilation(
     config: NormalizedServiceConfig,
     onManifestReady: () => void,
 ) {
-    const clientCompilation = await buildWebpackServer(config);
+    const clientCompilation = await buildDevServer(config);
 
     const compiler = clientCompilation.compiler;
     subscribeToManifestReadyEvent(compiler, onManifestReady);
@@ -25,8 +25,8 @@ export async function watchClientCompilation(
     return clientCompilation;
 }
 
-async function buildWebpackServer(config: NormalizedServiceConfig) {
-    const logger = new Logger('webpack', config.verbose);
+async function buildDevServer(config: NormalizedServiceConfig) {
+    const logger = new Logger('client', config.verbose);
 
     const {
         webSocketPath = path.normalize(`/${config.client.publicPathPrefix}/build/sockjs-node`),
@@ -40,9 +40,12 @@ async function buildWebpackServer(config: NormalizedServiceConfig) {
     ];
     const isSsr = Boolean(normalizedConfig.ssr);
     if (isSsr) {
-        const logger = new Logger('webpack(SSR)', config.verbose);
+        const ssrLogger = new Logger('client(SSR)', config.verbose);
         webpackConfigs.push(
-            await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger, isSsr}),
+            await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {
+                logger: ssrLogger,
+                isSsr,
+            }),
         );
     }
 

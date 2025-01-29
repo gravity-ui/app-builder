@@ -1,4 +1,5 @@
-import * as webpack from 'webpack';
+import webpack from 'webpack';
+import type * as Webpack from 'webpack';
 import type {Logger} from '../logger';
 import {elapsedTime} from '../logger/pretty-time';
 
@@ -25,12 +26,16 @@ export class ProgressPlugin extends webpack.ProgressPlugin {
         );
     };
 
-    apply(compiler: webpack.Compiler) {
+    apply(compiler: Webpack.Compiler) {
         super.apply(compiler);
 
         hook(compiler, 'compile', () => {
             this._logger.message('Start compilation');
-            this._logger.message(`Webpack v${compiler.webpack.version}`);
+            if ('rspackVersion' in compiler.webpack) {
+                this._logger.message(`Rspack v${compiler.webpack.rspackVersion}`);
+            } else {
+                this._logger.message(`Webpack v${compiler.webpack.version}`);
+            }
             this._state.start = process.hrtime.bigint();
         });
 
@@ -51,10 +56,10 @@ export class ProgressPlugin extends webpack.ProgressPlugin {
     }
 }
 
-function hook<HookName extends keyof webpack.Compiler['hooks']>(
-    compiler: webpack.Compiler,
+function hook<HookName extends keyof Webpack.Compiler['hooks']>(
+    compiler: Webpack.Compiler,
     hookName: HookName,
-    callback: Parameters<webpack.Compiler['hooks'][HookName]['tap']>[1],
+    callback: Parameters<Webpack.Compiler['hooks'][HookName]['tap']>[1],
 ) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     compiler.hooks[hookName].tap(`app-builder: ${hookName}`, callback as any);

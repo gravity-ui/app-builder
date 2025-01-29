@@ -1,9 +1,8 @@
-import {WebpackError} from 'webpack';
 import {globSync} from 'fast-glob';
 
 import {uploadFiles} from './upload.js';
 
-import type {Compiler} from 'webpack';
+import type * as Webpack from 'webpack';
 import type {Logger} from '../logger/index.js';
 import type {UploadOptions} from './upload.js';
 import type {S3ClientOptions} from './s3-client.js';
@@ -27,11 +26,11 @@ export class S3UploadPlugin {
         this.options = options;
     }
 
-    apply(compiler: Compiler) {
+    apply(compiler: Webpack.Compiler) {
         compiler.hooks.done.tapPromise('s3-upload-plugin', async (stats) => {
             if (stats.hasErrors()) {
                 stats.compilation.warnings.push(
-                    new WebpackError(
+                    new compiler.webpack.WebpackError(
                         's3-upload-plugin: skipped upload to s3 due to compilation errors',
                     ),
                 );
@@ -66,7 +65,7 @@ export class S3UploadPlugin {
                     `Files successfully uploaded to bucket ${this.options.s3UploadOptions.bucket}`,
                 );
             } catch (e) {
-                const error = new WebpackError(
+                const error = new compiler.webpack.WebpackError(
                     `s3-upload-plugin: ${e instanceof Error ? e.message : e}`,
                 );
                 stats.compilation.errors.push(error);

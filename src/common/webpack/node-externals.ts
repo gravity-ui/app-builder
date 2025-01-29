@@ -1,6 +1,5 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type * as webpack from 'webpack';
 import paths from '../paths';
 
 type Pattern = RegExp | ((v: string) => boolean) | string;
@@ -17,8 +16,8 @@ export function nodeExternals({noExternal = [], module}: NodeExternalsOptions) {
 
     const nodeModules = readPackagesNames(paths.appNodeModules);
 
-    return async (data: webpack.ExternalItemFunctionData) => {
-        const {request} = data;
+    return async (data: {request?: string; dependencyType?: string}) => {
+        const {request, dependencyType} = data;
         if (!request) {
             return undefined;
         }
@@ -33,18 +32,18 @@ export function nodeExternals({noExternal = [], module}: NodeExternalsOptions) {
         }
 
         if (!module) {
-            return `commonjs ${data.request}`;
+            return `commonjs ${request}`;
         }
 
         if (
-            data.dependencyType === 'commonjs' ||
+            dependencyType === 'commonjs' ||
             // lodash/something without extension can't be imported so always require it
             (moduleName === 'lodash' && request.match(/^lodash\/[\w_]+($|\/[\w_]+$)/))
         ) {
-            return `node-commonjs ${data.request}`;
+            return `node-commonjs ${request}`;
         }
 
-        return `module-import ${data.request}`;
+        return `module-import ${request}`;
     };
 }
 

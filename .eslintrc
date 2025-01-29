@@ -3,6 +3,7 @@
     "root": true,
     "rules": {
         "global-require": "off",
+        "complexity": "off",
         "import/consistent-type-specifier-style": ["error", "prefer-top-level"]
     },
     "overrides": [

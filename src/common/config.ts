@@ -1,6 +1,4 @@
-/* eslint-disable complexity */
 import * as path from 'node:path';
-import _ from 'lodash';
 
 import {cosmiconfigSync} from 'cosmiconfig';
 import {TypeScriptLoader as getTsLoader} from 'cosmiconfig-typescript-loader';
@@ -32,7 +30,13 @@ function remapPaths(paths: string | string[]) {
 }
 
 function omitUndefined<T extends object>(obj: T) {
-    return _.omitBy(obj, _.isUndefined);
+    const newObj: Record<string, any> = {};
+    for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+            newObj[key] = value;
+        }
+    }
+    return newObj;
 }
 
 function getModuleLoader({storybook}: {storybook?: boolean} = {}) {
@@ -191,7 +195,7 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
         return config;
     }
 
-    const config = _.cloneDeep(userConfig);
+    const config = structuredClone(userConfig);
     config.lib.newJsxTransform = config.lib.newJsxTransform ?? true;
     return config;
 }

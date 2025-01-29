@@ -3,11 +3,11 @@ import * as ts from 'typescript';
 import {prettyTime} from '../logger/pretty-time';
 import {getTsProjectConfig} from '../typescript/utils';
 
-import type webpack from 'webpack';
+import type * as Webpack from 'webpack';
 import type {Logger} from '../logger';
 
 export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
-    return async (err?: Error | null, stats?: webpack.MultiStats) => {
+    return async (err?: Error | null, stats?: Webpack.MultiStats) => {
         if (err) {
             logger.panic(err.message, err);
         }
@@ -36,7 +36,8 @@ export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?:
 
         const [clientStats, ssrStats] = stats?.stats ?? [];
         if (clientStats) {
-            const time = clientStats.endTime - clientStats.startTime;
+            const {startTime = 0, endTime = 0} = clientStats;
+            const time = endTime - startTime;
             logger.success(
                 `Client was successfully compiled in ${prettyTime(
                     BigInt(time) * BigInt(1_000_000),
@@ -45,7 +46,8 @@ export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?:
         }
 
         if (ssrStats) {
-            const time = ssrStats.endTime - ssrStats.startTime;
+            const {startTime = 0, endTime = 0} = ssrStats;
+            const time = endTime - startTime;
             logger.success(
                 `SSR: Client was successfully compiled in ${prettyTime(
                     BigInt(time) * BigInt(1_000_000),
