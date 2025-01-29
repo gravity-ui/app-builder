@@ -10,13 +10,11 @@ interface State {
 
 export class ProgressPlugin extends webpack.ProgressPlugin {
     private _logger: Logger;
-    private _bundler: string;
     private _state: State = {};
 
-    constructor({logger, bundler = 'webpack'}: {logger: Logger; bundler?: string}) {
+    constructor({logger}: {logger: Logger}) {
         super();
         this._logger = logger;
-        this._bundler = bundler;
     }
 
     handler = (percent: number, message: string, ...details: string[]) => {

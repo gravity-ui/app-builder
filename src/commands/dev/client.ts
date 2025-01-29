@@ -21,6 +21,7 @@ import {RspackMode, rspackConfigFactory} from '../../common/rspack/config';
 
 import type {Configuration, HttpProxyMiddlewareOptionsFilter} from 'webpack-dev-server';
 import type {NormalizedServiceConfig} from '../../common/models';
+import {clearCacheDirectory} from '../../common/rspack/utils';
 
 export async function watchClientCompilation(
     config: NormalizedServiceConfig,
@@ -156,6 +157,8 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         // Rspack multicompiler dont work with lazy compilation
         const compiler = rspack(rspackConfigs[0]!);
         server = new RspackDevServer(options, compiler);
+        // Need to clean cache before start. https://github.com/web-infra-dev/rspack/issues/9025
+        clearCacheDirectory(rspackConfigs[0]!, logger);
     } else {
         const compiler = webpack(webpackConfigs);
         server = new WebpackDevServer(options, compiler);

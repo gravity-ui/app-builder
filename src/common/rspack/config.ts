@@ -224,6 +224,13 @@ function configureExperiments({
             snapshot: {
                 managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
             },
+            storage: {
+                type: 'filesystem',
+                directory:
+                    typeof config.cache === 'object' && 'cacheDirectory' in config.cache
+                        ? config.cache.cacheDirectory
+                        : undefined,
+            },
         },
         lazyCompilation,
     };

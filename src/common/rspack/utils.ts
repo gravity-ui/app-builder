@@ -1,7 +1,30 @@
 import {prettyTime} from '../logger/pretty-time';
-
-import type {MultiStats} from '@rspack/core';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import type {Configuration, MultiStats} from '@rspack/core';
 import type {Logger} from '../logger';
+import paths from '../../common/paths';
+
+export function clearCacheDirectory(config: Configuration, logger: Logger) {
+    if (!config.cache) {
+        return;
+    }
+
+    let cacheDirectory = path.join(paths.appNodeModules, '.cache/rspack');
+
+    if (
+        typeof config.experiments?.cache === 'object' &&
+        config.experiments.cache.type === 'persistent' &&
+        config.experiments.cache.storage?.directory
+    ) {
+        cacheDirectory = config.experiments.cache.storage?.directory;
+    }
+
+    if (fs.existsSync(cacheDirectory)) {
+        fs.rmdirSync(cacheDirectory, {recursive: true});
+        logger.message(`Rspack cache ${cacheDirectory} successfully cleared`);
+    }
+}
 
 export function rspackCompilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
     return async (err?: Error | null, stats?: MultiStats) => {
