@@ -19,12 +19,6 @@ export function watch(
 
     const createProgram = ts.createEmitAndSemanticDiagnosticsBuilderProgram;
 
-    const formatHost = {
-        getCanonicalFileName: (path: string) => path,
-        getCurrentDirectory: ts.sys.getCurrentDirectory,
-        getNewLine: () => ts.sys.newLine,
-    };
-
     const host = ts.createWatchCompilerHost(
         configPath,
         {
@@ -79,6 +73,11 @@ export function watch(
     ts.createWatchProgram(host);
 
     function reportDiagnostic(diagnostic: Typescript.Diagnostic) {
+        const formatHost = {
+            getCanonicalFileName: (path: string) => path,
+            getCurrentDirectory: ts.sys.getCurrentDirectory,
+            getNewLine: () => ts.sys.newLine,
+        };
         if (logger.isVerbose) {
             logger.message(ts.formatDiagnosticsWithColorAndContext([diagnostic], formatHost));
         } else {
@@ -92,9 +91,7 @@ export function watch(
      */
     function reportWatchStatusChanged(diagnostic: Typescript.Diagnostic) {
         if (diagnostic.messageText) {
-            logger.message(
-                ts.flattenDiagnosticMessageText(diagnostic.messageText, formatHost.getNewLine()),
-            );
+            logger.message(ts.flattenDiagnosticMessageText(diagnostic.messageText, ts.sys.newLine));
         }
     }
 }

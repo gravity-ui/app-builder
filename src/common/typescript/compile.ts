@@ -37,7 +37,7 @@ export function compile(
     const program = ts.createProgram(parsedConfig.fileNames, parsedConfig.options, compilerHost);
     // @ts-expect-error
     const filesCount = compilerHost.readFile.disableDisplay();
-    const allDiagnostics = ts.getPreEmitDiagnostics(program).slice();
+    let allDiagnostics = ts.getPreEmitDiagnostics(program);
     logger.verbose(`Program created, read ${filesCount} files`);
 
     if (!hasErrors(allDiagnostics)) {
@@ -49,7 +49,9 @@ export function compile(
         });
         logger.verbose('Emit complete!');
 
-        allDiagnostics.push(...emitResult.diagnostics);
+        allDiagnostics = ts.sortAndDeduplicateDiagnostics(
+            allDiagnostics.concat(emitResult.diagnostics),
+        );
     }
 
     allDiagnostics.forEach(reportDiagnostic);
@@ -61,13 +63,12 @@ export function compile(
         logger.success(`Compiled successfully in ${elapsedTime(start)}`);
     }
 
-    const formatHost = {
-        getCanonicalFileName: (path: string) => path,
-        getCurrentDirectory: ts.sys.getCurrentDirectory,
-        getNewLine: () => ts.sys.newLine,
-    };
-
     function reportDiagnostic(diagnostic: Typescript.Diagnostic) {
+        const formatHost = {
+            getCanonicalFileName: (path: string) => path,
+            getCurrentDirectory: ts.sys.getCurrentDirectory,
+            getNewLine: () => ts.sys.newLine,
+        };
         if (logger.isVerbose) {
             logger.message(ts.formatDiagnosticsWithColorAndContext([diagnostic], formatHost));
         } else {
@@ -75,7 +76,7 @@ export function compile(
         }
     }
 
-    function hasErrors(diagnostics: Typescript.Diagnostic[]) {
+    function hasErrors(diagnostics: readonly Typescript.Diagnostic[]) {
         return diagnostics.some(({category}) => category === ts.DiagnosticCategory.Error);
     }
 }
