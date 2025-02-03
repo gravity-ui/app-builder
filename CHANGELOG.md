@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.15.0](https://github.com/gravity-ui/app-builder/compare/v0.14.1...v0.15.0) (2025-02-03)
+
+
+### Features
+
+* **client:** preparation for rspask ([#178](https://github.com/gravity-ui/app-builder/issues/178)) ([333ae77](https://github.com/gravity-ui/app-builder/commit/333ae77df9a5722d6a276e75686f338b527702e6))
+
+
+### Bug Fixes
+
+* **server:** cannot access 'formatHost' before initialization ([#180](https://github.com/gravity-ui/app-builder/issues/180)) ([dae373e](https://github.com/gravity-ui/app-builder/commit/dae373eedd44840131a3e79c10c963002e7038be))
+
 ## [0.14.1](https://github.com/gravity-ui/app-builder/compare/v0.14.0...v0.14.1) (2025-01-22)
 
 
