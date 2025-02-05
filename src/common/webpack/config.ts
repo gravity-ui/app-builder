@@ -12,6 +12,17 @@ import MomentTimezoneDataPlugin from 'moment-timezone-data-webpack-plugin';
 import StatoscopeWebpackPlugin from '@statoscope/webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
 import type {sentryWebpackPlugin} from '@sentry/webpack-plugin';
+import {
+    CssExtractRspackPlugin,
+    Configuration as RspackConfiguration,
+    LazyCompilationOptions as RspackLazyCompilationOptions,
+    ResolveOptions as RspackResolveOptions,
+    rspack,
+} from '@rspack/core';
+import {RspackManifestPlugin} from 'rspack-manifest-plugin';
+import {RspackProgressPlugin, generateAssetsManifest, prepareRspackRules} from './rspack';
+import {TsCheckerRspackPlugin} from 'ts-checker-rspack-plugin';
+import ReactRefreshRspackPlugin from '@rspack/plugin-react-refresh';
 
 import type TerserWebpackPlugin from 'terser-webpack-plugin';
 import type * as Lightningcss from 'lightningcss';
@@ -28,9 +39,11 @@ import {createS3UploadPlugins} from '../s3-upload';
 import {logConfig} from '../logger/log-config';
 import {resolveTypescript} from '../typescript/utils';
 import {nodeExternals} from './node-externals';
+import {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
+const assetsManifestFile = 'assets-manifest.json';
 
 export interface HelperOptions {
     config: NormalizedClientConfig;
@@ -48,15 +61,23 @@ export const enum WebpackMode {
     Dev = 'development',
 }
 
-export async function webpackConfigFactory(
-    webpackMode: WebpackMode,
-    config: NormalizedClientConfig,
-    {logger, isSsr = false}: {logger?: Logger; isSsr?: boolean} = {},
-): Promise<webpack.Configuration> {
+type ClientFactoryOptions = {
+    webpackMode: WebpackMode;
+    config: NormalizedClientConfig;
+    logger?: Logger;
+    isSsr?: boolean;
+};
+
+function getHelperOptions({
+    webpackMode,
+    config,
+    logger,
+    isSsr = false,
+}: ClientFactoryOptions): HelperOptions {
     const isEnvDevelopment = webpackMode === WebpackMode.Dev;
     const isEnvProduction = webpackMode === WebpackMode.Prod;
 
-    const helperOptions: HelperOptions = {
+    return {
         config,
         logger,
         isEnvDevelopment,
@@ -66,6 +87,14 @@ export async function webpackConfigFactory(
         entriesDirectory: isSsr ? paths.appSsrEntry : paths.appEntry,
         isSsr,
     };
+}
+
+export async function webpackConfigFactory(
+    options: ClientFactoryOptions,
+): Promise<webpack.Configuration> {
+    const {config} = options;
+    const helperOptions = getHelperOptions(options);
+    const {isSsr, isEnvProduction} = helperOptions;
 
     let externals = config.externals;
     if (isSsr) {
@@ -79,7 +108,7 @@ export async function webpackConfigFactory(
     }
 
     let webpackConfig: webpack.Configuration = {
-        mode: webpackMode,
+        mode: isEnvProduction ? 'production' : 'development',
         context: paths.app,
         bail: isEnvProduction,
         target: isSsr ? 'node' : undefined,
@@ -90,7 +119,7 @@ export async function webpackConfigFactory(
         module: {
             rules: configureModuleRules(helperOptions),
         },
-        plugins: configurePlugins(helperOptions),
+        plugins: configureWebpackPlugins(helperOptions),
         optimization: configureOptimization(helperOptions),
         externals,
         node: config.node,
@@ -110,13 +139,67 @@ export async function webpackConfigFactory(
         cache: config.cache,
     };
 
-    webpackConfig = await config.webpack(webpackConfig, {configType: webpackMode, isSsr});
+    webpackConfig = await config.webpack(webpackConfig, {
+        configType: isEnvProduction ? 'production' : 'development',
+        isSsr,
+    });
 
     if (config.debugWebpack) {
         logConfig('Preview webpack config', webpackConfig);
     }
 
     return webpackConfig;
+}
+
+export async function rspackConfigFactory(
+    options: ClientFactoryOptions,
+): Promise<RspackConfiguration> {
+    const {config} = options;
+    const helperOptions = getHelperOptions(options);
+    const {isSsr, isEnvProduction, isEnvDevelopment} = helperOptions;
+
+    // Cache is required for lazy compilation
+    const cache = Boolean(config.cache) || (isEnvDevelopment && Boolean(config.lazyCompilation));
+
+    let rspackConfig: RspackConfiguration = {
+        mode: isEnvProduction ? 'production' : 'development',
+        context: paths.app,
+        bail: isEnvProduction,
+        target: isSsr ? 'node' : undefined,
+        devtool: configureDevTool(helperOptions),
+        entry: configureEntry(helperOptions) as RspackConfiguration['entry'],
+        output: configureRspackOutput(helperOptions),
+        resolve: configureRspackResolve(helperOptions),
+        module: {
+            rules: prepareRspackRules(configureModuleRules(helperOptions)),
+        },
+        plugins: configureRspackPlugins(helperOptions),
+        optimization: configureRspackOptimization(helperOptions),
+        // TODO externals,
+        node: config.node,
+        watchOptions: configureWatchOptions(helperOptions),
+        ignoreWarnings: [/Failed to parse source map/],
+        infrastructureLogging: config.verbose
+            ? {
+                  colors: true,
+                  level: 'verbose',
+              }
+            : undefined,
+
+        experiments: configureRspackExperiments(helperOptions),
+        cache,
+    };
+
+    rspackConfig = await config.rspack(rspackConfig, {
+        configType: isEnvProduction ? 'production' : 'development',
+        isSsr,
+    });
+
+    if (config.debugWebpack) {
+        logConfig('Preview rspack config', rspackConfig);
+    }
+
+    return rspackConfig;
 }
 
 export function configureModuleRules(
@@ -143,7 +226,7 @@ export function configureModuleRules(
 }
 
 function configureDevTool({isEnvProduction, config}: HelperOptions) {
-    let format: webpack.Configuration['devtool'] = 'cheap-module-source-map';
+    let format: RspackConfiguration['devtool'] = 'cheap-module-source-map';
     if (isEnvProduction) {
         format = config.hiddenSourceMap ? 'hidden-source-map' : 'source-map';
     }
@@ -209,6 +292,67 @@ function configureExperiments({
     };
 }
 
+function configureRspackExperiments({
+    config,
+    isEnvProduction,
+    isSsr,
+}: HelperOptions): RspackConfiguration['experiments'] {
+    if (isSsr) {
+        return config.ssr?.moduleType === 'esm' ? {outputModule: true} : undefined;
+    }
+
+    if (isEnvProduction) {
+        return undefined;
+    }
+
+    let lazyCompilation: RspackLazyCompilationOptions | undefined;
+    let port;
+
+    if (config.lazyCompilation) {
+        if (typeof config.lazyCompilation === 'object') {
+            port = config.lazyCompilation.port;
+        }
+
+        lazyCompilation = {
+            // Lazy compilation works without problems only with lazy imports
+            // See https://github.com/web-infra-dev/rspack/issues/8503
+            entries: false,
+            imports: true,
+            backend: {
+                client: require.resolve('./lazy-client.js'),
+                ...(port
+                    ? {
+                          listen: {
+                              port,
+                          },
+                      }
+                    : {}),
+            },
+            test(module) {
+                // make sure that lazy-client.js won't be lazy compiled)
+                return !module.nameForCondition().endsWith('lazy-client.js');
+            },
+        };
+    }
+
+    return {
+        cache: {
+            type: 'persistent',
+            snapshot: {
+                managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
+            },
+            storage: {
+                type: 'filesystem',
+                directory:
+                    typeof config.cache === 'object' && 'cacheDirectory' in config.cache
+                        ? config.cache.cacheDirectory
+                        : undefined,
+            },
+        },
+        lazyCompilation,
+    };
+}
+
 export function configureResolve({isEnvProduction, config}: HelperOptions): webpack.ResolveOptions {
     const alias: Record<string, string> = {...config.alias};
 
@@ -231,6 +375,18 @@ export function configureResolve({isEnvProduction, config}: HelperOptions): webp
         extensions: ['.mjs', '.cjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
         symlinks: config.symlinks,
         fallback: config.fallback,
+    };
+}
+
+function configureRspackResolve(helperOptions: HelperOptions): RspackResolveOptions {
+    const {alias, modules, extensions, symlinks, fallback} = configureResolve(helperOptions);
+
+    return {
+        alias: Array.isArray(alias) ? undefined : alias,
+        modules,
+        extensions,
+        symlinks,
+        fallback: Array.isArray(fallback) ? undefined : fallback,
     };
 }
 
@@ -277,7 +433,7 @@ function getFileNames({isEnvProduction, isSsr, config}: HelperOptions) {
     };
 }
 
-function configureOutput(options: HelperOptions): webpack.Configuration['output'] {
+function configureOutput(options: HelperOptions): NonNullable<webpack.Configuration['output']> {
     let ssrOptions: webpack.Configuration['output'];
     if (options.isSsr) {
         ssrOptions = {
@@ -290,6 +446,21 @@ function configureOutput(options: HelperOptions): webpack.Configuration['output'
         path: options.buildDirectory,
         pathinfo: options.isEnvDevelopment,
         ...ssrOptions,
+    };
+}
+
+function configureRspackOutput(options: HelperOptions): RspackConfiguration['output'] {
+    const {filename, chunkFilename, library, chunkFormat, path, pathinfo} =
+        configureOutput(options);
+
+    return {
+        filename: typeof filename === 'string' ? filename : undefined,
+        chunkFilename: typeof chunkFilename === 'string' ? chunkFilename : undefined,
+        library,
+        chunkFormat,
+        path,
+        pathinfo,
+        clean: false,
     };
 }
 
@@ -389,7 +560,11 @@ function createWorkerRule(options: HelperOptions): webpack.RuleSetRule {
                       loader: require.resolve('./worker/worker-loader'),
                   }
                 : {
-                      loader: require.resolve('worker-loader'),
+                      loader: require.resolve(
+                          options.config.bundler === 'rspack'
+                              ? 'worker-rspack-loader'
+                              : 'worker-loader',
+                      ),
                       // currently workers located on cdn are not working properly, so we are enforcing loading workers from
                       // service instead
                       options: {
@@ -440,6 +615,7 @@ function getCssLoaders(
     {isEnvDevelopment, isEnvProduction, config, isSsr}: HelperOptions,
     additionalRules?: webpack.RuleSetUseItem[],
 ) {
+    const isRspack = config.bundler === 'rspack';
     const loaders: webpack.RuleSetUseItem[] = [];
 
     if (!config.transformCssWithLightningCss) {
@@ -483,12 +659,18 @@ function getCssLoaders(
     });
 
     if (isEnvProduction) {
-        loaders.unshift({loader: MiniCSSExtractPlugin.loader, options: {emit: !isSsr}});
+        loaders.unshift({
+            loader: isRspack ? CssExtractRspackPlugin.loader : MiniCSSExtractPlugin.loader,
+            options: {emit: !isSsr},
+        });
     }
 
     if (isEnvDevelopment) {
         if (isSsr || config.ssr) {
-            loaders.unshift({loader: MiniCSSExtractPlugin.loader, options: {emit: !isSsr}});
+            loaders.unshift({
+                loader: isRspack ? CssExtractRspackPlugin.loader : MiniCSSExtractPlugin.loader,
+                options: {emit: !isSsr},
+            });
         } else {
             loaders.unshift({
                 loader: require.resolve('style-loader'),
@@ -659,11 +841,86 @@ function createMomentTimezoneDataPlugin(options: NormalizedClientConfig['momentT
     return new MomentTimezoneDataPlugin({...options, startYear, endYear});
 }
 
-function configurePlugins(options: HelperOptions): webpack.Configuration['plugins'] {
+function getDefinitions({config, isSsr}: HelperOptions) {
+    return {
+        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+        'process.env.IS_SSR': JSON.stringify(isSsr),
+        ...config.definitions,
+    };
+}
+
+type ContextReplacement = {
+    resourceRegExp: RegExp;
+    newResource?: any;
+};
+
+function getContextReplacements({config, isSsr}: HelperOptions): ContextReplacement[] {
+    const contextReplacement = config.contextReplacement || {};
+
+    if (isSsr) {
+        return [];
+    }
+
+    const replacements = [
+        {
+            resourceRegExp: /moment[\\/]locale$/, // eslint-disable-next-line security/detect-non-literal-regexp
+            newResource: new RegExp(`^\\./(${(contextReplacement.locale || ['ru']).join('|')})$`),
+        },
+        {
+            resourceRegExp: /dayjs[\\/]locale$/,
+            // eslint-disable-next-line security/detect-non-literal-regexp
+            newResource: new RegExp(
+                `^\\./(${(contextReplacement.locale || ['ru']).join('|')})\\.js$`,
+            ),
+        },
+    ];
+
+    if (contextReplacement['highlight.js']) {
+        replacements.push({
+            resourceRegExp: /highlight\.js[\\/]lib[\\/]languages$/,
+            // eslint-disable-next-line security/detect-non-literal-regexp
+            newResource: new RegExp(`^\\./(${contextReplacement['highlight.js'].join('|')})$`),
+        });
+    }
+
+    return replacements;
+}
+
+function getForkTsCheckerOptions({
+    config,
+}: HelperOptions): ForkTsCheckerWebpackPluginOptions | undefined {
+    return config.forkTsChecker === false
+        ? undefined
+        : {
+              ...config.forkTsChecker,
+              typescript: {
+                  typescriptPath: resolveTypescript(),
+                  configFile: path.resolve(paths.appClient, 'tsconfig.json'),
+                  diagnosticOptions: {
+                      syntactic: true,
+                  },
+                  mode: 'write-references',
+                  ...config.forkTsChecker?.typescript,
+              },
+          };
+}
+
+function getCssExtractPluginOptions({isEnvProduction}: HelperOptions) {
+    return {
+        filename: isEnvProduction ? 'css/[name].[contenthash:8].css' : 'css/[name].css',
+        chunkFilename: isEnvProduction
+            ? 'css/[name].[contenthash:8].chunk.css'
+            : 'css/[name].chunk.css',
+        ignoreOrder: true,
+    };
+}
+
+function configureCommonPlugins(
+    options: HelperOptions,
+): NonNullable<webpack.Configuration['plugins']> {
     const {isEnvDevelopment, isEnvProduction, config, isSsr} = options;
     const excludeFromClean = config.excludeFromClean || [];
 
-    const manifestFile = 'assets-manifest.json';
     const plugins: webpack.Configuration['plugins'] = [
         new CleanWebpackPlugin({
             verbose: config.verbose,
@@ -673,51 +930,7 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
                 ...excludeFromClean,
             ],
         }),
-        new WebpackManifestPlugin({
-            writeToFileEmit: true,
-            publicPath: '',
-        }),
-        new WebpackAssetsManifest(
-            isEnvProduction
-                ? {
-                      entrypoints: true,
-                      output: manifestFile,
-                  }
-                : {
-                      entrypoints: true,
-                      writeToDisk: true,
-                      output: path.resolve(options.buildDirectory, manifestFile),
-                  },
-        ),
-        new webpack.DefinePlugin({
-            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-            'process.env.IS_SSR': JSON.stringify(isSsr),
-            ...config.definitions,
-        }),
     ];
-    if (options.logger) {
-        plugins.push(new ProgressPlugin({logger: options.logger}));
-    }
-    if (process.env.WEBPACK_PROFILE === 'true') {
-        plugins.push(new webpack.debug.ProfilingPlugin());
-    }
-
-    if (config.forkTsChecker !== false) {
-        plugins.push(
-            new ForkTsCheckerWebpackPlugin({
-                ...config.forkTsChecker,
-                typescript: {
-                    typescriptPath: resolveTypescript(),
-                    configFile: path.resolve(paths.appClient, 'tsconfig.json'),
-                    diagnosticOptions: {
-                        syntactic: true,
-                    },
-                    mode: 'write-references',
-                    ...config.forkTsChecker?.typescript,
-                },
-            }),
-        );
-    }
 
     if (config.detectCircularDependencies) {
         let circularPluginOptions: CircularDependencyPlugin.Options = {
@@ -740,33 +953,6 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
                 }),
             );
         }
-
-        if (config.analyzeBundle === 'statoscope') {
-            const customStatoscopeConfig = config.statoscopeConfig || {};
-
-            plugins.push(
-                new StatoscopeWebpackPlugin({
-                    saveReportTo: path.resolve(options.buildDirectory, 'report.html'),
-                    saveStatsTo: path.resolve(options.buildDirectory, 'stats.json'),
-                    open: false,
-                    statsOptions: {
-                        all: true,
-                    },
-                    ...customStatoscopeConfig,
-                }),
-            );
-        }
-    }
-    if (isEnvProduction || isSsr || config.ssr) {
-        plugins.push(
-            new MiniCSSExtractPlugin({
-                filename: isEnvProduction ? 'css/[name].[contenthash:8].css' : 'css/[name].css',
-                chunkFilename: isEnvProduction
-                    ? 'css/[name].[contenthash:8].chunk.css'
-                    : 'css/[name].chunk.css',
-                ignoreOrder: true,
-            }),
-        );
     }
 
     if (!isSsr) {
@@ -783,74 +969,178 @@ function configurePlugins(options: HelperOptions): webpack.Configuration['plugin
             );
         }
 
-        const contextReplacement = config.contextReplacement || {};
         plugins.push(createMomentTimezoneDataPlugin(config.momentTz));
-        plugins.push(
-            new webpack.ContextReplacementPlugin(
-                /moment[\\/]locale$/,
-                // eslint-disable-next-line security/detect-non-literal-regexp
-                new RegExp(`^\\./(${(contextReplacement.locale || ['ru']).join('|')})$`),
-            ),
-        );
+    }
 
-        plugins.push(
-            new webpack.ContextReplacementPlugin(
-                /dayjs[\\/]locale$/,
-                // eslint-disable-next-line security/detect-non-literal-regexp
-                new RegExp(`^\\./(${(contextReplacement.locale || ['ru']).join('|')})\\.js$`),
-            ),
-        );
-
-        if (contextReplacement['highlight.js']) {
-            plugins.push(
-                new webpack.ContextReplacementPlugin(
-                    /highlight\.js[\\/]lib[\\/]languages$/,
-                    // eslint-disable-next-line security/detect-non-literal-regexp
-                    new RegExp(`^\\./(${contextReplacement['highlight.js'].join('|')})$`),
-                ),
-            );
+    if (isEnvProduction) {
+        if (config.sentryConfig) {
+            const sentryPlugin: typeof sentryWebpackPlugin =
+                require('@sentry/webpack-plugin').sentryWebpackPlugin;
+            plugins.push(sentryPlugin({...config.sentryConfig}));
         }
+    }
 
-        if (isEnvDevelopment && config.reactRefresh !== false) {
-            const {
-                webSocketPath = path.normalize(`/${config.publicPathPrefix}/build/sockjs-node`),
-            } = config.devServer || {};
-            plugins.push(
-                new ReactRefreshWebpackPlugin(
-                    config.reactRefresh({
-                        overlay: {sockPath: webSocketPath},
-                        exclude: [/node_modules/, /\.worker\.[jt]sx?$/],
-                    }),
-                ),
-            );
-        }
-
-        if (config.polyfill?.process) {
-            plugins.push(new webpack.ProvidePlugin({process: 'process/browser.js'}));
-        }
-
-        if (isEnvProduction) {
-            if (config.sentryConfig) {
-                const sentryPlugin: typeof sentryWebpackPlugin =
-                    require('@sentry/webpack-plugin').sentryWebpackPlugin;
-                plugins.push(sentryPlugin({...config.sentryConfig}));
-            }
-        }
-
-        if (config.cdn) {
-            plugins.push(...createS3UploadPlugins(config, options.logger));
-        }
+    if (config.cdn) {
+        plugins.push(...createS3UploadPlugins(config, options.logger));
     }
 
     return plugins;
 }
 
-type Optimization = NonNullable<webpack.Configuration['optimization']>;
-export function configureOptimization({config, isSsr}: HelperOptions): Optimization {
-    if (isSsr) {
-        return {};
+function configureWebpackPlugins(options: HelperOptions): webpack.Configuration['plugins'] {
+    const {isEnvDevelopment, isEnvProduction, config, isSsr} = options;
+
+    const forkTsCheckerOptions = getForkTsCheckerOptions(options);
+
+    const webpackPlugins: webpack.Configuration['plugins'] = [
+        ...configureCommonPlugins(options),
+        ...(options.logger ? [new ProgressPlugin({logger: options.logger})] : []),
+        new webpack.DefinePlugin(getDefinitions(options)),
+        new WebpackManifestPlugin({
+            writeToFileEmit: true,
+            publicPath: '',
+        }),
+        new WebpackAssetsManifest(
+            isEnvProduction
+                ? {
+                      entrypoints: true,
+                      output: assetsManifestFile,
+                  }
+                : {
+                      entrypoints: true,
+                      writeToDisk: true,
+                      output: path.resolve(options.buildDirectory, assetsManifestFile),
+                  },
+        ),
+        ...(process.env.WEBPACK_PROFILE === 'true' ? [new webpack.debug.ProfilingPlugin()] : []),
+        ...(forkTsCheckerOptions ? [new ForkTsCheckerWebpackPlugin(forkTsCheckerOptions)] : []),
+    ];
+
+    if (isEnvProduction || isSsr || config.ssr) {
+        webpackPlugins.push(new MiniCSSExtractPlugin(getCssExtractPluginOptions(options)));
     }
 
+    if (isEnvProduction) {
+        if (config.analyzeBundle === 'statoscope') {
+            const customStatoscopeConfig = config.statoscopeConfig || {};
+
+            webpackPlugins.push(
+                new StatoscopeWebpackPlugin({
+                    saveReportTo: path.resolve(options.buildDirectory, 'report.html'),
+                    saveStatsTo: path.resolve(options.buildDirectory, 'stats.json'),
+                    open: false,
+                    statsOptions: {
+                        all: true,
+                    },
+                    ...customStatoscopeConfig,
+                }),
+            );
+        }
+    }
+
+    if (!isSsr) {
+        const contextReplacements = getContextReplacements(options);
+        contextReplacements.forEach(({resourceRegExp, newResource}) =>
+            webpackPlugins.push(new webpack.ContextReplacementPlugin(resourceRegExp, newResource)),
+        );
+
+        if (isEnvDevelopment && config.reactRefresh !== false) {
+            const {
+                webSocketPath = path.normalize(`/${config.publicPathPrefix}/build/sockjs-node`),
+            } = config.devServer || {};
+
+            const reactRefreshConfig = config.reactRefresh({
+                overlay: {sockPath: webSocketPath},
+                exclude: [/node_modules/, /\.worker\.[jt]sx?$/],
+            });
+
+            webpackPlugins.push(new ReactRefreshWebpackPlugin(reactRefreshConfig));
+        }
+
+        if (config.polyfill?.process) {
+            webpackPlugins.push(new webpack.ProvidePlugin({process: 'process/browser.js'}));
+        }
+    }
+
+    return webpackPlugins;
+}
+
+function configureRspackPlugins(options: HelperOptions): RspackConfiguration['plugins'] {
+    const {isEnvDevelopment, isEnvProduction, config, isSsr} = options;
+
+    const forkTsCheckerOptions = getForkTsCheckerOptions(options);
+
+    const rspackPlugins: RspackConfiguration['plugins'] = [
+        ...configureCommonPlugins(options),
+        ...(options.logger ? [new RspackProgressPlugin({logger: options.logger})] : []),
+        new rspack.DefinePlugin(getDefinitions(options)),
+        new RspackManifestPlugin({
+            fileName: isEnvProduction
+                ? assetsManifestFile
+                : path.resolve(paths.appBuild, assetsManifestFile),
+            writeToFileEmit: true,
+            useLegacyEmit: true,
+            publicPath: '',
+            generate: generateAssetsManifest,
+        }),
+        ...(forkTsCheckerOptions ? [new TsCheckerRspackPlugin(forkTsCheckerOptions)] : []),
+    ];
+
+    if (isEnvProduction || isSsr || config.ssr) {
+        rspackPlugins.push(new CssExtractRspackPlugin(getCssExtractPluginOptions(options)));
+    }
+
+    // TODO add rsdoctor plugin
+
+    if (!isSsr) {
+        const contextReplacements = getContextReplacements(options);
+        contextReplacements.forEach(({resourceRegExp, newResource}) =>
+            rspackPlugins.push(new rspack.ContextReplacementPlugin(resourceRegExp, newResource)),
+        );
+
+        if (isEnvDevelopment && config.reactRefresh !== false) {
+            const {
+                webSocketPath = path.normalize(`/${config.publicPathPrefix}/build/sockjs-node`),
+            } = config.devServer || {};
+
+            const {overlay, ...reactRefreshConfig} = config.reactRefresh({
+                overlay: {sockPath: webSocketPath},
+                exclude: [/node_modules/, /\.worker\.[jt]sx?$/],
+            });
+
+            rspackPlugins.push(
+                new ReactRefreshRspackPlugin({
+                    ...reactRefreshConfig,
+                    overlay:
+                        typeof overlay === 'object'
+                            ? {
+                                  entry:
+                                      typeof overlay.entry === 'string' ? overlay.entry : undefined,
+                                  module:
+                                      typeof overlay.module === 'string'
+                                          ? overlay.module
+                                          : undefined,
+                                  sockPath: overlay.sockPath,
+                                  sockHost: overlay.sockHost,
+                                  sockPort: overlay.sockPort?.toString(),
+                                  sockProtocol: overlay.sockProtocol,
+                                  sockIntegration:
+                                      overlay.sockIntegration === 'wds' ? 'wds' : undefined,
+                              }
+                            : undefined,
+                }),
+            );
+        }
+
+        if (config.polyfill?.process) {
+            rspackPlugins.push(new rspack.ProvidePlugin({process: 'process/browser.js'}));
+        }
+    }
+
+    return rspackPlugins;
+}
+
+function getOptimizationSplitChunks({config}: HelperOptions) {
     const configVendors = config.vendors ?? [];
 
     let vendorsList = [
@@ -875,30 +1165,38 @@ export function configureOptimization({config, isSsr}: HelperOptions): Optimizat
 
     const useVendorsList = vendorsList.length > 0;
 
-    const optimization: Optimization = {
-        splitChunks: {
-            chunks: 'all',
-            cacheGroups: {
-                ...(useVendorsList
-                    ? {
-                          defaultVendors: {
-                              name: 'vendors',
-                              // eslint-disable-next-line security/detect-non-literal-regexp
-                              test: new RegExp(
-                                  `([\\\\/])node_modules\\1(${vendorsList.join('|')})\\1`,
-                              ),
-                              priority: Infinity,
-                          },
-                      }
-                    : undefined),
-                css: {
-                    type: 'css/mini-extract',
-                    enforce: true,
-                    minChunks: 2,
-                    reuseExistingChunk: true,
-                },
+    return {
+        chunks: 'all',
+        cacheGroups: {
+            ...(useVendorsList
+                ? {
+                      defaultVendors: {
+                          name: 'vendors',
+                          // eslint-disable-next-line security/detect-non-literal-regexp
+                          test: new RegExp(`([\\\\/])node_modules\\1(${vendorsList.join('|')})\\1`),
+                          priority: Infinity,
+                      },
+                  }
+                : undefined),
+            css: {
+                type: 'css/mini-extract',
+                enforce: true,
+                minChunks: 2,
+                reuseExistingChunk: true,
             },
         },
+    } as const;
+}
+
+type Optimization = NonNullable<webpack.Configuration['optimization']>;
+export function configureOptimization(helperOptions: HelperOptions): Optimization {
+    const {config, isSsr} = helperOptions;
+    if (isSsr) {
+        return {};
+    }
+
+    const optimization: Optimization = {
+        splitChunks: getOptimizationSplitChunks(helperOptions),
         runtimeChunk: 'single',
         minimizer: [
             (compiler) => {
@@ -945,6 +1243,41 @@ export function configureOptimization({config, isSsr}: HelperOptions): Optimizat
                 }
                 new TerserPlugin({terserOptions}).apply(compiler);
             },
+        ],
+    };
+
+    return optimization;
+}
+
+function configureRspackOptimization(
+    helperOptions: HelperOptions,
+): NonNullable<RspackConfiguration['optimization']> {
+    const {config, isSsr} = helperOptions;
+    if (isSsr) {
+        return {};
+    }
+
+    const optimization: RspackConfiguration['optimization'] = {
+        splitChunks: getOptimizationSplitChunks(helperOptions),
+        runtimeChunk: 'single',
+        minimizer: [
+            new rspack.SwcJsMinimizerRspackPlugin({
+                minimizerOptions: {
+                    mangle: !config.reactProfiling,
+                    compress: {
+                        passes: 2,
+                    },
+                    format: {
+                        safari10: config.safari10,
+                    },
+                },
+            }),
+            new rspack.LightningCssMinimizerRspackPlugin({
+                minimizerOptions: {
+                    // Plugin will read the browserslist itself and generate targets
+                    targets: [],
+                },
+            }),
         ],
     };
 

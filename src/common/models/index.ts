@@ -202,7 +202,7 @@ export interface ClientConfig {
      */
     rspack?: (
         config: RspackConfiguration,
-        options: {configType: `${WebpackMode}`},
+        options: {configType: `${WebpackMode}`; isSsr?: boolean},
     ) => RspackConfiguration | Promise<RspackConfiguration>;
     /**
      * Modify or return a custom Babel config.

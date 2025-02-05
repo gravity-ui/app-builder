@@ -16,12 +16,11 @@ import {RspackDevServer} from '@rspack/dev-server';
 
 import paths from '../../common/paths';
 import {Logger} from '../../common/logger';
-import {WebpackMode, webpackConfigFactory} from '../../common/webpack/config';
-import {RspackMode, rspackConfigFactory} from '../../common/rspack/config';
+import {WebpackMode, rspackConfigFactory, webpackConfigFactory} from '../../common/webpack/config';
 
 import type {Configuration, HttpProxyMiddlewareOptionsFilter} from 'webpack-dev-server';
 import type {NormalizedServiceConfig} from '../../common/models';
-import {clearCacheDirectory} from '../../common/rspack/utils';
+import {clearCacheDirectory} from '../../common/webpack/rspack';
 
 export async function watchClientCompilation(
     config: NormalizedServiceConfig,
@@ -52,12 +51,23 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     let rspackConfigs: RspackConfiguration[] = [];
 
     if (bundler === 'webpack') {
-        webpackConfigs = [await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger})];
+        webpackConfigs = [
+            await webpackConfigFactory({
+                webpackMode: WebpackMode.Dev,
+                config: normalizedConfig,
+                logger,
+            }),
+        ];
 
         if (isSsr) {
             const ssrLogger = new Logger('webpack(SSR)', config.verbose);
             webpackConfigs.push(
-                await webpackConfigFactory(WebpackMode.Dev, normalizedConfig, {logger: ssrLogger, isSsr}),
+                await webpackConfigFactory({
+                    webpackMode: WebpackMode.Dev,
+                    config: normalizedConfig,
+                    logger: ssrLogger,
+                    isSsr,
+                }),
             );
         }
     } else {
@@ -65,7 +75,13 @@ async function buildDevServer(config: NormalizedServiceConfig) {
             throw new Error(`SSR is not supported in ${bundler}`);
         }
 
-        rspackConfigs = [await rspackConfigFactory(RspackMode.Dev, normalizedConfig, {logger})];
+        rspackConfigs = [
+            await rspackConfigFactory({
+                webpackMode: WebpackMode.Dev,
+                config: normalizedConfig,
+                logger,
+            }),
+        ];
     }
 
     const publicPath = path.normalize(config.client.publicPathPrefix + '/build/');
