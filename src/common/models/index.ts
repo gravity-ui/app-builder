@@ -141,7 +141,7 @@ export interface ClientConfig {
     svgr?: SvgrConfig;
     entryFilter?: string[];
     excludeFromClean?: string[];
-    analyzeBundle?: 'true' | 'statoscope';
+    analyzeBundle?: 'true' | 'statoscope' | 'rsdoctor';
     statoscopeConfig?: Partial<StatoscopeOptions>;
     reactProfiling?: boolean;
     /**

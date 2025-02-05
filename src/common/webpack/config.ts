@@ -1036,6 +1036,16 @@ function configureWebpackPlugins(options: HelperOptions): webpack.Configuration[
                 }),
             );
         }
+
+        if (config.analyzeBundle === 'rsdoctor') {
+            const {RsdoctorWebpackPlugin} = require('@rsdoctor/webpack-plugin');
+
+            webpackPlugins.push(
+                new RsdoctorWebpackPlugin({
+                    mode: 'brief',
+                }),
+            );
+        }
     }
 
     if (!isSsr) {
@@ -1090,7 +1100,17 @@ function configureRspackPlugins(options: HelperOptions): RspackConfiguration['pl
         rspackPlugins.push(new CssExtractRspackPlugin(getCssExtractPluginOptions(options)));
     }
 
-    // TODO add rsdoctor plugin
+    if (isEnvProduction) {
+        if (config.analyzeBundle === 'rsdoctor') {
+            const {RsdoctorRspackPlugin} = require('@rsdoctor/rspack-plugin');
+
+            rspackPlugins.push(
+                new RsdoctorRspackPlugin({
+                    mode: 'brief',
+                }),
+            );
+        }
+    }
 
     if (!isSsr) {
         const contextReplacements = getContextReplacements(options);
