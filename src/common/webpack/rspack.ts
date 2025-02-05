@@ -7,6 +7,7 @@ import type {Configuration, RuleSetRule as RspackRuleSetRule} from '@rspack/core
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type {Logger} from '../logger';
+import {elapsedTime, prettyTime} from '../logger/pretty-time';
 import paths from '../../common/paths';
 
 export function clearCacheDirectory(config: Configuration, logger: Logger) {
@@ -59,7 +60,7 @@ export const generateAssetsManifest: ManifestPluginOptions['generate'] = (seed, 
     }, {});
 
     return {
-        files: manifestFiles,
+        ...manifestFiles,
         entrypoints,
     };
 };
@@ -108,8 +109,6 @@ export function prepareRspackRules(
     }
     return rspackRules;
 }
-
-import {elapsedTime, prettyTime} from '../logger/pretty-time';
 
 interface State {
     done?: boolean;

@@ -71,10 +71,6 @@ async function buildDevServer(config: NormalizedServiceConfig) {
             );
         }
     } else {
-        if (isSsr) {
-            throw new Error(`SSR is not supported in ${bundler}`);
-        }
-
         rspackConfigs = [
             await rspackConfigFactory({
                 webpackMode: WebpackMode.Dev,
@@ -82,6 +78,18 @@ async function buildDevServer(config: NormalizedServiceConfig) {
                 logger,
             }),
         ];
+
+        if (isSsr) {
+            const ssrLogger = new Logger('rspack(SSR)', config.verbose);
+            rspackConfigs.push(
+                await rspackConfigFactory({
+                    webpackMode: WebpackMode.Dev,
+                    config: normalizedConfig,
+                    logger: ssrLogger,
+                    isSsr,
+                }),
+            );
+        }
     }
 
     const publicPath = path.normalize(config.client.publicPathPrefix + '/build/');
@@ -170,8 +178,9 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     let server: WebpackDevServer | RspackDevServer;
 
     if (bundler === 'rspack') {
-        // Rspack multicompiler dont work with lazy compilation
-        const compiler = rspack(rspackConfigs[0]!);
+        // Rspack multicompiler dont work with lazy compilation.
+        // Pass a single config to avoid multicompiler when SSR disabled.
+        const compiler = rspack(isSsr ? rspackConfigs : rspackConfigs[0]!);
         server = new RspackDevServer(options, compiler);
         // Need to clean cache before start. https://github.com/web-infra-dev/rspack/issues/9025
         clearCacheDirectory(rspackConfigs[0]!, logger);

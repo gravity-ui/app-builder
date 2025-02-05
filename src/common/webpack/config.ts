@@ -89,13 +89,7 @@ function getHelperOptions({
     };
 }
 
-export async function webpackConfigFactory(
-    options: ClientFactoryOptions,
-): Promise<webpack.Configuration> {
-    const {config} = options;
-    const helperOptions = getHelperOptions(options);
-    const {isSsr, isEnvProduction} = helperOptions;
-
+function configureExternals({config, isSsr}: HelperOptions) {
     let externals = config.externals;
     if (isSsr) {
         externals =
@@ -106,6 +100,32 @@ export async function webpackConfigFactory(
                       module: config.ssr?.moduleType === 'esm',
                   });
     }
+
+    return externals;
+}
+
+function prepareRspackExternals(
+    externals: webpack.Configuration['externals'],
+): RspackConfiguration['externals'] {
+    if (Array.isArray(externals)) {
+        const rspackExternals: Record<string, string | string[]> = {};
+        for (const ext of externals) {
+            if (typeof ext === 'object' && ext !== null) {
+                Object.assign(rspackExternals, ext);
+            }
+        }
+        return rspackExternals;
+    }
+
+    return externals as RspackConfiguration['externals'];
+}
+
+export async function webpackConfigFactory(
+    options: ClientFactoryOptions,
+): Promise<webpack.Configuration> {
+    const {config} = options;
+    const helperOptions = getHelperOptions(options);
+    const {isSsr, isEnvProduction} = helperOptions;
 
     let webpackConfig: webpack.Configuration = {
         mode: isEnvProduction ? 'production' : 'development',
@@ -121,7 +141,7 @@ export async function webpackConfigFactory(
         },
         plugins: configureWebpackPlugins(helperOptions),
         optimization: configureOptimization(helperOptions),
-        externals,
+        externals: configureExternals(helperOptions),
         node: config.node,
         watchOptions: configureWatchOptions(helperOptions),
         ignoreWarnings: [/Failed to parse source map/],
@@ -175,7 +195,7 @@ export async function rspackConfigFactory(
         },
         plugins: configureRspackPlugins(helperOptions),
         optimization: configureRspackOptimization(helperOptions),
-        // TODO externals,
+        externals: prepareRspackExternals(configureExternals(helperOptions)),
         node: config.node,
         watchOptions: configureWatchOptions(helperOptions),
         ignoreWarnings: [/Failed to parse source map/],
