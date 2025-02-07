@@ -151,7 +151,6 @@ function compileStyles(
                 const sassTransformed = sass.compile(scssFile, {
                     sourceMap: true,
                     sourceMapIncludeSources: true,
-                    silenceDeprecations: ['legacy-js-api'],
                     importers: [
                         {
                             findFileUrl(url) {

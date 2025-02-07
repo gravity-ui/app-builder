@@ -4,8 +4,7 @@ import {Configuration as RspackConfiguration, rspack} from '@rspack/core';
 import type {NormalizedClientConfig} from '../models';
 import {Logger} from '../logger';
 import {WebpackMode, rspackConfigFactory, webpackConfigFactory} from './config';
-import {webpackCompilerHandlerFactory} from './utils';
-import {rspackCompilerHandlerFactory} from './rspack';
+import {compilerHandlerFactory} from './utils';
 
 export async function clientCompile(config: NormalizedClientConfig): Promise<void> {
     const logger = new Logger('client', config.verbose);
@@ -52,20 +51,14 @@ export async function clientCompile(config: NormalizedClientConfig): Promise<voi
     logger.verbose('Config created');
 
     return new Promise((resolve) => {
+        const compilerHandler = compilerHandlerFactory(logger, async () => {
+            resolve();
+        });
+
         const compiler =
             config.bundler === 'rspack'
-                ? rspack(
-                      rspackConfigs,
-                      rspackCompilerHandlerFactory(logger, async () => {
-                          resolve();
-                      }),
-                  )
-                : webpack(
-                      webpackConfigs,
-                      webpackCompilerHandlerFactory(logger, async () => {
-                          resolve();
-                      }),
-                  );
+                ? rspack(rspackConfigs, compilerHandler)
+                : webpack(webpackConfigs, compilerHandler);
 
         process.on('SIGINT', async () => {
             compiler?.close(() => {

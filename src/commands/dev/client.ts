@@ -60,7 +60,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         ];
 
         if (isSsr) {
-            const ssrLogger = new Logger('webpack(SSR)', config.verbose);
+            const ssrLogger = new Logger('client(SSR)', config.verbose);
             webpackConfigs.push(
                 await webpackConfigFactory({
                     webpackMode: WebpackMode.Dev,
@@ -80,7 +80,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         ];
 
         if (isSsr) {
-            const ssrLogger = new Logger('rspack(SSR)', config.verbose);
+            const ssrLogger = new Logger('client(SSR)', config.verbose);
             rspackConfigs.push(
                 await rspackConfigFactory({
                     webpackMode: WebpackMode.Dev,
