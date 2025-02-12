@@ -9,6 +9,7 @@ import type {
     MemoryCacheOptions,
     ResolveOptions,
 } from 'webpack';
+import type {Configuration as RspackConfiguration} from '@rspack/core';
 import type * as Babel from '@babel/core';
 import type {ServerConfiguration} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
@@ -20,6 +21,8 @@ import type {WebpackMode} from '../webpack/config';
 import type {UploadOptions} from '../s3-upload/upload';
 import type {TerserOptions} from 'terser-webpack-plugin';
 import type {ReactRefreshPluginOptions} from '@pmmmwh/react-refresh-webpack-plugin/types/lib/types';
+
+type Bundler = 'webpack' | 'rspack';
 
 export interface Entities<T> {
     data: Record<string, T>;
@@ -138,7 +141,7 @@ export interface ClientConfig {
     svgr?: SvgrConfig;
     entryFilter?: string[];
     excludeFromClean?: string[];
-    analyzeBundle?: 'true' | 'statoscope';
+    analyzeBundle?: 'true' | 'statoscope' | 'rsdoctor';
     statoscopeConfig?: Partial<StatoscopeOptions>;
     reactProfiling?: boolean;
     /**
@@ -195,6 +198,13 @@ export interface ClientConfig {
         options: {configType: `${WebpackMode}`; isSsr?: boolean},
     ) => Configuration | Promise<Configuration>;
     /**
+     * Modify or return a custom Rspack config.
+     */
+    rspack?: (
+        config: RspackConfiguration,
+        options: {configType: `${WebpackMode}`; isSsr?: boolean},
+    ) => RspackConfiguration | Promise<RspackConfiguration>;
+    /**
      * Modify or return a custom Babel config.
      */
     babel?: (
@@ -209,6 +219,7 @@ export interface ClientConfig {
         noExternal?: string | RegExp | (string | RegExp)[] | true;
         moduleType?: 'commonjs' | 'esm';
     };
+    bundler?: Bundler;
 }
 
 export interface CdnUploadConfig {
@@ -249,6 +260,7 @@ export type NormalizedClientConfig = Omit<
     | 'disableForkTsChecker'
     | 'disableReactRefresh'
 > & {
+    bundler: Bundler;
     publicPathPrefix: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
@@ -262,6 +274,10 @@ export type NormalizedClientConfig = Omit<
         config: Configuration,
         options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => Configuration | Promise<Configuration>;
+    rspack: (
+        config: RspackConfiguration,
+        options: {configType: `${WebpackMode}`},
+    ) => RspackConfiguration | Promise<RspackConfiguration>;
     debugWebpack?: boolean;
     babel: (
         config: Babel.TransformOptions,

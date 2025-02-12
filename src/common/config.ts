@@ -216,9 +216,11 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
         svgr: client.svgr ?? {},
         entryFilter: client.entryFilter && splitPaths(client.entryFilter),
         webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
+        rspack: typeof client.rspack === 'function' ? client.rspack : (config) => config,
         babel: typeof client.babel === 'function' ? client.babel : (config) => config,
         devServer: undefined,
         lazyCompilation: undefined,
+        bundler: client.bundler || 'webpack',
     };
 
     if (mode === 'dev') {

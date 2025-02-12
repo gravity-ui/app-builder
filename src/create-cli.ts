@@ -175,7 +175,7 @@ export function createCli(argv: string[]) {
                     .option('analyze-bundle', {
                         group: 'Client',
                         describe: 'Analyze bundle',
-                        choices: ['true', 'statoscope'] as const,
+                        choices: ['true', 'statoscope', 'rsdoctor'] as const,
                     })
                     .option('disable-fork-ts-checker', {
                         group: 'Client',

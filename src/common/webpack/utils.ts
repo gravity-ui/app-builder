@@ -5,9 +5,10 @@ import {getTsProjectConfig} from '../typescript/utils';
 
 import type * as Webpack from 'webpack';
 import type {Logger} from '../logger';
+import {MultiStats} from '@rspack/core';
 
-export function webpackCompilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
-    return async (err?: Error | null, stats?: Webpack.MultiStats) => {
+export function compilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
+    return async (err?: Error | null, stats?: Webpack.MultiStats | MultiStats) => {
         if (err) {
             logger.panic(err.message, err);
         }
