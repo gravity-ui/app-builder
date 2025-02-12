@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.0](https://github.com/gravity-ui/app-builder/compare/v0.15.0...v0.16.0) (2025-02-12)
+
+
+### Features
+
+* support rspack bundler ([#177](https://github.com/gravity-ui/app-builder/issues/177)) ([13b68b0](https://github.com/gravity-ui/app-builder/commit/13b68b0f40941dd9f858ed1b574655154a87ccc9))
+
 ## [0.15.0](https://github.com/gravity-ui/app-builder/compare/v0.14.1...v0.15.0) (2025-02-03)
 
 
