@@ -575,7 +575,7 @@ function createSassStylesRule(options: HelperOptions): webpack.RuleSetRule {
             options: {
                 sourceMap: true, // must be always true for work with resolve-url-loader
                 sassOptions: {
-                    loadPaths: [paths.app, paths.appClient],
+                    loadPaths: [paths.appClient],
                 },
             },
         },
