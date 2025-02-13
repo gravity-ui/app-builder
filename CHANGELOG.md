@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.2](https://github.com/gravity-ui/app-builder/compare/v0.16.1...v0.16.2) (2025-02-13)
+
+
+### Bug Fixes
+
+* fix swc versions relative to swc_core ([#188](https://github.com/gravity-ui/app-builder/issues/188)) ([a6cf51c](https://github.com/gravity-ui/app-builder/commit/a6cf51c0eaae28a9d6f21df38c8418faa75842ca))
+
 ## [0.16.1](https://github.com/gravity-ui/app-builder/compare/v0.16.0...v0.16.1) (2025-02-13)
 
 
