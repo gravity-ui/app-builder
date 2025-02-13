@@ -1,17 +1,16 @@
-import webpack from 'webpack';
+import type * as Rspack from '@rspack/core';
 import type * as Webpack from 'webpack';
 import type {Logger} from '../logger';
 import {elapsedTime} from '../logger/pretty-time';
-import {rspack} from '@rspack/core';
 
 interface State {
     done?: boolean;
     start?: bigint;
 }
 
-function createProgressPlugin(
-    BaseClass: typeof webpack.ProgressPlugin | typeof rspack.ProgressPlugin,
-) {
+export function createProgressPlugin<
+    T extends typeof Webpack.ProgressPlugin | typeof Rspack.ProgressPlugin,
+>(BaseClass: T) {
     return class ProgressPlugin extends BaseClass {
         logger: Logger;
         state: State = {};
@@ -69,6 +68,3 @@ function hook<HookName extends keyof Webpack.Compiler['hooks']>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     compiler.hooks[hookName].tap(`app-builder: ${hookName}`, callback as any);
 }
-
-export const WebpackProgressPlugin = createProgressPlugin(webpack.ProgressPlugin);
-export const RspackProgressPlugin = createProgressPlugin(rspack.ProgressPlugin);
