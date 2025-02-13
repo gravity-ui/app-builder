@@ -17,7 +17,6 @@ import {
     CssExtractRspackPlugin,
     Configuration as RspackConfiguration,
     LazyCompilationOptions as RspackLazyCompilationOptions,
-    ResolveOptions as RspackResolveOptions,
     RuleSetRule as RspackRuleSetRule,
     rspack,
 } from '@rspack/core';
@@ -172,9 +171,9 @@ export async function rspackConfigFactory(
         bail: isEnvProduction,
         target: isSsr ? 'node' : undefined,
         devtool: configureDevTool(helperOptions),
-        entry: configureEntry(helperOptions) as RspackConfiguration['entry'],
+        entry: configureEntry(helperOptions),
         output: configureOutput(helperOptions),
-        resolve: configureRspackResolve(helperOptions),
+        resolve: configureResolve(helperOptions),
         module: {
             rules: configureModuleRules(helperOptions) as RspackRuleSetRule[],
         },
@@ -358,7 +357,7 @@ function configureRspackExperiments({
     };
 }
 
-export function configureResolve({isEnvProduction, config}: HelperOptions): webpack.ResolveOptions {
+export function configureResolve({isEnvProduction, config}: HelperOptions) {
     const alias: Record<string, string> = {...config.alias};
 
     for (const [key, value] of Object.entries(alias)) {
@@ -380,33 +379,21 @@ export function configureResolve({isEnvProduction, config}: HelperOptions): webp
         extensions: ['.mjs', '.cjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
         symlinks: config.symlinks,
         fallback: config.fallback,
-    };
-}
-
-function configureRspackResolve(helperOptions: HelperOptions): RspackResolveOptions {
-    const {alias, modules, extensions, symlinks, fallback} = configureResolve(helperOptions);
-
-    return {
-        alias: Array.isArray(alias) ? undefined : alias,
-        modules,
-        extensions,
-        symlinks,
-        fallback: Array.isArray(fallback) ? undefined : fallback,
-    };
+    } satisfies webpack.ResolveOptions;
 }
 
 function createEntryArray(entry: string) {
     return [require.resolve('./public-path'), entry];
 }
 
-function addEntry(entry: webpack.EntryObject, file: string): webpack.EntryObject {
+function addEntry(entry: Record<string, string | string[]>, file: string) {
     return {
         ...entry,
         [path.parse(file).name]: createEntryArray(file),
     };
 }
 
-function configureEntry({config, entriesDirectory}: HelperOptions): webpack.EntryObject {
+function configureEntry({config, entriesDirectory}: HelperOptions) {
     let entries = fs.readdirSync(entriesDirectory).filter((file) => /\.[jt]sx?$/.test(file));
 
     if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
@@ -419,7 +406,7 @@ function configureEntry({config, entriesDirectory}: HelperOptions): webpack.Entr
         throw new Error('No entries were found after applying entry filter');
     }
 
-    return entries.reduce(
+    return entries.reduce<Record<string, string | string[]>>(
         (entry, file) => addEntry(entry, path.resolve(entriesDirectory, file)),
         {},
     );

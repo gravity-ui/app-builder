@@ -2,13 +2,7 @@ import type {EditorLanguage} from 'monaco-editor-webpack-plugin/out/languages';
 import type {EditorFeature} from 'monaco-editor-webpack-plugin/out/features';
 import type {IFeatureDefinition} from 'monaco-editor-webpack-plugin/out/types';
 import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plugin';
-import type {
-    Configuration,
-    DefinePlugin,
-    FileCacheOptions,
-    MemoryCacheOptions,
-    ResolveOptions,
-} from 'webpack';
+import type {Configuration, DefinePlugin, FileCacheOptions, MemoryCacheOptions} from 'webpack';
 import type {Configuration as RspackConfiguration} from '@rspack/core';
 import type * as Babel from '@babel/core';
 import type {ServerConfiguration} from 'webpack-dev-server';
@@ -124,7 +118,7 @@ export interface ClientConfig {
     /**
      * Redirect module requests when normal resolving fails.
      */
-    fallback?: ResolveOptions['fallback'];
+    fallback?: {[index: string]: string | false | string[]};
     /**
      * Follow symbolic links while looking for a file. [more](https://webpack.js.org/configuration/resolve/#resolvesymlinks)
      */
