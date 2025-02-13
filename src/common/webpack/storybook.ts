@@ -31,6 +31,12 @@ export async function configureServiceWebpackConfig(
         options = serviceConfig.client;
     }
 
+    options = {
+        ...options,
+        // TODO support rspack for storybook
+        bundler: 'webpack',
+    };
+
     const webpackConfig = await configureWebpackConfigForStorybook(
         mode,
         options,
@@ -91,6 +97,8 @@ export async function configureWebpackConfigForStorybook(
     const config = await normalizeConfig({
         client: {
             ...userConfig,
+            // TODO support rspack for storybook
+            bundler: 'webpack',
             includes: (userConfig.includes ?? []).concat(['.storybook']),
         },
     });
