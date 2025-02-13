@@ -218,9 +218,11 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
         webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
         rspack: typeof client.rspack === 'function' ? client.rspack : (config) => config,
         babel: typeof client.babel === 'function' ? client.babel : (config) => config,
+        swc: typeof client.swc === 'function' ? client.swc : (config) => config,
         devServer: undefined,
         lazyCompilation: undefined,
         bundler: client.bundler || 'webpack',
+        javaScriptLoader: client.javaScriptLoader || 'babel',
     };
 
     if (mode === 'dev') {
