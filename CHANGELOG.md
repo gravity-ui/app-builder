@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.16.1](https://github.com/gravity-ui/app-builder/compare/v0.16.0...v0.16.1) (2025-02-13)
+
+
+### Features
+
+* support swc javascript loader ([#182](https://github.com/gravity-ui/app-builder/issues/182)) ([575975a](https://github.com/gravity-ui/app-builder/commit/575975a32c3551bfdceacaff41fa825c26bcb2cc))
+
+
+### Bug Fixes
+
+* build storybook with rspack bundler ([#183](https://github.com/gravity-ui/app-builder/issues/183)) ([9eb0194](https://github.com/gravity-ui/app-builder/commit/9eb0194e510b4922aae417ab52f3562e32614196))
+* **node-externals:** always require lodash ([#184](https://github.com/gravity-ui/app-builder/issues/184)) ([d10ef19](https://github.com/gravity-ui/app-builder/commit/d10ef19c9990ad2acd7a7950efbec719ba8caf32))
+
 ## [0.16.0](https://github.com/gravity-ui/app-builder/compare/v0.15.0...v0.16.0) (2025-02-12)
 
 
