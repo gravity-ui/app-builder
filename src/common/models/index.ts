@@ -5,7 +5,7 @@ import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plug
 import type {Configuration, DefinePlugin, FileCacheOptions, MemoryCacheOptions} from 'webpack';
 import type {Configuration as RspackConfiguration} from '@rspack/core';
 import type * as Babel from '@babel/core';
-import type * as Swc from '@swc/types';
+import type * as Swc from '@swc/core';
 import type {ServerConfiguration} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
 import type {Config as SvgrConfig} from '@svgr/core';
