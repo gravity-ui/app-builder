@@ -115,7 +115,7 @@ export async function configureWebpackConfigForStorybook(
 
     return {
         module: {
-            rules: configureModuleRules(
+            rules: await configureModuleRules(
                 helperOptions,
                 storybookModuleRules.filter((rule) => rule !== '...') as Exclude<
                     ModuleRule,

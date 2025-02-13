@@ -5,6 +5,7 @@ import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plug
 import type {Configuration, DefinePlugin, FileCacheOptions, MemoryCacheOptions} from 'webpack';
 import type {Configuration as RspackConfiguration} from '@rspack/core';
 import type * as Babel from '@babel/core';
+import type * as Swc from '@swc/types';
 import type {ServerConfiguration} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
 import type {Config as SvgrConfig} from '@svgr/core';
@@ -17,6 +18,9 @@ import type {TerserOptions} from 'terser-webpack-plugin';
 import type {ReactRefreshPluginOptions} from '@pmmmwh/react-refresh-webpack-plugin/types/lib/types';
 
 type Bundler = 'webpack' | 'rspack';
+type JavaScriptLoader = 'babel' | 'swc';
+
+export type SwcConfig = Swc.Config & Pick<Swc.Options, 'isModule'>;
 
 export interface Entities<T> {
     data: Record<string, T>;
@@ -206,6 +210,13 @@ export interface ClientConfig {
         options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
     /**
+     * Modify or return a custom SWC config.
+     */
+    swc?: (
+        config: SwcConfig,
+        options: {configType: `${WebpackMode}`; isSsr: boolean},
+    ) => SwcConfig | Promise<SwcConfig>;
+    /**
      * Modify or return a custom [Terser options](https://github.com/terser/terser#minify-options).
      */
     terser?: (options: TerserOptions) => TerserOptions;
@@ -214,6 +225,7 @@ export interface ClientConfig {
         moduleType?: 'commonjs' | 'esm';
     };
     bundler?: Bundler;
+    javaScriptLoader?: JavaScriptLoader;
 }
 
 export interface CdnUploadConfig {
@@ -255,6 +267,7 @@ export type NormalizedClientConfig = Omit<
     | 'disableReactRefresh'
 > & {
     bundler: Bundler;
+    javaScriptLoader: JavaScriptLoader;
     publicPathPrefix: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
@@ -277,6 +290,10 @@ export type NormalizedClientConfig = Omit<
         config: Babel.TransformOptions,
         options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => Babel.TransformOptions | Promise<Babel.TransformOptions>;
+    swc: (
+        config: SwcConfig,
+        options: {configType: `${WebpackMode}`; isSsr: boolean},
+    ) => SwcConfig | Promise<SwcConfig>;
     reactRefresh: NonNullable<ClientConfig['reactRefresh']>;
 };
 

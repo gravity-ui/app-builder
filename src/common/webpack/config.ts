@@ -116,7 +116,7 @@ export async function webpackConfigFactory(
         output: configureOutput(helperOptions),
         resolve: configureResolve(helperOptions),
         module: {
-            rules: configureModuleRules(helperOptions),
+            rules: await configureModuleRules(helperOptions),
         },
         plugins: configureWebpackPlugins(helperOptions),
         optimization: configureOptimization(helperOptions),
@@ -170,7 +170,7 @@ export async function rspackConfigFactory(
         output: configureOutput(helperOptions),
         resolve: configureResolve(helperOptions),
         module: {
-            rules: configureModuleRules(helperOptions) as Rspack.RuleSetRule[],
+            rules: (await configureModuleRules(helperOptions)) as Rspack.RuleSetRule[],
         },
         plugins: configureRspackPlugins(helperOptions),
         optimization: configureRspackOptimization(helperOptions),
@@ -201,16 +201,17 @@ export async function rspackConfigFactory(
     return rspackConfig;
 }
 
-export function configureModuleRules(
+export async function configureModuleRules(
     helperOptions: HelperOptions,
     additionalRules: NonNullable<webpack.RuleSetRule['oneOf']> = [],
 ) {
-    const jsLoader = createJavaScriptLoader(helperOptions);
+    const jsLoader = await createJavaScriptLoader(helperOptions);
+
     return [
         ...createSourceMapRules(!helperOptions.config.disableSourceMapGeneration),
         {
             oneOf: [
-                createWorkerRule(helperOptions),
+                await createWorkerRule(helperOptions),
                 createJavaScriptRule(helperOptions, jsLoader),
                 createStylesRule(helperOptions),
                 createSassStylesRule(helperOptions),
@@ -436,14 +437,77 @@ function configureOutput(options: HelperOptions) {
     } satisfies NonNullable<webpack.Configuration['output']>;
 }
 
-function createJavaScriptLoader({
+async function createJavaScriptLoader({
     isEnvProduction,
     isEnvDevelopment,
     configType,
     config,
     isSsr,
-}: HelperOptions): webpack.RuleSetUseItem {
+}: HelperOptions): Promise<webpack.RuleSetUseItem> {
+    if (config.javaScriptLoader === 'swc') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const plugins: Array<[string, Record<string, any>]> = [];
+
+        if (!isSsr && isEnvProduction) {
+            plugins.push([
+                require.resolve('@swc/plugin-transform-imports'),
+                {
+                    lodash: {transform: 'lodash/{{member}}'},
+                },
+            ]);
+        }
+
+        const swcConfig = await config.swc(
+            {
+                module: {
+                    type: 'es6',
+                },
+                env: {
+                    targets: isSsr ? {node: process.versions.node} : require('browserslist')(),
+                    mode: 'usage',
+                    coreJs: '3.40',
+                    bugfixes: true,
+                },
+                isModule: 'unknown',
+                jsc: {
+                    parser: {
+                        syntax: 'typescript',
+                        tsx: true,
+                    },
+                    transform: {
+                        react: {
+                            runtime: config.newJsxTransform ? 'automatic' : 'classic',
+                            development: isEnvDevelopment,
+                            refresh: !isSsr && isEnvDevelopment && config.reactRefresh !== false,
+                            useBuiltins: true,
+                        },
+                        optimizer: isEnvProduction
+                            ? {
+                                  simplify: true,
+                                  jsonify: {minCost: 1024},
+                              }
+                            : undefined,
+                    },
+                    assumptions: {
+                        privateFieldsAsProperties: true,
+                        setPublicClassFields: true,
+                    },
+                    experimental: {plugins},
+                },
+                sourceMaps: !config.disableSourceMapGeneration,
+            },
+            {configType, isSsr},
+        );
+
+        return {
+            loader:
+                config.bundler === 'rspack' ? 'builtin:swc-loader' : require.resolve('swc-loader'),
+            options: swcConfig,
+        };
+    }
+
     const plugins: Babel.PluginItem[] = [];
+
     if (!isSsr) {
         if (isEnvDevelopment && config.reactRefresh !== false) {
             plugins.push([
@@ -457,6 +521,7 @@ function createJavaScriptLoader({
                     : undefined,
             ]);
         }
+
         if (isEnvProduction) {
             plugins.push([
                 require.resolve('babel-plugin-import'),
@@ -465,7 +530,7 @@ function createJavaScriptLoader({
         }
     }
 
-    const transformOptions = config.babel(
+    const babelTransformOptions = await config.babel(
         {
             presets: [babelPreset({newJsxTransform: config.newJsxTransform, isSsr})],
             plugins,
@@ -477,7 +542,7 @@ function createJavaScriptLoader({
         loader: require.resolve('babel-loader'),
         options: {
             sourceType: 'unambiguous',
-            ...transformOptions,
+            ...babelTransformOptions,
             babelrc: false,
             configFile: false,
             compact: isEnvProduction,
@@ -522,7 +587,7 @@ function createSourceMapRules(shouldUseSourceMap: boolean): webpack.RuleSetRule[
     return [];
 }
 
-function createWorkerRule(options: HelperOptions): webpack.RuleSetRule {
+async function createWorkerRule(options: HelperOptions): Promise<webpack.RuleSetRule> {
     return {
         test: /\.worker\.[jt]sx?$/,
         exclude: /node_modules/,
@@ -539,7 +604,7 @@ function createWorkerRule(options: HelperOptions): webpack.RuleSetRule {
                           inline: 'no-fallback',
                       },
                   },
-            createJavaScriptLoader(options),
+            await createJavaScriptLoader(options),
         ],
     };
 }
