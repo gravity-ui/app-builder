@@ -37,8 +37,9 @@ export function nodeExternals({noExternal = [], module}: NodeExternalsOptions) {
 
         if (
             dependencyType === 'commonjs' ||
-            // lodash/something without extension can't be imported so always require it
-            (moduleName === 'lodash' && request.match(/^lodash\/[\w_]+($|\/[\w_]+$)/))
+            // lodash and lodash/something without extension can't be imported so always require it
+            (moduleName === 'lodash' &&
+                (request === 'lodash' || request.match(/^lodash\/[\w_]+($|\/[\w_]+$)/)))
         ) {
             return `node-commonjs ${request}`;
         }
