@@ -1310,7 +1310,13 @@ export function configureOptimization(helperOptions: HelperOptions): Optimizatio
                 if (typeof terser === 'function') {
                     terserOptions = terser(terserOptions);
                 }
-                new TerserPlugin({terserOptions}).apply(compiler);
+                new TerserPlugin({
+                    minify:
+                        config.javaScriptLoader === 'swc'
+                            ? TerserPlugin.swcMinify
+                            : TerserPlugin.terserMinify,
+                    terserOptions,
+                }).apply(compiler);
             },
         ],
     };
