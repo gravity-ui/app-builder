@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.3](https://github.com/gravity-ui/app-builder/compare/v0.16.2...v0.16.3) (2025-02-14)
+
+
+### Features
+
+* use swcMinify for swc javaScriptLoader ([#190](https://github.com/gravity-ui/app-builder/issues/190)) ([33ce33d](https://github.com/gravity-ui/app-builder/commit/33ce33de843e8d2bcf1f5a3de654a9ee0f57540b))
+
 ## [0.16.2](https://github.com/gravity-ui/app-builder/compare/v0.16.1...v0.16.2) (2025-02-13)
 
 
