@@ -651,7 +651,7 @@ function getCssLoaders(
     const isRspack = config.bundler === 'rspack';
     const loaders: webpack.RuleSetUseItem[] = [];
 
-    if (!config.transformCssWithLightningCss && config.bundler !== 'rspack') {
+    if (!config.transformCssWithLightningCss) {
         loaders.push({
             loader: require.resolve('postcss-loader'),
             options: {
@@ -1332,6 +1332,29 @@ function configureRspackOptimization(
         return {};
     }
 
+    let cssMinimizer: Rspack.Plugin;
+
+    if (config.transformCssWithLightningCss) {
+        cssMinimizer = new rspack.LightningCssMinimizerRspackPlugin({
+            minimizerOptions: {
+                // Plugin will read the browserslist itself and generate targets
+                targets: [],
+            },
+        });
+    } else {
+        const CssMinimizerPlugin: typeof CssMinimizerWebpackPlugin = require('css-minimizer-webpack-plugin');
+        cssMinimizer = new CssMinimizerPlugin({
+            minimizerOptions: {
+                preset: [
+                    'default',
+                    {
+                        svgo: false,
+                    },
+                ],
+            },
+        });
+    }
+
     const optimization: Rspack.Configuration['optimization'] = {
         splitChunks: getOptimizationSplitChunks(helperOptions),
         runtimeChunk: 'single',
@@ -1347,12 +1370,7 @@ function configureRspackOptimization(
                     },
                 },
             }),
-            new rspack.LightningCssMinimizerRspackPlugin({
-                minimizerOptions: {
-                    // Plugin will read the browserslist itself and generate targets
-                    targets: [],
-                },
-            }),
+            cssMinimizer,
         ],
     };
 
