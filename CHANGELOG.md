@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.4](https://github.com/gravity-ui/app-builder/compare/v0.16.3...v0.16.4) (2025-02-20)
+
+
+### Bug Fixes
+
+* transformCssWithLightningCss with rspack ([#193](https://github.com/gravity-ui/app-builder/issues/193)) ([54d6e7e](https://github.com/gravity-ui/app-builder/commit/54d6e7ee23376ab53adf64e23288ee2f35b5488b))
+
 ## [0.16.3](https://github.com/gravity-ui/app-builder/compare/v0.16.2...v0.16.3) (2025-02-14)
 
 
