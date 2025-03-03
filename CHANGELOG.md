@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.0](https://github.com/gravity-ui/app-builder/compare/v0.16.4...v0.17.0) (2025-03-03)
+
+
+### Features
+
+* bump @rspack/plugin-react-refresh ([#196](https://github.com/gravity-ui/app-builder/issues/196)) ([b0c2cfe](https://github.com/gravity-ui/app-builder/commit/b0c2cfe53aa2a18fd57a77e55560ee8687ae4660))
+
 ## [0.16.4](https://github.com/gravity-ui/app-builder/compare/v0.16.3...v0.16.4) (2025-02-20)
 
 
