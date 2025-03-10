@@ -1068,17 +1068,22 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         if (config.analyzeBundle === 'statoscope') {
             const customStatoscopeConfig = config.statoscopeConfig || {};
 
-            plugins.push(
-                new StatoscopeWebpackPlugin({
-                    saveReportTo: path.resolve(options.buildDirectory, 'report.html'),
-                    saveStatsTo: path.resolve(options.buildDirectory, 'stats.json'),
-                    open: false,
-                    statsOptions: {
-                        all: true,
-                    },
-                    ...customStatoscopeConfig,
-                }),
-            );
+            const statoscopePlugin = new StatoscopeWebpackPlugin({
+                saveReportTo: path.resolve(options.buildDirectory, 'report.html'),
+                saveStatsTo: path.resolve(options.buildDirectory, 'stats.json'),
+                open: false,
+                statsOptions: {
+                    all: true,
+                },
+                ...customStatoscopeConfig,
+            });
+
+            // TIP: statoscope doesn't support rspack, but this workaround helps to run it
+            if (config.bundler === 'rspack') {
+                statoscopePlugin.extensions = [];
+            }
+
+            plugins.push(statoscopePlugin);
         }
 
         if (config.analyzeBundle === 'rsdoctor') {
