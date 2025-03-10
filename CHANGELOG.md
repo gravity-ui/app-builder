@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.1](https://github.com/gravity-ui/app-builder/compare/v0.17.0...v0.17.1) (2025-03-10)
+
+
+### Bug Fixes
+
+* use statoscope with rspack ([#198](https://github.com/gravity-ui/app-builder/issues/198)) ([fb306f8](https://github.com/gravity-ui/app-builder/commit/fb306f814546f2f4c8abe635a806235fff6dd844))
+
 ## [0.17.0](https://github.com/gravity-ui/app-builder/compare/v0.16.4...v0.17.0) (2025-03-03)
 
 
