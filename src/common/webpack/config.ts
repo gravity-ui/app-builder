@@ -1363,23 +1363,28 @@ function configureRspackOptimization(
         });
     }
 
+    let swcMinifyOptions: Rspack.SwcJsMinimizerRspackPluginOptions = {
+        minimizerOptions: {
+            mangle: !config.reactProfiling,
+            compress: {
+                passes: 2,
+            },
+            format: {
+                safari10: config.safari10,
+            },
+        },
+    };
+
+    const {swcMinimizerOptions} = config;
+
+    if (typeof swcMinimizerOptions === 'function') {
+        swcMinifyOptions = swcMinimizerOptions(swcMinifyOptions);
+    }
+
     const optimization: Rspack.Configuration['optimization'] = {
         splitChunks: getOptimizationSplitChunks(helperOptions),
         runtimeChunk: 'single',
-        minimizer: [
-            new rspack.SwcJsMinimizerRspackPlugin({
-                minimizerOptions: {
-                    mangle: !config.reactProfiling,
-                    compress: {
-                        passes: 2,
-                    },
-                    format: {
-                        safari10: config.safari10,
-                    },
-                },
-            }),
-            cssMinimizer,
-        ],
+        minimizer: [new rspack.SwcJsMinimizerRspackPlugin(swcMinifyOptions), cssMinimizer],
     };
 
     return optimization;
