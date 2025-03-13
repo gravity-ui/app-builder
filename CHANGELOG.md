@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.1](https://github.com/gravity-ui/app-builder/compare/v0.18.0...v0.18.1) (2025-03-13)
+
+
+### Bug Fixes
+
+* custom config for swc minimizer ([#202](https://github.com/gravity-ui/app-builder/issues/202)) ([25b2f85](https://github.com/gravity-ui/app-builder/commit/25b2f85624631d0f7f5e3dc7e13cae74aae3eaea))
+
 ## [0.18.0](https://github.com/gravity-ui/app-builder/compare/v0.17.1...v0.18.0) (2025-03-13)
 
 
