@@ -3,7 +3,10 @@ import type {EditorFeature} from 'monaco-editor-webpack-plugin/out/features';
 import type {IFeatureDefinition} from 'monaco-editor-webpack-plugin/out/types';
 import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plugin';
 import type {Configuration, DefinePlugin, FileCacheOptions, MemoryCacheOptions} from 'webpack';
-import type {Configuration as RspackConfiguration} from '@rspack/core';
+import type {
+    Configuration as RspackConfiguration,
+    SwcJsMinimizerRspackPluginOptions,
+} from '@rspack/core';
 import type * as Babel from '@babel/core';
 import type * as Swc from '@swc/core';
 import type {ServerConfiguration} from 'webpack-dev-server';
@@ -220,6 +223,15 @@ export interface ClientConfig {
      * Modify or return a custom [Terser options](https://github.com/terser/terser#minify-options).
      */
     terser?: (options: TerserOptions) => TerserOptions;
+
+    /**
+     * Modify or return a custom [SWC minification options](https://swc.rs/docs/configuration/minification).
+     * Available with rspack bundler.
+     */
+    swcMinimizerOptions?: (
+        options: SwcJsMinimizerRspackPluginOptions,
+    ) => SwcJsMinimizerRspackPluginOptions;
+
     ssr?: {
         noExternal?: string | RegExp | (string | RegExp)[] | true;
         moduleType?: 'commonjs' | 'esm';
