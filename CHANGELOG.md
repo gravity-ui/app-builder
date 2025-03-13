@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.0](https://github.com/gravity-ui/app-builder/compare/v0.17.1...v0.18.0) (2025-03-13)
+
+
+### Features
+
+* statoscope compression plugin for rspack ([#200](https://github.com/gravity-ui/app-builder/issues/200)) ([2150116](https://github.com/gravity-ui/app-builder/commit/215011642c137467ec4055e67e719dee18006fa4))
+
 ## [0.17.1](https://github.com/gravity-ui/app-builder/compare/v0.17.0...v0.17.1) (2025-03-10)
 
 
