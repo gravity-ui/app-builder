@@ -1343,12 +1343,7 @@ function configureRspackOptimization(
     let cssMinimizer: Rspack.Plugin;
 
     if (config.transformCssWithLightningCss) {
-        cssMinimizer = new rspack.LightningCssMinimizerRspackPlugin({
-            minimizerOptions: {
-                // Plugin will read the browserslist itself and generate targets
-                targets: [],
-            },
-        });
+        cssMinimizer = new rspack.LightningCssMinimizerRspackPlugin();
     } else {
         const CssMinimizerPlugin: typeof CssMinimizerWebpackPlugin = require('css-minimizer-webpack-plugin');
         cssMinimizer = new CssMinimizerPlugin({
