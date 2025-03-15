@@ -331,7 +331,7 @@ function configureRspackExperiments({
             },
             test(module) {
                 // make sure that lazy-client.js won't be lazy compiled)
-                return !module.nameForCondition().endsWith('lazy-client.js');
+                return !module.nameForCondition()?.endsWith('lazy-client.js');
             },
         };
     }
