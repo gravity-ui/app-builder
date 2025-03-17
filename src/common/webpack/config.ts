@@ -449,7 +449,7 @@ async function createJavaScriptLoader({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const plugins: Array<[string, Record<string, any>]> = [];
 
-        if (!isSsr && isEnvProduction) {
+        if (config.bundler !== 'rspack' && !isSsr && isEnvProduction) {
             plugins.push([
                 require.resolve('@swc/plugin-transform-imports'),
                 {
@@ -500,9 +500,28 @@ async function createJavaScriptLoader({
             {configType, isSsr},
         );
 
+        if (config.bundler === 'rspack') {
+            const rspackSwcConfig: Rspack.SwcLoaderOptions = swcConfig;
+
+            if (!isSsr && isEnvProduction) {
+                rspackSwcConfig.rspackExperiments = {
+                    import: [
+                        {
+                            libraryName: 'lodash',
+                            customName: 'lodash/{{member}}',
+                        },
+                    ],
+                };
+            }
+
+            return {
+                loader: 'builtin:swc-loader',
+                options: rspackSwcConfig,
+            };
+        }
+
         return {
-            loader:
-                config.bundler === 'rspack' ? 'builtin:swc-loader' : require.resolve('swc-loader'),
+            loader: require.resolve('swc-loader'),
             options: swcConfig,
         };
     }
