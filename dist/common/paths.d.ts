@@ -1,0 +1,22 @@
+declare const _default: {
+    app: string;
+    appNodeModules: string;
+    appClient: string;
+    appServer: string;
+    appEntry: string;
+    appDist: string;
+    appRun: string;
+    appBuild: string;
+    appSsrEntry: string;
+    appSsrBuild: string;
+    src: string;
+    libBuild: string;
+    libBuildEsm: string;
+    libBuildCjs: string;
+    libAssets: string;
+    libGlobalStyles: string;
+    libCompiledGlobalStyles: string;
+    libCompiledAssetsEsm: string;
+    libCompiledAssetsCjs: string;
+};
+export default _default;
