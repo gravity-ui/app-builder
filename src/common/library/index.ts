@@ -5,7 +5,7 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 import * as babel from '@babel/core';
 import {globStream} from 'fast-glob';
 import {rimraf} from 'rimraf';
-import sass from 'sass';
+import sass from 'sass-embedded';
 import postcss from 'postcss';
 import postcssPresetEnv from 'postcss-preset-env';
 import {transform} from '@svgr/core';
@@ -148,7 +148,7 @@ function compileStyles(
             const sourceMapFile = getFilePath(file, {dir: outputDir, ext: 'css.map'});
 
             try {
-                const sassTransformed = sass.compile(scssFile, {
+                const sassTransformed = await sass.compileAsync(scssFile, {
                     sourceMap: true,
                     sourceMapIncludeSources: true,
                     importers: [
