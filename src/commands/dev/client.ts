@@ -20,7 +20,6 @@ import {WebpackMode, rspackConfigFactory, webpackConfigFactory} from '../../comm
 
 import type {Configuration, HttpProxyMiddlewareOptionsFilter} from 'webpack-dev-server';
 import type {NormalizedServiceConfig} from '../../common/models';
-import {clearCacheDirectory} from '../../common/webpack/rspack';
 
 export async function watchClientCompilation(
     config: NormalizedServiceConfig,
@@ -182,8 +181,6 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         // Pass a single config to avoid multicompiler when SSR disabled.
         const compiler = rspack(isSsr ? rspackConfigs : rspackConfigs[0]!);
         server = new RspackDevServer(options, compiler);
-        // Need to clean cache before start. https://github.com/web-infra-dev/rspack/issues/9025
-        clearCacheDirectory(rspackConfigs[0]!, logger);
     } else {
         const compiler = webpack(webpackConfigs);
         server = new WebpackDevServer(options, compiler);

@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.21.0](https://github.com/gravity-ui/app-builder/compare/v0.20.0...v0.21.0) (2025-03-17)
+
+
+### Features
+
+* use builtin swc transform plugin for rspack ([#210](https://github.com/gravity-ui/app-builder/issues/210)) ([19c883e](https://github.com/gravity-ui/app-builder/commit/19c883e141ed0d164acb8987dbb621e4e7043a85))
+
+## [0.20.0](https://github.com/gravity-ui/app-builder/compare/v0.19.0...v0.20.0) (2025-03-17)
+
+
+### Features
+
+* bump rspack version to 1.2.7 ([#208](https://github.com/gravity-ui/app-builder/issues/208)) ([715c0d3](https://github.com/gravity-ui/app-builder/commit/715c0d3b1f66c4bd85bfd2435490b2c89dbbd55d))
+
+## [0.19.0](https://github.com/gravity-ui/app-builder/compare/v0.18.1...v0.19.0) (2025-03-16)
+
+
+### Features
+
+* bump rspack packages ([#206](https://github.com/gravity-ui/app-builder/issues/206)) ([cbf064d](https://github.com/gravity-ui/app-builder/commit/cbf064d883d478541fea3c0c9681478e5fa81e74))
+
 ## [0.18.1](https://github.com/gravity-ui/app-builder/compare/v0.18.0...v0.18.1) (2025-03-13)
 
 
