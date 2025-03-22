@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.1](https://github.com/gravity-ui/app-builder/compare/v0.21.0...v0.21.1) (2025-03-20)
+
+
+### Bug Fixes
+
+* remove empty targets from lightningcss minimizer ([#205](https://github.com/gravity-ui/app-builder/issues/205)) ([60e8f73](https://github.com/gravity-ui/app-builder/commit/60e8f73ba7ef5356d770235e727d684be7be6aff))
+
 ## [0.21.0](https://github.com/gravity-ui/app-builder/compare/v0.20.0...v0.21.0) (2025-03-17)
 
 
