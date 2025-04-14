@@ -177,6 +177,9 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 - `icons` (`string[]`) — Additional paths for svg icons. By default, all svgs with paths including `icons/` will be processed.
   Example: `icons: [node_modules/@fortawesome/fontawesome-pro/svgs]`
 - `publicPathPrefix` (`string`) — publicPath prefix, will be added to `/build/`
+- `publicPath` (`string`) — publicPath for bundler, this option has higher priority than publicPathPrefix
+- `outputPath` (`string`) — Build directory for output, default: `dist/public/build` and `dist/ssr` - for SSR
+- `assetsManifestFile` (`string`) — File name for assets manifest, default: `assets-manifest.json`
 - `symlinks` (`boolean`) — Follow symbolic links while looking for a file. [more](https://webpack.js.org/configuration/resolve/#resolvesymlinks)
 - `externals` — specify dependencies that shouldn't be resolved by webpack, but should become dependencies of the resulting bundle. [more](https://webpack.js.org/configuration/externals/)
 - `node` — include polyfills or mocks for various node stuff. [more](https://webpack.js.org/configuration/node/)
@@ -187,6 +190,7 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 - `definitions` — add additional options to DefinePlugin. [more](https://webpack.js.org/plugins/define-plugin/#usage)
 - `newJsxTransform` (`boolean=true`) — use new JSX Transform.
 - `svgr` (`SvgrConfig`) — svgr plugin options. [more](https://react-svgr.com/docs/options/)
+- `entry` (`string | string[] | Record<string, string | string[]>`) — entry for bundler, overrides entry which is generated from entries directory
 - `entryFilter` (`string[]`) — filter used entrypoints.
 - `excludeFromClean` (`string[]`) — do not clean provided paths before build.
 - `forkTsCheker` (`false | ForkTsCheckerWebpackPluginOptions`) - config for ForkTsCheckerWebpackPlugin [more](https://github.com/TypeStrong/fork-ts-checker-webpack-plugin#options). If `false`, ForkTsCheckerWebpackPlugin will be disabled.

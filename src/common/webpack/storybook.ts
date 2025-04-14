@@ -103,12 +103,14 @@ export async function configureWebpackConfigForStorybook(
         },
     });
 
-    const helperOptions = {
+    const helperOptions: HelperOptions = {
         isEnvDevelopment,
         isEnvProduction,
         config: config.client,
         configType: mode,
-        buildDirectory: paths.appBuild,
+        buildDirectory: config.client.outputPath || paths.appBuild,
+        assetsManifestFile: config.client.assetsManifestFile,
+        entry: config.client.entry,
         entriesDirectory: paths.appEntry,
         isSsr: false,
     };

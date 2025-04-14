@@ -90,9 +90,24 @@ export interface ClientConfig {
     devServer?: DevServerConfig;
     contextReplacement?: ContextReplacement;
     /**
-     *  publicPath prefix, will be added to '/build/'
+     * publicPath prefix, will be added to '/build/'
      */
     publicPathPrefix?: string;
+    /**
+     * publicPath for bundler
+     * This option has higher priority than publicPathPrefix
+     */
+    publicPath?: string;
+    /**
+     * Build directory for output
+     * Default: 'dist/public/build' and 'dist/ssr' - for SSR
+     */
+    outputPath?: string;
+    /**
+     * File name for assets manifest
+     * Default: 'assets-manifest.json'
+     */
+    assetsManifestFile?: string;
     /**
      * Add monaco-editor support
      */
@@ -103,7 +118,7 @@ export interface ClientConfig {
         customLanguages?: IFeatureDefinition[];
     };
     /**
-     * if false - source maps will be generated for prod builds,
+     * if false - source maps will be generated for prod builds
      */
     hiddenSourceMap?: boolean;
     /**
@@ -140,6 +155,11 @@ export interface ClientConfig {
      * svgr plugin options.
      */
     svgr?: SvgrConfig;
+    /**
+     * entry for bundler
+     * Overrides entry which is generated from entries directory
+     */
+    entry?: string | string[] | Record<string, string | string[]>;
     entryFilter?: string[];
     excludeFromClean?: string[];
     analyzeBundle?: 'true' | 'statoscope' | 'rsdoctor';
@@ -271,6 +291,8 @@ export interface ServiceConfig {
 export type NormalizedClientConfig = Omit<
     ClientConfig,
     | 'publicPathPrefix'
+    | 'publicPath'
+    | 'assetsManifestFile'
     | 'hiddenSourceMap'
     | 'svgr'
     | 'lazyCompilation'
@@ -280,7 +302,8 @@ export type NormalizedClientConfig = Omit<
 > & {
     bundler: Bundler;
     javaScriptLoader: JavaScriptLoader;
-    publicPathPrefix: string;
+    publicPath: string;
+    assetsManifestFile: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
     lazyCompilation?: LazyCompilationConfig;
