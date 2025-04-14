@@ -748,6 +748,7 @@ function getCssLoaders(
         } else {
             loaders.unshift({
                 loader: require.resolve('style-loader'),
+                options: {insert: require.resolve('./insert-style-tag.js')},
             });
         }
     }
