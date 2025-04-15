@@ -103,6 +103,19 @@ function configureExternals({config, isSsr}: HelperOptions) {
     return externals;
 }
 
+function configureWebpackCache(options: HelperOptions): webpack.Configuration['cache'] {
+    const {config} = options;
+
+    if (typeof config.cache === 'object' && config.cache.type === 'filesystem') {
+        return {
+            ...config.cache,
+            buildDependencies: getCacheBuildDependencies(options),
+        };
+    }
+
+    return config.cache;
+}
+
 export async function webpackConfigFactory(
     options: ClientFactoryOptions,
 ): Promise<webpack.Configuration> {
@@ -139,7 +152,7 @@ export async function webpackConfigFactory(
         snapshot: {
             managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
         },
-        cache: config.cache,
+        cache: configureWebpackCache(helperOptions),
     };
 
     webpackConfig = await config.webpack(webpackConfig, {
@@ -253,6 +266,40 @@ function configureWatchOptions({config}: HelperOptions): webpack.Configuration['
     return watchOptions;
 }
 
+function getCacheBuildDependencies({config}: HelperOptions) {
+    const buildDependencies: Record<string, string[]> = {};
+
+    const dependenciesGroups: Record<string, string[]> = {
+        appBuilderConfig: [
+            path.join(paths.app, 'app-builder.config.ts'),
+            path.join(paths.app, 'app-builder.config.js'),
+        ],
+        packageJson: [path.join(paths.app, 'package.json')],
+        tsconfig: [
+            path.join(paths.app, 'tsconfig.json'),
+            path.join(paths.appClient, 'tsconfig.json'),
+        ],
+    };
+
+    for (const [group, filePaths] of Object.entries(dependenciesGroups)) {
+        for (const filePath of filePaths) {
+            if (fs.existsSync(filePath)) {
+                buildDependencies[group] = [...(buildDependencies[group] || []), filePath];
+            }
+        }
+    }
+
+    const userBuildDependencies =
+        typeof config.cache === 'object' && config.cache.type === 'filesystem'
+            ? config.cache.buildDependencies
+            : {};
+
+    return {
+        ...buildDependencies,
+        ...userBuildDependencies,
+    };
+}
+
 function configureExperiments({
     config,
     isEnvProduction,
@@ -296,11 +343,9 @@ function configureExperiments({
     };
 }
 
-function configureRspackExperiments({
-    config,
-    isEnvProduction,
-    isSsr,
-}: HelperOptions): Rspack.Configuration['experiments'] {
+function configureRspackExperiments(options: HelperOptions): Rspack.Configuration['experiments'] {
+    const {config, isSsr, isEnvProduction} = options;
+
     if (isSsr) {
         return config.ssr?.moduleType === 'esm' ? {outputModule: true} : undefined;
     }
@@ -352,6 +397,7 @@ function configureRspackExperiments({
                         ? config.cache.cacheDirectory
                         : undefined,
             },
+            buildDependencies: Object.values(getCacheBuildDependencies(options)).flat(),
         },
         lazyCompilation,
     };
