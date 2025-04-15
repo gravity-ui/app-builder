@@ -6,7 +6,10 @@ import {Logger} from '../logger';
 import {WebpackMode, rspackConfigFactory, webpackConfigFactory} from './config';
 import {compilerHandlerFactory} from './utils';
 
-export async function clientCompile(config: NormalizedClientConfig): Promise<void> {
+export async function clientCompile(
+    config: NormalizedClientConfig,
+    configPath?: string,
+): Promise<void> {
     const logger = new Logger('client', config.verbose);
 
     const webpackConfigs: webpack.Configuration[] = [];
@@ -16,7 +19,12 @@ export async function clientCompile(config: NormalizedClientConfig): Promise<voi
 
     if (config.bundler === 'rspack') {
         rspackConfigs.push(
-            await rspackConfigFactory({webpackMode: WebpackMode.Prod, config, logger}),
+            await rspackConfigFactory({
+                webpackMode: WebpackMode.Prod,
+                config,
+                configPath,
+                logger,
+            }),
         );
 
         if (isSsr) {
@@ -25,6 +33,7 @@ export async function clientCompile(config: NormalizedClientConfig): Promise<voi
                 await rspackConfigFactory({
                     webpackMode: WebpackMode.Prod,
                     config,
+                    configPath,
                     logger: ssrLogger,
                     isSsr,
                 }),
@@ -32,7 +41,12 @@ export async function clientCompile(config: NormalizedClientConfig): Promise<voi
         }
     } else {
         webpackConfigs.push(
-            await webpackConfigFactory({webpackMode: WebpackMode.Prod, config, logger}),
+            await webpackConfigFactory({
+                webpackMode: WebpackMode.Prod,
+                config,
+                configPath,
+                logger,
+            }),
         );
 
         if (isSsr) {
@@ -41,6 +55,7 @@ export async function clientCompile(config: NormalizedClientConfig): Promise<voi
                 await webpackConfigFactory({
                     webpackMode: WebpackMode.Prod,
                     config,
+                    configPath,
                     logger: ssrLogger,
                     isSsr,
                 }),

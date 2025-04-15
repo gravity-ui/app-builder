@@ -51,6 +51,7 @@ export interface HelperOptions {
     entry?: string | string[] | Record<string, string | string[]>;
     entriesDirectory: string;
     isSsr: boolean;
+    configPath?: string;
 }
 
 export const enum WebpackMode {
@@ -63,6 +64,7 @@ type ClientFactoryOptions = {
     config: NormalizedClientConfig;
     logger?: Logger;
     isSsr?: boolean;
+    configPath?: string;
 };
 
 function getHelperOptions({
@@ -70,6 +72,7 @@ function getHelperOptions({
     config,
     logger,
     isSsr = false,
+    configPath,
 }: ClientFactoryOptions): HelperOptions {
     const isEnvDevelopment = webpackMode === WebpackMode.Dev;
     const isEnvProduction = webpackMode === WebpackMode.Prod;
@@ -85,6 +88,7 @@ function getHelperOptions({
         entry: config.entry,
         entriesDirectory: isSsr ? paths.appSsrEntry : paths.appEntry,
         isSsr,
+        configPath,
     };
 }
 
@@ -266,14 +270,11 @@ function configureWatchOptions({config}: HelperOptions): webpack.Configuration['
     return watchOptions;
 }
 
-function getCacheBuildDependencies({config}: HelperOptions) {
+function getCacheBuildDependencies({config, configPath}: HelperOptions) {
     const buildDependencies: Record<string, string[]> = {};
 
     const dependenciesGroups: Record<string, string[]> = {
-        appBuilderConfig: [
-            path.join(paths.app, 'app-builder.config.ts'),
-            path.join(paths.app, 'app-builder.config.js'),
-        ],
+        appBuilderConfig: configPath ? [configPath] : [],
         packageJson: [path.join(paths.app, 'package.json')],
         tsconfig: [
             path.join(paths.app, 'tsconfig.json'),
@@ -384,18 +385,21 @@ function configureRspackExperiments(options: HelperOptions): Rspack.Configuratio
         };
     }
 
+    const filesystemCacheOptions =
+        typeof config.cache === 'object' && config.cache.type === 'filesystem'
+            ? config.cache
+            : undefined;
+
     return {
         cache: {
+            version: filesystemCacheOptions?.version,
             type: 'persistent',
             snapshot: {
                 managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
             },
             storage: {
                 type: 'filesystem',
-                directory:
-                    typeof config.cache === 'object' && 'cacheDirectory' in config.cache
-                        ? config.cache.cacheDirectory
-                        : undefined,
+                directory: filesystemCacheOptions?.cacheDirectory,
             },
             buildDependencies: Object.values(getCacheBuildDependencies(options)).flat(),
         },
