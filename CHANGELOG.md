@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.23.0](https://github.com/gravity-ui/app-builder/compare/v0.22.0...v0.23.0) (2025-04-15)
+
+
+### Features
+
+* add options to configure entry, publicPath, outputPath and assetsManifestFile ([#215](https://github.com/gravity-ui/app-builder/issues/215)) ([31793ee](https://github.com/gravity-ui/app-builder/commit/31793ee208a245a83bea2c728d25e5bbd8f9fb86))
+
+
+### Bug Fixes
+
+* do not duplicate style tags with style-loader ([#216](https://github.com/gravity-ui/app-builder/issues/216)) ([f3c6729](https://github.com/gravity-ui/app-builder/commit/f3c6729faa8f5df50805a28126ff238ec24d36cc))
+
 ## [0.22.0](https://github.com/gravity-ui/app-builder/compare/v0.21.1...v0.22.0) (2025-03-25)
 
 
