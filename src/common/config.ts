@@ -208,7 +208,8 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
             ? false
             : (client.reactRefresh ?? ((options) => options)),
         newJsxTransform: client.newJsxTransform ?? true,
-        publicPathPrefix: client.publicPathPrefix || '',
+        publicPath: client.publicPath || path.normalize(`${client.publicPathPrefix || ''}/build/`),
+        assetsManifestFile: client.assetsManifestFile || 'assets-manifest.json',
         modules: client.modules && remapPaths(client.modules),
         includes: client.includes && remapPaths(client.includes),
         images: client.images && remapPaths(client.images),

@@ -37,8 +37,9 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     const bundler = config.client.bundler;
     const logger = new Logger('client', config.verbose);
 
+    const {publicPath} = config.client;
     const {
-        webSocketPath = path.normalize(`/${config.client.publicPathPrefix}/build/sockjs-node`),
+        webSocketPath = path.normalize(`/${publicPath}/sockjs-node`),
         writeToDisk,
         ...devServer
     } = config.client.devServer || {};
@@ -91,7 +92,6 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         }
     }
 
-    const publicPath = path.normalize(config.client.publicPathPrefix + '/build/');
     const staticFolder = path.resolve(paths.appDist, 'public');
     const options: Configuration = {
         static: staticFolder,
@@ -179,6 +179,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     if (bundler === 'rspack') {
         // Rspack multicompiler dont work with lazy compilation.
         // Pass a single config to avoid multicompiler when SSR disabled.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const compiler = rspack(isSsr ? rspackConfigs : rspackConfigs[0]!);
         server = new RspackDevServer(options, compiler);
     } else {
@@ -214,13 +215,13 @@ function subscribeToManifestReadyEvent(
 
     for (let i = 0; i < options.length; i++) {
         const config = options[i];
-        const compiler = compilers[i];
+        const currentCompiler = compilers[i];
 
-        if (!config || !compiler) {
+        if (!config || !currentCompiler) {
             throw new Error('Something goes wrong!');
         }
 
-        if (!isRspackCompiler(compiler)) {
+        if (!isRspackCompiler(currentCompiler)) {
             const assetsManifestPlugin = config.plugins.find(
                 (plugin) => plugin instanceof WebpackAssetsManifest,
             );
@@ -235,11 +236,11 @@ function subscribeToManifestReadyEvent(
         const manifestReady = deferredPromise();
         promises.push(manifestReady.promise);
 
-        if (isRspackCompiler(compiler)) {
-            const {afterEmit} = getRspackCompilerHooks(compiler);
+        if (isRspackCompiler(currentCompiler)) {
+            const {afterEmit} = getRspackCompilerHooks(currentCompiler);
             afterEmit.tap('app-builder', manifestReady.resolve);
         } else {
-            const {afterEmit} = getCompilerHooks(compiler);
+            const {afterEmit} = getCompilerHooks(currentCompiler);
             afterEmit.tap('app-builder', manifestReady.resolve);
         }
     }

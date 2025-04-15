@@ -39,7 +39,6 @@ import {RspackCompressedExtension} from './statoscope';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
-const assetsManifestFile = 'assets-manifest.json';
 
 export interface HelperOptions {
     config: NormalizedClientConfig;
@@ -48,6 +47,8 @@ export interface HelperOptions {
     isEnvProduction: boolean;
     configType: `${WebpackMode}`;
     buildDirectory: string;
+    assetsManifestFile: string;
+    entry?: string | string[] | Record<string, string | string[]>;
     entriesDirectory: string;
     isSsr: boolean;
 }
@@ -79,7 +80,9 @@ function getHelperOptions({
         isEnvDevelopment,
         isEnvProduction,
         configType: webpackMode,
-        buildDirectory: isSsr ? paths.appSsrBuild : paths.appBuild,
+        buildDirectory: config.outputPath || (isSsr ? paths.appSsrBuild : paths.appBuild),
+        assetsManifestFile: config.assetsManifestFile,
+        entry: config.entry,
         entriesDirectory: isSsr ? paths.appSsrEntry : paths.appEntry,
         isSsr,
     };
@@ -379,32 +382,48 @@ export function configureResolve({isEnvProduction, config}: HelperOptions) {
     } satisfies webpack.ResolveOptions;
 }
 
-function createEntryArray(entry: string) {
-    return [require.resolve('./public-path'), entry];
+function createEntryArray(entry: string | string[]) {
+    if (typeof entry === 'string') {
+        return [require.resolve('./public-path'), entry];
+    }
+
+    return [require.resolve('./public-path'), ...entry];
 }
 
-function addEntry(entry: Record<string, string | string[]>, file: string) {
+function addEntry(entry: Record<string, string[]>, file: string) {
     return {
         ...entry,
         [path.parse(file).name]: createEntryArray(file),
     };
 }
 
-function configureEntry({config, entriesDirectory}: HelperOptions) {
+function configureEntry({config, entry, entriesDirectory}: HelperOptions) {
+    if (typeof entry === 'string' || Array.isArray(entry)) {
+        return createEntryArray(entry);
+    }
+
+    if (typeof entry === 'object') {
+        return Object.entries(entry).reduce<Record<string, string[]>>(
+            (acc, [key, value]) => ({
+                ...acc,
+                [key]: createEntryArray(value),
+            }),
+            {},
+        );
+    }
+
     let entries = fs.readdirSync(entriesDirectory).filter((file) => /\.[jt]sx?$/.test(file));
 
     if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
-        entries = entries.filter((entry) =>
-            config.entryFilter?.includes(entry.split('.')[0] ?? ''),
-        );
+        entries = entries.filter((file) => config.entryFilter?.includes(file.split('.')[0] ?? ''));
     }
 
     if (!entries.length) {
         throw new Error('No entries were found after applying entry filter');
     }
 
-    return entries.reduce<Record<string, string | string[]>>(
-        (entry, file) => addEntry(entry, path.resolve(entriesDirectory, file)),
+    return entries.reduce<Record<string, string[]>>(
+        (acc, file) => addEntry(acc, path.resolve(entriesDirectory, file)),
         {},
     );
 }
@@ -1067,7 +1086,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                     ...config.monaco,
                     // currently, workers located on cdn are not working properly, so we are enforcing loading workers from
                     // service instead
-                    publicPath: path.normalize(config.publicPathPrefix + '/build/'),
+                    publicPath: config.publicPath,
                 }),
             );
         }
@@ -1150,19 +1169,19 @@ function configureWebpackPlugins(options: HelperOptions): webpack.Configuration[
             isEnvProduction
                 ? {
                       entrypoints: true,
-                      output: assetsManifestFile,
+                      output: options.assetsManifestFile,
                   }
                 : {
                       entrypoints: true,
                       writeToDisk: true,
-                      output: path.resolve(options.buildDirectory, assetsManifestFile),
+                      output: path.resolve(options.buildDirectory, options.assetsManifestFile),
                   },
         ),
         ...(process.env.WEBPACK_PROFILE === 'true' ? [new webpack.debug.ProfilingPlugin()] : []),
     ];
 
     if (!isSsr && isEnvDevelopment && config.reactRefresh !== false) {
-        const {webSocketPath = path.normalize(`/${config.publicPathPrefix}/build/sockjs-node`)} =
+        const {webSocketPath = path.normalize(`/${config.publicPath}/sockjs-node`)} =
             config.devServer || {};
 
         const reactRefreshConfig = config.reactRefresh({
@@ -1194,8 +1213,8 @@ function configureRspackPlugins(options: HelperOptions): Rspack.Configuration['p
         ...configureCommonPlugins(options, plugins),
         new RspackManifestPlugin({
             fileName: isEnvProduction
-                ? assetsManifestFile
-                : path.resolve(options.buildDirectory, assetsManifestFile),
+                ? options.assetsManifestFile
+                : path.resolve(options.buildDirectory, options.assetsManifestFile),
             writeToFileEmit: true,
             useLegacyEmit: true,
             publicPath: '',
@@ -1204,7 +1223,7 @@ function configureRspackPlugins(options: HelperOptions): Rspack.Configuration['p
     ];
 
     if (!isSsr && isEnvDevelopment && config.reactRefresh !== false) {
-        const {webSocketPath = path.normalize(`/${config.publicPathPrefix}/build/sockjs-node`)} =
+        const {webSocketPath = path.normalize(`/${config.publicPath}/sockjs-node`)} =
             config.devServer || {};
 
         const {overlay, ...reactRefreshConfig} = config.reactRefresh({
