@@ -390,9 +390,13 @@ function configureRspackExperiments(options: HelperOptions): Rspack.Configuratio
             ? config.cache
             : undefined;
 
+    const version = [filesystemCacheOptions?.name, filesystemCacheOptions?.version]
+        .filter(Boolean)
+        .join('-');
+
     return {
         cache: {
-            version: filesystemCacheOptions?.version,
+            version: version || undefined,
             type: 'persistent',
             snapshot: {
                 managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
