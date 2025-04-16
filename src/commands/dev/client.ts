@@ -55,6 +55,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
             await webpackConfigFactory({
                 webpackMode: WebpackMode.Dev,
                 config: normalizedConfig,
+                configPath: config.configPath,
                 logger,
             }),
         ];
@@ -65,6 +66,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
                 await webpackConfigFactory({
                     webpackMode: WebpackMode.Dev,
                     config: normalizedConfig,
+                    configPath: config.configPath,
                     logger: ssrLogger,
                     isSsr,
                 }),
@@ -75,6 +77,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
             await rspackConfigFactory({
                 webpackMode: WebpackMode.Dev,
                 config: normalizedConfig,
+                configPath: config.configPath,
                 logger,
             }),
         ];
@@ -85,6 +88,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
                 await rspackConfigFactory({
                     webpackMode: WebpackMode.Dev,
                     config: normalizedConfig,
+                    configPath: config.configPath,
                     logger: ssrLogger,
                     isSsr,
                 }),

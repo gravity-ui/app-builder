@@ -51,6 +51,7 @@ export interface HelperOptions {
     entry?: string | string[] | Record<string, string | string[]>;
     entriesDirectory: string;
     isSsr: boolean;
+    configPath?: string;
 }
 
 export const enum WebpackMode {
@@ -63,6 +64,7 @@ type ClientFactoryOptions = {
     config: NormalizedClientConfig;
     logger?: Logger;
     isSsr?: boolean;
+    configPath?: string;
 };
 
 function getHelperOptions({
@@ -70,6 +72,7 @@ function getHelperOptions({
     config,
     logger,
     isSsr = false,
+    configPath,
 }: ClientFactoryOptions): HelperOptions {
     const isEnvDevelopment = webpackMode === WebpackMode.Dev;
     const isEnvProduction = webpackMode === WebpackMode.Prod;
@@ -85,6 +88,7 @@ function getHelperOptions({
         entry: config.entry,
         entriesDirectory: isSsr ? paths.appSsrEntry : paths.appEntry,
         isSsr,
+        configPath,
     };
 }
 
@@ -101,6 +105,19 @@ function configureExternals({config, isSsr}: HelperOptions) {
     }
 
     return externals;
+}
+
+function configureWebpackCache(options: HelperOptions): webpack.Configuration['cache'] {
+    const {config} = options;
+
+    if (typeof config.cache === 'object' && config.cache.type === 'filesystem') {
+        return {
+            ...config.cache,
+            buildDependencies: getCacheBuildDependencies(options),
+        };
+    }
+
+    return config.cache;
 }
 
 export async function webpackConfigFactory(
@@ -139,7 +156,7 @@ export async function webpackConfigFactory(
         snapshot: {
             managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
         },
-        cache: config.cache,
+        cache: configureWebpackCache(helperOptions),
     };
 
     webpackConfig = await config.webpack(webpackConfig, {
@@ -253,6 +270,37 @@ function configureWatchOptions({config}: HelperOptions): webpack.Configuration['
     return watchOptions;
 }
 
+function getCacheBuildDependencies({config, configPath}: HelperOptions) {
+    const buildDependencies: Record<string, string[]> = {};
+
+    const dependenciesGroups: Record<string, string[]> = {
+        appBuilderConfig: configPath ? [configPath] : [],
+        packageJson: [path.join(paths.app, 'package.json')],
+        tsconfig: [
+            path.join(paths.app, 'tsconfig.json'),
+            path.join(paths.appClient, 'tsconfig.json'),
+        ],
+    };
+
+    for (const [group, filePaths] of Object.entries(dependenciesGroups)) {
+        for (const filePath of filePaths) {
+            if (fs.existsSync(filePath)) {
+                buildDependencies[group] = [...(buildDependencies[group] || []), filePath];
+            }
+        }
+    }
+
+    const userBuildDependencies =
+        typeof config.cache === 'object' && config.cache.type === 'filesystem'
+            ? config.cache.buildDependencies
+            : {};
+
+    return {
+        ...buildDependencies,
+        ...userBuildDependencies,
+    };
+}
+
 function configureExperiments({
     config,
     isEnvProduction,
@@ -296,11 +344,9 @@ function configureExperiments({
     };
 }
 
-function configureRspackExperiments({
-    config,
-    isEnvProduction,
-    isSsr,
-}: HelperOptions): Rspack.Configuration['experiments'] {
+function configureRspackExperiments(options: HelperOptions): Rspack.Configuration['experiments'] {
+    const {config, isSsr, isEnvProduction} = options;
+
     if (isSsr) {
         return config.ssr?.moduleType === 'esm' ? {outputModule: true} : undefined;
     }
@@ -339,19 +385,27 @@ function configureRspackExperiments({
         };
     }
 
+    const filesystemCacheOptions =
+        typeof config.cache === 'object' && config.cache.type === 'filesystem'
+            ? config.cache
+            : undefined;
+
+    const version = [filesystemCacheOptions?.name, filesystemCacheOptions?.version]
+        .filter(Boolean)
+        .join('-');
+
     return {
         cache: {
+            version: version || undefined,
             type: 'persistent',
             snapshot: {
                 managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
             },
             storage: {
                 type: 'filesystem',
-                directory:
-                    typeof config.cache === 'object' && 'cacheDirectory' in config.cache
-                        ? config.cache.cacheDirectory
-                        : undefined,
+                directory: filesystemCacheOptions?.cacheDirectory,
             },
+            buildDependencies: Object.values(getCacheBuildDependencies(options)).flat(),
         },
         lazyCompilation,
     };

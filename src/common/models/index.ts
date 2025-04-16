@@ -286,6 +286,7 @@ export interface ServiceConfig {
     server?: ServerConfig;
     lib?: never;
     verbose?: boolean;
+    configPath?: string;
 }
 
 export type NormalizedClientConfig = Omit<
