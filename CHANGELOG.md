@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.0](https://github.com/gravity-ui/app-builder/compare/v0.23.0...v0.24.0) (2025-04-16)
+
+
+### Features
+
+* invalidate build cache ([#218](https://github.com/gravity-ui/app-builder/issues/218)) ([956f3c9](https://github.com/gravity-ui/app-builder/commit/956f3c9d4dc759f97514b33fc3fa80d1b5b1fe9d))
+
 ## [0.23.0](https://github.com/gravity-ui/app-builder/compare/v0.22.0...v0.23.0) (2025-04-15)
 
 
