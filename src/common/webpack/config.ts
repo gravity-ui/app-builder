@@ -35,7 +35,6 @@ import {logConfig} from '../logger/log-config';
 import {resolveTypescript} from '../typescript/utils';
 import {nodeExternals} from './node-externals';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
-import {RspackCompressedExtension} from './statoscope';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -1162,24 +1161,17 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         if (config.analyzeBundle === 'statoscope') {
             const customStatoscopeConfig = config.statoscopeConfig || {};
 
-            const statoscopePlugin = new StatoscopeWebpackPlugin({
-                saveReportTo: path.resolve(options.buildDirectory, 'report.html'),
-                saveStatsTo: path.resolve(options.buildDirectory, 'stats.json'),
-                open: false,
-                statsOptions: {
-                    all: true,
-                },
-                ...customStatoscopeConfig,
-            });
-
-            // TIP: statoscope doesn't support rspack, but this workaround helps to run it
-            if (config.bundler === 'rspack') {
-                const compressor = statoscopePlugin.options.compressor;
-                statoscopePlugin.extensions =
-                    compressor === false ? [] : [new RspackCompressedExtension(compressor)];
-            }
-
-            plugins.push(statoscopePlugin);
+            plugins.push(
+                new StatoscopeWebpackPlugin({
+                    saveReportTo: path.resolve(options.buildDirectory, 'report.html'),
+                    saveStatsTo: path.resolve(options.buildDirectory, 'stats.json'),
+                    open: false,
+                    statsOptions: {
+                        all: true,
+                    },
+                    ...customStatoscopeConfig,
+                }),
+            );
         }
 
         if (config.analyzeBundle === 'rsdoctor') {
