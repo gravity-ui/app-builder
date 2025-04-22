@@ -1436,7 +1436,13 @@ function configureRspackOptimization(
     let cssMinimizer: Rspack.Plugin;
 
     if (config.transformCssWithLightningCss) {
-        cssMinimizer = new rspack.LightningCssMinimizerRspackPlugin();
+        cssMinimizer = new rspack.LightningCssMinimizerRspackPlugin({
+            minimizerOptions: {
+                exclude: {
+                    langSelectorList: true,
+                },
+            },
+        });
     } else {
         const CssMinimizerPlugin: typeof CssMinimizerWebpackPlugin = require('css-minimizer-webpack-plugin');
         cssMinimizer = new CssMinimizerPlugin({
