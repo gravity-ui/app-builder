@@ -355,28 +355,15 @@ function configureRspackExperiments(options: HelperOptions): Rspack.Configuratio
     }
 
     let lazyCompilation: Rspack.LazyCompilationOptions | undefined;
-    let port;
 
     if (config.lazyCompilation) {
-        if (typeof config.lazyCompilation === 'object') {
-            port = config.lazyCompilation.port;
-        }
-
         lazyCompilation = {
             // Lazy compilation works without problems only with lazy imports
             // See https://github.com/web-infra-dev/rspack/issues/8503
             entries: false,
             imports: true,
-            backend: {
-                client: require.resolve('./lazy-client.js'),
-                ...(port
-                    ? {
-                          listen: {
-                              port,
-                          },
-                      }
-                    : {}),
-            },
+            prefix: '/build/lazy-compilation-using-',
+            client: require.resolve('./lazy-client.js'),
             test(module) {
                 // make sure that lazy-client.js won't be lazy compiled)
                 return !module.nameForCondition()?.endsWith('lazy-client.js');
