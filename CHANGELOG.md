@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.0](https://github.com/gravity-ui/app-builder/compare/v0.24.0...v0.25.0) (2025-04-23)
+
+
+### Features
+
+* bump statoscope ([#220](https://github.com/gravity-ui/app-builder/issues/220)) ([c509780](https://github.com/gravity-ui/app-builder/commit/c509780e4231aa54ea4df7decbfdd481719e2dd7))
+
 ## [0.24.0](https://github.com/gravity-ui/app-builder/compare/v0.23.0...v0.24.0) (2025-04-16)
 
 
