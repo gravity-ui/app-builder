@@ -1428,7 +1428,21 @@ function configureRspackOptimization(
     let cssMinimizer: Rspack.Plugin;
 
     if (config.transformCssWithLightningCss) {
-        cssMinimizer = new rspack.LightningCssMinimizerRspackPlugin();
+        let lightningCssMinifyOptions: Rspack.LightningCssMinimizerRspackPluginOptions = {
+            minimizerOptions: {
+                exclude: {
+                    langSelectorList: true,
+                },
+            },
+        };
+
+        const {lightningCssMinimizerOptions} = config;
+
+        if (typeof lightningCssMinimizerOptions === 'function') {
+            lightningCssMinifyOptions = lightningCssMinimizerOptions(lightningCssMinifyOptions);
+        }
+
+        cssMinimizer = new rspack.LightningCssMinimizerRspackPlugin(lightningCssMinifyOptions);
     } else {
         const CssMinimizerPlugin: typeof CssMinimizerWebpackPlugin = require('css-minimizer-webpack-plugin');
         cssMinimizer = new CssMinimizerPlugin({

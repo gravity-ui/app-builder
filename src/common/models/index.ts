@@ -4,6 +4,7 @@ import type {IFeatureDefinition} from 'monaco-editor-webpack-plugin/out/types';
 import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plugin';
 import type {Configuration, DefinePlugin, FileCacheOptions, MemoryCacheOptions} from 'webpack';
 import type {
+    LightningCssMinimizerRspackPluginOptions,
     Configuration as RspackConfiguration,
     SwcJsMinimizerRspackPluginOptions,
 } from '@rspack/core';
@@ -251,6 +252,11 @@ export interface ClientConfig {
     swcMinimizerOptions?: (
         options: SwcJsMinimizerRspackPluginOptions,
     ) => SwcJsMinimizerRspackPluginOptions;
+
+    /** Modify or return a custom [LightningCssMinimizerRspackPlugin](https://rspack.dev/plugins/rspack/lightning-css-minimizer-rspack-plugin) */
+    lightningCssMinimizerOptions?: (
+        options: LightningCssMinimizerRspackPluginOptions,
+    ) => LightningCssMinimizerRspackPluginOptions;
 
     ssr?: {
         noExternal?: string | RegExp | (string | RegExp)[] | true;
