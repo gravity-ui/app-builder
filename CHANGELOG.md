@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.0](https://github.com/gravity-ui/app-builder/compare/v0.25.0...v0.26.0) (2025-04-24)
+
+
+### Features
+
+* add lightningCssMinimizerOptions in config and exclude langSelectorList in lightningcss ([#226](https://github.com/gravity-ui/app-builder/issues/226)) ([42a679d](https://github.com/gravity-ui/app-builder/commit/42a679dc565928cef20d2546d7faae9f3b362c29))
+
 ## [0.25.0](https://github.com/gravity-ui/app-builder/compare/v0.24.0...v0.25.0) (2025-04-23)
 
 
