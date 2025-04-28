@@ -1432,6 +1432,7 @@ function configureRspackOptimization(
             minimizerOptions: {
                 exclude: {
                     langSelectorList: true,
+                    logicalProperties: true,
                 },
             },
         };
