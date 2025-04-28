@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.1](https://github.com/gravity-ui/app-builder/compare/v0.26.0...v0.26.1) (2025-04-28)
+
+
+### Bug Fixes
+
+* exclude logicalProperties-in-lightningcss ([#228](https://github.com/gravity-ui/app-builder/issues/228)) ([341a421](https://github.com/gravity-ui/app-builder/commit/341a421b20a092bd7eabfad1a9f86e16ffad67a0))
+
 ## [0.26.0](https://github.com/gravity-ui/app-builder/compare/v0.25.0...v0.26.0) (2025-04-24)
 
 
