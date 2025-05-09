@@ -1175,9 +1175,12 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         }
 
         if (config.analyzeBundle === 'rsdoctor') {
+            const customRsdoctorConfig = config.rsdoctorConfig || {};
+
             plugins.push(
                 new bundlerPlugins.RSDoctorPlugin({
                     mode: 'brief',
+                    ...customRsdoctorConfig,
                 }),
             );
         }

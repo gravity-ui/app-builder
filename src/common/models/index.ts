@@ -15,6 +15,7 @@ import type {Options as CircularDependenciesOptions} from 'circular-dependency-p
 import type {Config as SvgrConfig} from '@svgr/core';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
 import type {Options as StatoscopeOptions} from '@statoscope/webpack-plugin';
+import type {RsdoctorPluginOptionsNormalized as RsdoctorOptions} from '@rsdoctor/core/types';
 import type {SentryWebpackPluginOptions} from '@sentry/webpack-plugin';
 import type {WebpackMode} from '../webpack/config';
 import type {UploadOptions} from '../s3-upload/upload';
@@ -165,6 +166,7 @@ export interface ClientConfig {
     excludeFromClean?: string[];
     analyzeBundle?: 'true' | 'statoscope' | 'rsdoctor';
     statoscopeConfig?: Partial<StatoscopeOptions>;
+    rsdoctorConfig?: RsdoctorOptions<[]>;
     reactProfiling?: boolean;
     /**
      * Disable react-refresh in dev mode

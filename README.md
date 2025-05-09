@@ -229,8 +229,10 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 - `analyzeBundle` (`true | statoscope`) — tools to analyze bundle.
   - `true` — enable [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) plugin. Report generated to `dist/public/build/stats.html`
   - `statoscope` — enable [statoscope](https://github.com/statoscope/statoscope) plugin. Reports generated to `dist/public/build/stats.json` and `dist/public/build/report.json`
+  - `rsdoctor` — enable [@rsdoctor/rspack-plugin](https://rsdoctor.dev/guide/start/quick-start) plugin. Reports generated to `dist/public/build/.rsdoctor/manifest.json` and `dist/public/build/.rsdoctor/report-rsdoctor.html`
 - `reactProfiling` (`boolean`) — use react profiler API in production, this option also disable minimization. The API is required by React developers tools for profile.
 - `statoscopeConfig` (`Options`) — `@statoscope/webpack-plugin` [configuration options](https://github.com/statoscope/statoscope/tree/master/packages/webpack-plugin#usage). Might be used to override the defaults. Requires `analyzeBundle: statoscope`.
+- `rsdoctorConfig` (`RsdoctorPluginOptionsNormalized`) — `@rsdoctor/rspack-plugin` or `@rsdoctor/webpack-plugin`[configuration options](https://rsdoctor.dev/config/options/options). Might be used to override the defaults. Requires `analyzeBundle: rsdoctor`.
 - `cdn` (`CdnUploadConfig | CdnUploadConfig[]`) - upload bundled client files to CDN.
   - `bucket` (`string`) — bucket name
   - `prefix` (`string`) — path to files inside the bucket
