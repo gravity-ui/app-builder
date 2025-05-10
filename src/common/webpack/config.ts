@@ -362,12 +362,7 @@ function configureRspackExperiments(options: HelperOptions): Rspack.Configuratio
             // See https://github.com/web-infra-dev/rspack/issues/8503
             entries: false,
             imports: true,
-            prefix: '/build/lazy-compilation-using-',
-            client: require.resolve('./lazy-client.js'),
-            test(module) {
-                // make sure that lazy-client.js won't be lazy compiled)
-                return !module.nameForCondition()?.endsWith('lazy-client.js');
-            },
+            prefix: '/build/lazy-',
         };
     }
 

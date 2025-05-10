@@ -166,7 +166,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     }
 
     const proxy = options.proxy || [];
-    if (config.client.lazyCompilation) {
+    if (config.client.lazyCompilation && bundler !== 'rspack') {
         proxy.push({
             context: ['/build/lazy'],
             target: `http://localhost:${config.client.lazyCompilation.port}`,
