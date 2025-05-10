@@ -7,6 +7,7 @@ import WebpackAssetsManifest from 'webpack-assets-manifest';
 import {deferredPromise} from '../../common/utils';
 import {getCompilerHooks as getRspackCompilerHooks} from 'rspack-manifest-plugin';
 import {
+    DevServer,
     Compiler as RspackCompiler,
     Configuration as RspackConfiguration,
     MultiCompiler as RspackMultiCompiler,
@@ -96,9 +97,28 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         }
     }
 
+    // Rspack multicompiler dont work with lazy compilation.
+    // Pass a single config to avoid multicompiler when SSR disabled.
+    const compiler =
+        bundler === 'rspack'
+            ? rspack(isSsr ? rspackConfigs : rspackConfigs[0]!)
+            : webpack(webpackConfigs);
+
     const staticFolder = path.resolve(paths.appDist, 'public');
     const options: Configuration = {
         static: staticFolder,
+        setupMiddlewares(middlewares) {
+            if (config.client.lazyCompilation && bundler === 'rspack') {
+                const lazyCompilationMiddleware = rspack.experiments.lazyCompilationMiddleware(
+                    compiler as RspackCompiler,
+                    rspackConfigs[0]?.experiments?.lazyCompilation,
+                );
+
+                return [lazyCompilationMiddleware, ...middlewares];
+            }
+
+            return middlewares;
+        },
         devMiddleware: {
             publicPath,
             stats: 'errors-warnings',
@@ -146,7 +166,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     }
 
     const proxy = options.proxy || [];
-    if (config.client.lazyCompilation) {
+    if (config.client.lazyCompilation && bundler !== 'rspack') {
         proxy.push({
             context: ['/build/lazy'],
             target: `http://localhost:${config.client.lazyCompilation.port}`,
@@ -181,14 +201,15 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     let server: WebpackDevServer | RspackDevServer;
 
     if (bundler === 'rspack') {
-        // Rspack multicompiler dont work with lazy compilation.
-        // Pass a single config to avoid multicompiler when SSR disabled.
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const compiler = rspack(isSsr ? rspackConfigs : rspackConfigs[0]!);
-        server = new RspackDevServer(options, compiler);
+        server = new RspackDevServer(
+            options as DevServer,
+            compiler as RspackCompiler | RspackMultiCompiler,
+        );
     } else {
-        const compiler = webpack(webpackConfigs);
-        server = new WebpackDevServer(options, compiler);
+        server = new WebpackDevServer(
+            options,
+            compiler as webpack.Compiler | webpack.MultiCompiler,
+        );
     }
 
     try {
