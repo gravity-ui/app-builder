@@ -7,9 +7,9 @@ import WebpackAssetsManifest from 'webpack-assets-manifest';
 import {deferredPromise} from '../../common/utils';
 import {getCompilerHooks as getRspackCompilerHooks} from 'rspack-manifest-plugin';
 import {
-    DevServer,
     Compiler as RspackCompiler,
     Configuration as RspackConfiguration,
+    DevServer as RspackDevServerConfiguration,
     MultiCompiler as RspackMultiCompiler,
     rspack,
 } from '@rspack/core';
@@ -201,10 +201,11 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     let server: WebpackDevServer | RspackDevServer;
 
     if (bundler === 'rspack') {
-        server = new RspackDevServer(
-            options as DevServer,
-            compiler as RspackCompiler | RspackMultiCompiler,
-        );
+        // Rspack multicompiler dont work with lazy compilation.
+        // Pass a single config to avoid multicompiler when SSR disabled.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const compiler = rspack(isSsr ? rspackConfigs : rspackConfigs[0]!);
+        server = new RspackDevServer(options as RspackDevServerConfiguration, compiler);
     } else {
         server = new WebpackDevServer(
             options,
