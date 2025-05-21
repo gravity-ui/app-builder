@@ -9,6 +9,7 @@ import {getCompilerHooks as getRspackCompilerHooks} from 'rspack-manifest-plugin
 import {
     Compiler as RspackCompiler,
     Configuration as RspackConfiguration,
+    DevServer as RspackDevServerConfiguration,
     MultiCompiler as RspackMultiCompiler,
     rspack,
 } from '@rspack/core';
@@ -185,7 +186,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         // Pass a single config to avoid multicompiler when SSR disabled.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const compiler = rspack(isSsr ? rspackConfigs : rspackConfigs[0]!);
-        server = new RspackDevServer(options, compiler);
+        server = new RspackDevServer(options as RspackDevServerConfiguration, compiler);
     } else {
         const compiler = webpack(webpackConfigs);
         server = new WebpackDevServer(options, compiler);
