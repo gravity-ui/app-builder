@@ -209,6 +209,8 @@ export function buildLibrary(config: LibraryConfig) {
     const internalGlobs = config.lib?.internalDirs?.map((dir) => `!${dir}/**/*`) ?? [];
     rimraf.sync(paths.libBuild);
 
+    const tsConfigFilePath = path.resolve(paths.app, 'tsconfig.publish.json');
+
     // sources compilation
     const sourceStream = globStream(['**/*.{js,jsx,ts,tsx}', '!**/*.d.ts', ...internalGlobs], {
         cwd: paths.src,
@@ -248,6 +250,12 @@ export function buildLibrary(config: LibraryConfig) {
                             camel2DashComponentName: false,
                         },
                     ],
+                    [
+                        require.resolve('babel-plugin-tsconfig-paths-module-resolver'),
+                        {
+                            tsconfig: tsConfigFilePath,
+                        },
+                    ],
                     require.resolve('./babel-plugin-replace-paths'),
                 ],
                 sourceMaps: true,
@@ -285,11 +293,10 @@ export function buildLibrary(config: LibraryConfig) {
     });
 
     // type definitions compilation and type checking
-    const projectFilePath = path.resolve(paths.app, 'tsconfig.publish.json');
     const tscExec = path.resolve(paths.appNodeModules, 'typescript/bin/tsc');
     // eslint-disable-next-line security/detect-child-process
     childProcess.exec(
-        `${tscExec} -p ${projectFilePath} --declaration --emitDeclarationOnly --outDir build/esm`,
+        `${tscExec} -p ${tsConfigFilePath} --declaration --emitDeclarationOnly --outDir build/esm`,
         (error, stdout, stderr) => {
             logger.message(stdout);
             logger.error(stderr);
