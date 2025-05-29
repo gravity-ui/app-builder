@@ -23,35 +23,6 @@ interface GetFilePathOpts {
     dir?: string;
 }
 
-interface ModuleResolverConfig {
-    root?: string[];
-    alias?: Record<string, string>;
-}
-
-function clean(value: string) {
-    return value.replace(/\/\*$/, '').replace(/\\/g, '/');
-}
-
-function getModuleResolverConfig(tsConfigFilePath: string): ModuleResolverConfig {
-    const config = JSON.parse(fs.readFileSync(tsConfigFilePath, 'utf-8'));
-    const compilerOptions = config.compilerOptions || {};
-    const baseUrl: string = clean(compilerOptions.baseUrl || '.');
-
-    const alias: Record<string, string> = {};
-    const configPaths: Record<string, string[]> = compilerOptions.paths || {};
-
-    Object.entries(configPaths).forEach(([pattern, targets]) => {
-        const key = clean(pattern);
-        const value = targets[0];
-        if (value) {
-            const target = clean(value);
-            alias[key] = target;
-        }
-    });
-
-    return {root: [baseUrl], alias};
-}
-
 function getFilePath(filePath: string, {ext, dir}: GetFilePathOpts = {dir: paths.src}) {
     let filePathWithExt = filePath;
     if (ext) {
@@ -280,8 +251,10 @@ export function buildLibrary(config: LibraryConfig) {
                         },
                     ],
                     [
-                        require.resolve('babel-plugin-module-resolver'),
-                        getModuleResolverConfig(tsConfigFilePath),
+                        require.resolve('babel-plugin-tsconfig-paths-module-resolver'),
+                        {
+                            tsconfig: tsConfigFilePath,
+                        },
                     ],
                     require.resolve('./babel-plugin-replace-paths'),
                 ],
