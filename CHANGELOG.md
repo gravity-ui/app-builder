@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.0](https://github.com/gravity-ui/app-builder/compare/v0.26.1...v0.27.0) (2025-05-29)
+
+
+### Features
+
+* add module-resolver for library ([#233](https://github.com/gravity-ui/app-builder/issues/233)) ([12c0c16](https://github.com/gravity-ui/app-builder/commit/12c0c16e7867c75ff35d1364e7934391e739249f))
+
 ## [0.26.1](https://github.com/gravity-ui/app-builder/compare/v0.26.0...v0.26.1) (2025-04-28)
 
 
