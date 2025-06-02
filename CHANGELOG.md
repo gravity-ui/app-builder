@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.28.0](https://github.com/gravity-ui/app-builder/compare/v0.27.0...v0.28.0) (2025-06-02)
+
+
+### Features
+
+* bump rspack and use lazyCompilationMiddleware ([#222](https://github.com/gravity-ui/app-builder/issues/222)) ([eb43013](https://github.com/gravity-ui/app-builder/commit/eb4301375ac9a70a017b54f1ccb6e50c2b771c61))
+* bump rspack to 1.3.9 ([#231](https://github.com/gravity-ui/app-builder/issues/231)) ([fb206a0](https://github.com/gravity-ui/app-builder/commit/fb206a09e72fc93e062c78bf97536d33b270ae54))
+
 ## [0.27.0](https://github.com/gravity-ui/app-builder/compare/v0.26.1...v0.27.0) (2025-05-29)
 
 
