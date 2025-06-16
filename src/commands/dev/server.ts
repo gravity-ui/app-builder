@@ -13,6 +13,8 @@ export async function watchServerCompilation(config: NormalizedServiceConfig) {
 
     createRunFolder();
 
+    const tsconfigFileName = config.server.tsconfigFileName || 'tsconfig.json';
+
     const build = new ControllableScript(
         `
         let ts;
@@ -38,7 +40,8 @@ export async function watchServerCompilation(config: NormalizedServiceConfig) {
                 onAfterFilesEmitted: () => {
                     process.send({type: 'Emitted'});
                 },
-                enableSourceMap: true
+                enableSourceMap: true,
+                tsconfigFileName: ${JSON.stringify(tsconfigFileName)}
             }
         );
         `,

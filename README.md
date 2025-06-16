@@ -81,6 +81,7 @@ export default defineConfig(
       },
       server: {
         // server settings
+        tsconfigFileName: 'custom-tsconfig.json',
       },
     };
   },
@@ -143,6 +144,8 @@ All server settings are used only in dev mode:
 - `watchThrottle` (`number`) — use to add an extra throttle, or delay restarting.
 - `inspect/inspectBrk` (`number | true`) — listen for a debugging client on specified port.
   If specified `true`, try to listen on `9229`.
+- `tsconfig` (`string`) — name of the tsconfig file for server build.
+  Default: `tsconfig.json`.
 
 ### Client
 

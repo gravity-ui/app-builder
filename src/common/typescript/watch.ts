@@ -11,11 +11,17 @@ export function watch(
         logger,
         onAfterFilesEmitted,
         enableSourceMap,
-    }: {logger: Logger; onAfterFilesEmitted?: () => void; enableSourceMap?: boolean},
+        tsconfigFileName,
+    }: {
+        logger: Logger;
+        onAfterFilesEmitted?: () => void;
+        enableSourceMap?: boolean;
+        tsconfigFileName: string;
+    },
 ) {
     logger.message('Start compilation in watch mode');
     logger.message(`Typescript v${ts.version}`);
-    const configPath = getTsProjectConfigPath(ts, projectPath);
+    const configPath = getTsProjectConfigPath(ts, projectPath, tsconfigFileName);
 
     const createProgram = ts.createEmitAndSemanticDiagnosticsBuilderProgram;
 
