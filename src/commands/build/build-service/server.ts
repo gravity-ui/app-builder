@@ -10,6 +10,8 @@ export function buildServer(config: NormalizedServiceConfig): Promise<void> {
     createRunFolder();
 
     return new Promise((resolve, reject) => {
+        const tsconfigFileName = config.server.tsconfigFileName || 'tsconfig.json';
+
         const build = new ControllableScript(
             `
         let ts;
@@ -27,7 +29,11 @@ export function buildServer(config: NormalizedServiceConfig): Promise<void> {
         )});
 
         const logger = new Logger('server', ${config.verbose});
-        compile(ts, {logger, projectPath: ${JSON.stringify(paths.appServer)}});
+        compile(ts, {
+            logger,
+            projectPath: ${JSON.stringify(paths.appServer)},
+            configFileName: ${JSON.stringify(tsconfigFileName)}
+        });
     `,
             null,
         );

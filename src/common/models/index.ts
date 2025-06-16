@@ -285,6 +285,11 @@ export interface ServerConfig {
     watchThrottle?: number;
     inspect?: number | true;
     inspectBrk?: number | true;
+    /**
+     * Name of the tsconfig file for server build
+     * Default: 'tsconfig.json'
+     */
+    tsconfigFileName?: string;
 }
 export interface ServiceConfig {
     target?: 'client' | 'server';
