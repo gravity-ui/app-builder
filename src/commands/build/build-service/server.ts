@@ -8,21 +8,11 @@ import type {NormalizedServiceConfig} from '../../../common/models';
 
 function createSWCBuildScript(config: NormalizedServiceConfig) {
     return `
-let swcCli;
-try {
-    swcCli = require('@swc/cli');
-} catch (e) {
-    if (e.code !== 'MODULE_NOT_FOUND') {
-        throw e;
-    }
-    swcCli = require(${JSON.stringify(require.resolve('@swc/cli'))});
-}
-const {swcDir} = swcCli;
 const {Logger} = require(${JSON.stringify(require.resolve('../../../common/logger'))});
 const {compile} = require(${JSON.stringify(require.resolve('../../../common/swc/compile'))});
 
 const logger = new Logger('server', ${config.verbose});
-compile(swcDir, {
+compile({
     logger,
     outputPath: ${JSON.stringify(paths.appDist)},
     projectPath: ${JSON.stringify(paths.appServer)},

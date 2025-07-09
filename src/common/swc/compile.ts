@@ -1,6 +1,8 @@
 import type {Logger} from '../logger';
 import {elapsedTime} from '../logger/pretty-time';
 import {Options} from '@swc/core';
+// @ts-ignore @swc/cli is not typed
+import {swcDir} from '@swc/cli';
 
 const getSwcConfig = (enableSourceMap = false): Options => {
     return {
@@ -24,11 +26,12 @@ interface SwcCompileOptions {
     enableSourceMap?: boolean;
 }
 
-export async function compile(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    swcDir: any,
-    {projectPath, outputPath, logger, enableSourceMap = false}: SwcCompileOptions,
-): Promise<void> {
+export async function compile({
+    projectPath,
+    outputPath,
+    logger,
+    enableSourceMap = false,
+}: SwcCompileOptions): Promise<void> {
     const start = process.hrtime.bigint();
     logger.message('Start compilation');
 

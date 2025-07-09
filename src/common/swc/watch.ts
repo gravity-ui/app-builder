@@ -1,5 +1,7 @@
 import type {Logger} from '../logger';
 import {Options} from '@swc/core';
+// @ts-ignore @swc/cli is not typed
+import {swcDir} from '@swc/cli';
 
 interface SwcWatchOptions {
     outputPath: string;
@@ -24,8 +26,6 @@ const getSwcConfig = (enableSourceMap = false): Options => {
 };
 
 export async function watch(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    swcDir: any,
     projectPath: string,
     {outputPath, logger, onAfterFilesEmitted, enableSourceMap = false}: SwcWatchOptions,
 ) {
