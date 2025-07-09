@@ -23,6 +23,7 @@ import type {ReactRefreshPluginOptions} from '@pmmmwh/react-refresh-webpack-plug
 
 type Bundler = 'webpack' | 'rspack';
 type JavaScriptLoader = 'babel' | 'swc';
+type ServerCompiler = 'typescript' | 'swc';
 
 export type SwcConfig = Swc.Config & Pick<Swc.Options, 'isModule'>;
 
@@ -285,6 +286,11 @@ export interface ServerConfig {
     watchThrottle?: number;
     inspect?: number | true;
     inspectBrk?: number | true;
+    /**
+     * Compiler for server code compilation
+     * @default 'typescript'
+     */
+    compiler?: ServerCompiler;
 }
 export interface ServiceConfig {
     target?: 'client' | 'server';
@@ -339,11 +345,15 @@ export type NormalizedClientConfig = Omit<
     reactRefresh: NonNullable<ClientConfig['reactRefresh']>;
 };
 
-export type NormalizedServerConfig = Omit<ServerConfig, 'port' | 'inspect' | 'inspectBrk'> & {
+export type NormalizedServerConfig = Omit<
+    ServerConfig,
+    'port' | 'inspect' | 'inspectBrk' | 'compiler'
+> & {
     port?: number;
     verbose?: boolean;
     inspect?: number;
     inspectBrk?: number;
+    compiler: ServerCompiler;
 };
 
 export type NormalizedServiceConfig = Omit<ServiceConfig, 'client' | 'server'> & {

@@ -7,41 +7,76 @@ import paths from '../../common/paths';
 
 import type {NormalizedServiceConfig} from '../../common/models';
 
-export async function watchServerCompilation(config: NormalizedServiceConfig) {
+function createTypescriptBuildScript(config: NormalizedServiceConfig) {
+    return `
+let ts;
+try {
+    ts = require('typescript');
+} catch (e) {
+    if (e.code !== 'MODULE_NOT_FOUND') {
+        throw e;
+    }
+    ts = require(${JSON.stringify(require.resolve('typescript'))});
+}
+const {Logger} = require(${JSON.stringify(require.resolve('../../common/logger'))});
+const {watch} = require(${JSON.stringify(require.resolve('../../common/typescript/watch'))});
+
+const logger = new Logger('server', ${config.verbose});
+watch(
+    ts,
+    ${JSON.stringify(paths.appServer)},
+    {
+        logger,
+        onAfterFilesEmitted: () => {
+            process.send({type: 'Emitted'});
+        },
+        enableSourceMap: true
+    }
+);`;
+}
+
+function createSWCBuildScript(config: NormalizedServiceConfig) {
+    return `
+let swcCli;
+try {
+    swcCli = require('@swc/cli');
+} catch (e) {
+    if (e.code !== 'MODULE_NOT_FOUND') {
+        throw e;
+    }
+    swcCli = require(${JSON.stringify(require.resolve('@swc/cli'))});
+}
+const {swcDir} = swcCli;
+const {Logger} = require(${JSON.stringify(require.resolve('../../common/logger'))});
+const {watch} = require(${JSON.stringify(require.resolve('../../common/swc/watch'))});
+
+const logger = new Logger('server', ${config.verbose});
+watch(
+    swcDir,
+    ${JSON.stringify(paths.appServer)},
+    {
+        outputPath: ${JSON.stringify(paths.appDist)},
+        logger,
+        onAfterFilesEmitted: () => {
+            process.send({type: 'Emitted'});
+        },
+        enableSourceMap: true
+    }
+);`;
+}
+
+export async function watchServerCompilation(
+    config: NormalizedServiceConfig,
+): Promise<ControllableScript> {
     const serverPath = path.resolve(paths.appDist, 'server');
     rimraf.sync(serverPath);
 
     createRunFolder();
 
     const build = new ControllableScript(
-        `
-        let ts;
-        try {
-            ts = require('typescript');
-        } catch (e) {
-            if (e.code !== 'MODULE_NOT_FOUND') {
-                throw e;
-            }
-            ts = require(${JSON.stringify(require.resolve('typescript'))});
-        }
-        const {Logger} = require(${JSON.stringify(require.resolve('../../common/logger'))});
-        const {watch} = require(${JSON.stringify(
-            require.resolve('../../common/typescript/watch'),
-        )});
-
-        const logger = new Logger('server', ${config.verbose});
-        watch(
-            ts,
-            ${JSON.stringify(paths.appServer)},
-            {
-                logger,
-                onAfterFilesEmitted: () => {
-                    process.send({type: 'Emitted'});
-                },
-                enableSourceMap: true
-            }
-        );
-        `,
+        config.server.compiler === 'swc'
+            ? createSWCBuildScript(config)
+            : createTypescriptBuildScript(config),
         null,
     );
 

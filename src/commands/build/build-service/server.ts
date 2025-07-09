@@ -6,29 +6,56 @@ import {createRunFolder} from '../../../common/utils';
 
 import type {NormalizedServiceConfig} from '../../../common/models';
 
+function createSWCBuildScript(config: NormalizedServiceConfig) {
+    return `
+let swcCli;
+try {
+    swcCli = require('@swc/cli');
+} catch (e) {
+    if (e.code !== 'MODULE_NOT_FOUND') {
+        throw e;
+    }
+    swcCli = require(${JSON.stringify(require.resolve('@swc/cli'))});
+}
+const {swcDir} = swcCli;
+const {Logger} = require(${JSON.stringify(require.resolve('../../../common/logger'))});
+const {compile} = require(${JSON.stringify(require.resolve('../../../common/swc/compile'))});
+
+const logger = new Logger('server', ${config.verbose});
+compile(swcDir, {
+    logger,
+    outputPath: ${JSON.stringify(paths.appDist)},
+    projectPath: ${JSON.stringify(paths.appServer)},
+});`;
+}
+
+function createTypescriptBuildScript(config: NormalizedServiceConfig) {
+    return `
+let ts;
+try {
+    ts = require('typescript');
+} catch (e) {
+    if (e.code !== 'MODULE_NOT_FOUND') {
+        throw e;
+    }
+    ts = require(${JSON.stringify(require.resolve('typescript'))});
+}
+const {Logger} = require(${JSON.stringify(require.resolve('../../../common/logger'))});
+const {compile} = require(${JSON.stringify(require.resolve('../../../common/typescript/compile'))});
+
+const logger = new Logger('server', ${config.verbose});
+compile(ts, {logger, projectPath: ${JSON.stringify(paths.appServer)}});`;
+}
+
 export function buildServer(config: NormalizedServiceConfig): Promise<void> {
     createRunFolder();
 
+    // Используем TypeScript для компиляции (по умолчанию)
     return new Promise((resolve, reject) => {
         const build = new ControllableScript(
-            `
-        let ts;
-        try {
-            ts = require('typescript');
-        } catch (e) {
-            if (e.code !== 'MODULE_NOT_FOUND') {
-                throw e;
-            }
-            ts = require(${JSON.stringify(require.resolve('typescript'))});
-        }
-        const {Logger} = require(${JSON.stringify(require.resolve('../../../common/logger'))});
-        const {compile} = require(${JSON.stringify(
-            require.resolve('../../../common/typescript/compile'),
-        )});
-
-        const logger = new Logger('server', ${config.verbose});
-        compile(ts, {logger, projectPath: ${JSON.stringify(paths.appServer)}});
-    `,
+            config.server.compiler === 'swc'
+                ? createSWCBuildScript(config)
+                : createTypescriptBuildScript(config),
             null,
         );
 

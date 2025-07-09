@@ -13,6 +13,7 @@ export default defineConfig(() => {
         },
         server: {
             port: true,
+            compiler: 'swc',
         },
     };
 });
