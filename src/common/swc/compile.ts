@@ -14,10 +14,10 @@ export async function compile({projectPath, outputPath, logger}: SwcCompileOptio
     const start = process.hrtime.bigint();
     logger.message('Start compilation');
 
-    const swcOptions = getSwcOptionsFromTsconfig(projectPath);
+    const {swcOptions, directoriesToCompile} = getSwcOptionsFromTsconfig(projectPath);
 
     const cliOptions = {
-        filenames: [projectPath],
+        filenames: directoriesToCompile,
         outDir: outputPath,
         watch: false,
         extensions: ['.js', '.ts', '.mjs', '.cjs'],

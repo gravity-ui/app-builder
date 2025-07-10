@@ -14,10 +14,10 @@ export async function watch(
     {outputPath, logger, onAfterFilesEmitted}: SwcWatchOptions,
 ) {
     logger.message('Start compilation in watch mode');
-    const swcOptions = getSwcOptionsFromTsconfig(projectPath);
+    const {swcOptions, directoriesToCompile} = getSwcOptionsFromTsconfig(projectPath);
 
     const cliOptions = {
-        filenames: [projectPath],
+        filenames: directoriesToCompile,
         outDir: outputPath,
         watch: true,
         extensions: ['.js', '.ts', '.mjs', '.cjs'],
