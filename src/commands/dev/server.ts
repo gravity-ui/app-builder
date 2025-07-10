@@ -49,7 +49,6 @@ watch(
         onAfterFilesEmitted: () => {
             process.send({type: 'Emitted'});
         },
-        enableSourceMap: true
     }
 );`;
 }

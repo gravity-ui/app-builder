@@ -1,47 +1,25 @@
 import type {Logger} from '../logger';
 import {elapsedTime} from '../logger/pretty-time';
-import {Options} from '@swc/core';
 // @ts-ignore @swc/cli is not typed
 import {swcDir} from '@swc/cli';
-
-const getSwcConfig = (enableSourceMap = false): Options => {
-    return {
-        module: {
-            type: 'commonjs',
-        },
-        jsc: {
-            target: 'es2020',
-            parser: {
-                syntax: 'typescript',
-            },
-        },
-        sourceMaps: enableSourceMap,
-    };
-};
+import {getSwcOptionsFromTsconfig} from './utils';
 
 interface SwcCompileOptions {
     projectPath: string;
     outputPath: string;
     logger: Logger;
-    enableSourceMap?: boolean;
 }
 
-export async function compile({
-    projectPath,
-    outputPath,
-    logger,
-    enableSourceMap = false,
-}: SwcCompileOptions): Promise<void> {
+export async function compile({projectPath, outputPath, logger}: SwcCompileOptions): Promise<void> {
     const start = process.hrtime.bigint();
     logger.message('Start compilation');
 
-    const swcConfig = getSwcConfig(enableSourceMap);
+    const swcOptions = getSwcOptionsFromTsconfig(projectPath);
 
     const cliOptions = {
         filenames: [projectPath],
         outDir: outputPath,
         watch: false,
-        sourceMaps: enableSourceMap,
         extensions: ['.js', '.ts', '.mjs', '.cjs'],
         stripLeadingPaths: true,
         sync: false,
@@ -68,7 +46,7 @@ export async function compile({
         try {
             swcDir({
                 cliOptions,
-                swcOptions: swcConfig,
+                swcOptions,
                 callbacks,
             });
         } catch (error) {

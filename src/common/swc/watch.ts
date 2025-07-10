@@ -1,42 +1,25 @@
 import type {Logger} from '../logger';
-import {Options} from '@swc/core';
 // @ts-ignore @swc/cli is not typed
 import {swcDir} from '@swc/cli';
+import {getSwcOptionsFromTsconfig} from './utils';
 
 interface SwcWatchOptions {
     outputPath: string;
     logger: Logger;
     onAfterFilesEmitted?: () => void;
-    enableSourceMap?: boolean;
 }
-
-const getSwcConfig = (enableSourceMap = false): Options => {
-    return {
-        module: {
-            type: 'commonjs',
-        },
-        jsc: {
-            target: 'es2020',
-            parser: {
-                syntax: 'typescript',
-            },
-        },
-        sourceMaps: enableSourceMap,
-    };
-};
 
 export async function watch(
     projectPath: string,
-    {outputPath, logger, onAfterFilesEmitted, enableSourceMap = false}: SwcWatchOptions,
+    {outputPath, logger, onAfterFilesEmitted}: SwcWatchOptions,
 ) {
     logger.message('Start compilation in watch mode');
-    const swcConfig = getSwcConfig(enableSourceMap);
+    const swcOptions = getSwcOptionsFromTsconfig(projectPath);
 
     const cliOptions = {
         filenames: [projectPath],
         outDir: outputPath,
         watch: true,
-        sourceMaps: enableSourceMap,
         extensions: ['.js', '.ts', '.mjs', '.cjs'],
         stripLeadingPaths: true,
         sync: false,
@@ -69,7 +52,7 @@ export async function watch(
 
     swcDir({
         cliOptions,
-        swcOptions: swcConfig,
+        swcOptions,
         callbacks,
     });
 }
