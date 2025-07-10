@@ -2,7 +2,7 @@ import type {Logger} from '../logger';
 import {elapsedTime} from '../logger/pretty-time';
 // @ts-ignore @swc/cli is not typed
 import {swcDir} from '@swc/cli';
-import {getSwcOptionsFromTsconfig} from './utils';
+import {EXTENSIONS_TO_COMPILE, getSwcOptionsFromTsconfig} from './utils';
 
 interface SwcCompileOptions {
     projectPath: string;
@@ -20,7 +20,7 @@ export async function compile({projectPath, outputPath, logger}: SwcCompileOptio
         filenames: directoriesToCompile,
         outDir: outputPath,
         watch: false,
-        extensions: ['.js', '.ts', '.mjs', '.cjs'],
+        extensions: EXTENSIONS_TO_COMPILE,
         stripLeadingPaths: true,
         sync: false,
     };

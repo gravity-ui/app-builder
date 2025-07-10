@@ -1,6 +1,8 @@
 import path from 'path';
 import {convert} from 'tsconfig-to-swcconfig';
 
+export const EXTENSIONS_TO_COMPILE = ['.js', '.ts', '.mts', '.mjs', '.cjs'];
+
 function resolvePaths(paths: Record<string, string[]>, baseUrl: string) {
     const entries = [];
     for (const targets of Object.values(paths)) {

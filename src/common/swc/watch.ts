@@ -1,7 +1,7 @@
 import type {Logger} from '../logger';
 // @ts-ignore @swc/cli is not typed
 import {swcDir} from '@swc/cli';
-import {getSwcOptionsFromTsconfig} from './utils';
+import {EXTENSIONS_TO_COMPILE, getSwcOptionsFromTsconfig} from './utils';
 
 interface SwcWatchOptions {
     outputPath: string;
@@ -20,7 +20,7 @@ export async function watch(
         filenames: directoriesToCompile,
         outDir: outputPath,
         watch: true,
-        extensions: ['.js', '.ts', '.mjs', '.cjs'],
+        extensions: EXTENSIONS_TO_COMPILE,
         stripLeadingPaths: true,
         sync: false,
         logWatchCompilation: true,

@@ -40,7 +40,6 @@ compile(ts, {logger, projectPath: ${JSON.stringify(paths.appServer)}});`;
 export function buildServer(config: NormalizedServiceConfig): Promise<void> {
     createRunFolder();
 
-    // Используем TypeScript для компиляции (по умолчанию)
     return new Promise((resolve, reject) => {
         const build = new ControllableScript(
             config.server.compiler === 'swc'
