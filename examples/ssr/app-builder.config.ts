@@ -3,6 +3,8 @@ import {defineConfig} from '@gravity-ui/app-builder';
 export default defineConfig(() => {
     return {
         client: {
+            bundler: 'rspack',
+            transformCssWithLightningCss: true,
             devServer: {
                 port: true,
             },
@@ -13,6 +15,7 @@ export default defineConfig(() => {
         },
         server: {
             port: true,
+            compiler: 'swc',
         },
     };
 });

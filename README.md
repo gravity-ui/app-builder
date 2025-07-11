@@ -143,6 +143,8 @@ All server settings are used only in dev mode:
 - `watchThrottle` (`number`) — use to add an extra throttle, or delay restarting.
 - `inspect/inspectBrk` (`number | true`) — listen for a debugging client on specified port.
   If specified `true`, try to listen on `9229`.
+- `compiler` (`'typescript' | 'swc'`) — choose TypeScript compiler for server code compilation.
+  Default is `'typescript'`. Set to `'swc'` for faster compilation with SWC.
 
 ### Client
 

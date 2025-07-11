@@ -170,6 +170,7 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
             port: undefined,
             inspect: undefined,
             inspectBrk: undefined,
+            compiler: serverConfig.compiler || 'typescript',
         };
         if (mode === 'dev') {
             if (serverConfig.port === true) {
