@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.29.2](https://github.com/gravity-ui/app-builder/compare/v0.29.1...v0.29.2) (2025-07-17)
+
+
+### Bug Fixes
+
+* commit to bump version ([#247](https://github.com/gravity-ui/app-builder/issues/247)) ([c3915ec](https://github.com/gravity-ui/app-builder/commit/c3915ec5a2bde7dfbf90edfe93f8ded9ea099777))
+* fix core-js version ([#249](https://github.com/gravity-ui/app-builder/issues/249)) ([2578d84](https://github.com/gravity-ui/app-builder/commit/2578d8467102462243f812dbf20aeb5d02939eb3))
+
 ## [0.29.1](https://github.com/gravity-ui/app-builder/compare/v0.29.0...v0.29.1) (2025-07-17)
 
 
