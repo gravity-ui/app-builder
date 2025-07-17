@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.1](https://github.com/gravity-ui/app-builder/compare/v0.29.0...v0.29.1) (2025-07-17)
+
+
+### Bug Fixes
+
+* fix polyfills ([#245](https://github.com/gravity-ui/app-builder/issues/245)) ([1dc092d](https://github.com/gravity-ui/app-builder/commit/1dc092d3794d4d407ed35405ead23ba4e23e7c1e))
+
 ## [0.29.0](https://github.com/gravity-ui/app-builder/compare/v0.28.0...v0.29.0) (2025-07-11)
 
 
