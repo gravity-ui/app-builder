@@ -3,9 +3,12 @@ export function babelPreset(config: {newJsxTransform?: boolean; isSsr?: boolean}
         require.resolve('./ui-preset'),
         {
             env: {
+                targets: config.isSsr ? {node: 'current'} : undefined,
+                useBuiltIns: 'usage',
+                corejs: '3.44',
                 modules: false,
                 bugfixes: true,
-                targets: config.isSsr ? {node: 'current'} : undefined,
+                shippedProposals: true,
             },
             runtime: {version: '^7.26.0'},
             typescript: true,
