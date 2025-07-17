@@ -520,8 +520,9 @@ async function createJavaScriptLoader({
                 env: {
                     targets: isSsr ? {node: process.versions.node} : require('browserslist')(),
                     mode: 'usage',
-                    coreJs: '3.40',
+                    coreJs: '3.44',
                     bugfixes: true,
+                    shippedProposals: true,
                 },
                 isModule: 'unknown',
                 jsc: {
