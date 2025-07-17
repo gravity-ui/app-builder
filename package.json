@@ -95,7 +95,7 @@
     "circular-dependency-plugin": "^5.2.2",
     "clean-webpack-plugin": "^4.0.0",
     "common-tags": "^1.8.2",
-    "core-js": "~3.40.0",
+    "core-js": "~3.44.0",
     "cosmiconfig": "^8.3.6",
     "cosmiconfig-typescript-loader": "^5.0.0",
     "css-loader": "^7.1.2",
