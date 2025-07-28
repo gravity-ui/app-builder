@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import * as fs from 'node:fs';
 import nodemon from 'nodemon';
 import {onExit} from 'signal-exit';
 import {rimraf} from 'rimraf';
@@ -19,7 +20,12 @@ export default async function (config: NormalizedServiceConfig) {
     const shouldCompileServer = shouldCompileTarget(config.target, 'server');
 
     if (shouldCompileClient && shouldCompileServer) {
-        rimraf.sync(paths.appRun);
+        try {
+            fs.accessSync(paths.appRun, fs.constants.W_OK | fs.constants.X_OK);
+            rimraf.sync(paths.appRun);
+        } catch (error) {
+            logger.warning(`Failed to remove appRun path [${paths.appRun}]: ${error}`);
+        }
     }
 
     let clientCompiled = !shouldCompileClient;
