@@ -21,7 +21,7 @@ export default async function (config: NormalizedServiceConfig) {
 
     if (shouldCompileClient && shouldCompileServer) {
         try {
-            fs.accessSync(paths.appRun, fs.constants.W_OK | fs.constants.X_OK);
+            fs.accessSync(paths.appRun, fs.constants.W_OK | fs.constants.X_OK); // eslint-disable-line no-bitwise
             rimraf.sync(paths.appRun);
         } catch (error) {
             logger.warning(`Failed to remove appRun path [${paths.appRun}]: ${error}`);
