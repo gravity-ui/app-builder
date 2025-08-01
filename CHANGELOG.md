@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.3](https://github.com/gravity-ui/app-builder/compare/v0.29.2...v0.29.3) (2025-07-30)
+
+
+### Bug Fixes
+
+* remove dist/run path in docker volume ([#251](https://github.com/gravity-ui/app-builder/issues/251)) ([b8e425d](https://github.com/gravity-ui/app-builder/commit/b8e425d0b2e97eed89257b5d84d5e58598be3ba0))
+
 ## [0.29.2](https://github.com/gravity-ui/app-builder/compare/v0.29.0...v0.29.2) (2025-07-17)
 
 
