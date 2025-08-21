@@ -162,7 +162,11 @@ async function buildDevServer(config: NormalizedServiceConfig) {
 
     const listenOn = options.port || options.ipc;
     if (!listenOn) {
-        options.ipc = path.resolve(paths.appDist, 'run/client.sock');
+        options.ipc = path.resolve(
+            paths.appRun,
+            config.client.moduleFederation?.name || '',
+            'client.sock',
+        );
     }
 
     const proxy = options.proxy || [];

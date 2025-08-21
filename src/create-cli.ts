@@ -1,4 +1,4 @@
-import yargs from 'yargs';
+import yargs, {Arguments} from 'yargs';
 import {hideBin} from 'yargs/helpers';
 import * as path from 'node:path';
 
@@ -211,8 +211,8 @@ function getVersionInfo(): string {
     return `app-builder CLI version: ${version}`;
 }
 
-function handlerP(fn: (args: yargs.Arguments) => void) {
-    return (args: yargs.Arguments): void => {
+function handlerP(fn: (args: Arguments) => void) {
+    return (args: Arguments): void => {
         Promise.resolve(fn(args)).then(
             () => process.exit(0),
             (err) => logger.panic(err),
@@ -223,7 +223,7 @@ function handlerP(fn: (args: yargs.Arguments) => void) {
 function getCommandHandler(
     command: string,
     handler?: (args: ProjectConfig, cmd: (args: ProjectConfig) => void) => void,
-): (argv: yargs.Arguments) => void {
+): (argv: Arguments) => void {
     return async (argv) => {
         const config = await getProjectConfig(command, argv as CliArgs);
         logger.setVerbose(Boolean(config.verbose));

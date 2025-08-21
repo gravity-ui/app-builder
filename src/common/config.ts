@@ -202,6 +202,12 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
 }
 
 async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build' | string) {
+    let publicPath = client.publicPath || path.normalize(`${client.publicPathPrefix || ''}/build/`);
+
+    if (client.moduleFederation) {
+        publicPath = path.normalize(`${publicPath}${client.moduleFederation.name}/`);
+    }
+
     const normalizedConfig: NormalizedClientConfig = {
         ...client,
         forkTsChecker: client.disableForkTsChecker ? false : client.forkTsChecker,
@@ -209,14 +215,21 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
             ? false
             : (client.reactRefresh ?? ((options) => options)),
         newJsxTransform: client.newJsxTransform ?? true,
-        publicPath: client.publicPath || path.normalize(`${client.publicPathPrefix || ''}/build/`),
-        assetsManifestFile: client.assetsManifestFile || 'assets-manifest.json',
+        publicPath,
+        assetsManifestFile:
+            client.assetsManifestFile ||
+            (client.moduleFederation?.version
+                ? `assets-manifest-${client.moduleFederation.version}.json`
+                : 'assets-manifest.json'),
         modules: client.modules && remapPaths(client.modules),
         includes: client.includes && remapPaths(client.includes),
         images: client.images && remapPaths(client.images),
         hiddenSourceMap: client.hiddenSourceMap ?? true,
         svgr: client.svgr ?? {},
         entryFilter: client.entryFilter && splitPaths(client.entryFilter),
+        transformCssWithLightningCss: Boolean(
+            client.transformCssWithLightningCss && !client.moduleFederation?.isolateStyles,
+        ),
         webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
         rspack: typeof client.rspack === 'function' ? client.rspack : (config) => config,
         babel: typeof client.babel === 'function' ? client.babel : (config) => config,

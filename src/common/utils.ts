@@ -1,12 +1,14 @@
 import fs from 'node:fs';
 import os from 'node:os';
+import path from 'node:path';
 
 import paths from './paths';
 
-export function createRunFolder() {
-    const runPath = paths.appRun;
-    if (!fs.existsSync(runPath)) {
-        fs.mkdirSync(runPath, {recursive: true});
+export function createRunFolder(moduleFederationName?: string) {
+    const appRunPath = path.resolve(paths.appRun, moduleFederationName || '');
+
+    if (!fs.existsSync(appRunPath)) {
+        fs.mkdirSync(appRunPath, {recursive: true});
     }
 }
 

@@ -59,7 +59,7 @@ export async function watchServerCompilation(
     const serverPath = path.resolve(paths.appDist, 'server');
     rimraf.sync(serverPath);
 
-    createRunFolder();
+    createRunFolder(config.client.moduleFederation?.name);
 
     const build = new ControllableScript(
         config.server.compiler === 'swc'

@@ -19,12 +19,14 @@ export default async function (config: NormalizedServiceConfig) {
     const shouldCompileClient = shouldCompileTarget(config.target, 'client');
     const shouldCompileServer = shouldCompileTarget(config.target, 'server');
 
+    const appRunPath = path.resolve(paths.appRun, config.client.moduleFederation?.name || '');
+
     if (shouldCompileClient && shouldCompileServer) {
         try {
-            fs.accessSync(paths.appRun, fs.constants.W_OK | fs.constants.X_OK); // eslint-disable-line no-bitwise
-            rimraf.sync(paths.appRun);
+            fs.accessSync(appRunPath, fs.constants.W_OK | fs.constants.X_OK); // eslint-disable-line no-bitwise
+            rimraf.sync(appRunPath);
         } catch (error) {
-            logger.warning(`Failed to remove appRun path [${paths.appRun}]: ${error}`);
+            logger.warning(`Failed to remove appRun path [${appRunPath}]: ${error}`);
         }
     }
 

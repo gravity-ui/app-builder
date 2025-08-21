@@ -20,6 +20,7 @@ import type {WebpackMode} from '../webpack/config';
 import type {UploadOptions} from '../s3-upload/upload';
 import type {TerserOptions} from 'terser-webpack-plugin';
 import type {ReactRefreshPluginOptions} from '@pmmmwh/react-refresh-webpack-plugin/types/lib/types';
+import type {moduleFederationPlugin} from '@module-federation/sdk';
 
 type Bundler = 'webpack' | 'rspack';
 type JavaScriptLoader = 'babel' | 'swc';
@@ -265,6 +266,27 @@ export interface ClientConfig {
     };
     bundler?: Bundler;
     javaScriptLoader?: JavaScriptLoader;
+
+    moduleFederation?: Omit<
+        moduleFederationPlugin.ModuleFederationPluginOptions,
+        'name' | 'remotes'
+    > & {
+        name: string;
+        version?: string;
+        publicPath: string;
+        remotes?: string[];
+        originalRemotes?: moduleFederationPlugin.ModuleFederationPluginOptions['remotes'];
+        remotesRuntimeVersioning?: boolean;
+        isolateStyles?: {
+            getPrefix: (entryName: string) => string;
+            prefixSelector: (
+                prefix: string,
+                selector: string,
+                prefixedSelector: string,
+                filePath: string,
+            ) => string;
+        };
+    };
 }
 
 export interface CdnUploadConfig {
@@ -312,6 +334,7 @@ export type NormalizedClientConfig = Omit<
     | 'devServer'
     | 'disableForkTsChecker'
     | 'disableReactRefresh'
+    | 'transformCssWithLightningCss'
 > & {
     bundler: Bundler;
     javaScriptLoader: JavaScriptLoader;
@@ -325,6 +348,7 @@ export type NormalizedClientConfig = Omit<
         server?: ServerConfiguration;
     };
     verbose?: boolean;
+    transformCssWithLightningCss: boolean;
     webpack: (
         config: Configuration,
         options: {configType: `${WebpackMode}`; isSsr: boolean},
