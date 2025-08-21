@@ -267,18 +267,68 @@ export interface ClientConfig {
     bundler?: Bundler;
     javaScriptLoader?: JavaScriptLoader;
 
+    /**
+     * Module Federation configuration for building micro-frontends
+     * @see https://module-federation.io/
+     */
     moduleFederation?: Omit<
         moduleFederationPlugin.ModuleFederationPluginOptions,
         'name' | 'remotes'
     > & {
+        /**
+         * Unique name of the application in the Module Federation ecosystem
+         * Used as an identifier for this micro-frontend
+         */
         name: string;
+        /**
+         * Application version, appended to the entry file name
+         * When specified, the file will be named `entry-{version}.js`
+         * @default undefined (file will be named `entry.js`)
+         */
         version?: string;
+        /**
+         * Base URL for loading resources of this micro-frontend
+         * Should point to a publicly accessible URL where the files will be hosted
+         * @example 'https://cdn.example.com/my-app/'
+         */
         publicPath: string;
+        /**
+         * List of remote application names that this application can load
+         * Simplified alternative to originalRemotes - only names are specified
+         * @example ['header', 'footer', 'navigation']
+         */
         remotes?: string[];
+        /**
+         * Full configuration of remote applications in Module Federation format
+         * Allows more detailed configuration of each remote application
+         * @example { header: 'header@https://header.example.com/remoteEntry.js' }
+         */
         originalRemotes?: moduleFederationPlugin.ModuleFederationPluginOptions['remotes'];
+        /**
+         * Enables runtime versioning for remote applications
+         * When enabled, remote applications will be loaded with version in the filename
+         * @default false
+         */
         remotesRuntimeVersioning?: boolean;
+        /**
+         * CSS style isolation settings to prevent conflicts
+         * between styles of different micro-frontends
+         */
         isolateStyles?: {
+            /**
+             * Function to generate CSS class prefix
+             * @param entryName - Application entry name
+             * @returns Prefix string for CSS classes
+             */
             getPrefix: (entryName: string) => string;
+            /**
+             * Function to add prefix to CSS selectors
+             * @param prefix - Prefix to add
+             * @param selector - Original CSS selector
+             * @param prefixedSelector - Selector with added prefix
+             * @param filePath - Path to the styles file
+             * @returns Modified CSS selector
+             */
             prefixSelector: (
                 prefix: string,
                 selector: string,

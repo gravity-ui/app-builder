@@ -330,3 +330,141 @@ worker.onmessage = ({data: {result}}) => {
 
 worker.postMessage({a: 1, b: 2});
 ```
+
+##### Module Federation
+
+Module Federation is a Webpack 5 feature that enables micro-frontend architecture, where JavaScript applications can dynamically load code from each other at runtime.
+
+`app-builder` uses `@module-federation/enhanced` for advanced Module Federation support.
+
+- `moduleFederation` (`object`) — Module Federation configuration
+  - `name` (`string`) — unique name of the application in the Module Federation ecosystem. Required parameter.
+  - `version` (`string`) — application version. When specified, the entry file will be named `entry-{version}.js` instead of `entry.js`.
+  - `publicPath` (`string`) — base URL for loading resources of this micro-frontend. Required parameter.
+  - `remotes` (`string[]`) — list of remote application names that this application can load. Simplified alternative to `originalRemotes`.
+  - `originalRemotes` (`RemotesObject`) — full configuration of remote applications in Module Federation Plugin format.
+  - `remotesRuntimeVersioning` (`boolean`) — enables runtime versioning for remote applications.
+  - `isolateStyles` (`object`) — CSS style isolation settings to prevent conflicts between micro-frontends.
+    - `getPrefix` (`(entryName: string) => string`) — function to generate CSS class prefix.
+    - `prefixSelector` (`(prefix: string, selector: string, prefixedSelector: string, filePath: string) => string`) — function to add prefix to CSS selectors.
+  - Also supports all standard options from [@module-federation/enhanced](https://module-federation.io/), except `name` and `remotes`, such as:
+    - `filename` — entry file name (default `remoteEntry.js`)
+    - `exposes` — modules that this application exports
+    - `shared` — shared dependencies between applications
+    - `runtimePlugins` — plugins for Module Federation runtime
+
+**Host Application Configuration Example:**
+
+Host applications consume remote modules from other micro-frontends:
+
+```ts
+export default defineConfig({
+  client: {
+    moduleFederation: {
+      name: 'shell',
+      publicPath: 'https://cdn.example.com/my-app/',
+      // Simple remotes configuration
+      remotes: ['header', 'footer', 'sidebar'],
+      shared: {
+        react: {singleton: true, requiredVersion: '^18.0.0'},
+        'react-dom': {singleton: true, requiredVersion: '^18.0.0'},
+        lodash: {singleton: true},
+      },
+    },
+  },
+});
+```
+
+**Advanced Host Configuration:**
+
+```ts
+export default defineConfig({
+  client: {
+    moduleFederation: {
+      name: 'main-shell',
+      version: '2.1.0',
+      publicPath: 'https://cdn.example.com/my-app/',
+      // Detailed remotes configuration
+      originalRemotes: {
+        header: 'header@https://cdn.example.com/header/remoteEntry.js',
+        footer: 'footer@https://cdn.example.com/footer/remoteEntry.js',
+        userProfile: 'userProfile@https://cdn.example.com/user-profile/remoteEntry.js',
+      },
+      remotesRuntimeVersioning: true,
+      isolateStyles: {
+        getPrefix: (entryName) => `.app-${entryName}`,
+        prefixSelector: (prefix, selector, prefixedSelector, filePath) => {
+          if (
+            [prefix, ':root', 'html', 'body', '.g-root', '.remote-app'].some((item) =>
+              selector.startsWith(item),
+            ) ||
+            filePath.includes('@gravity-ui/chartkit')
+          ) {
+            return selector;
+          }
+          return prefixedSelector;
+        },
+      },
+      shared: {
+        react: {singleton: true, requiredVersion: '^18.0.0'},
+        'react-dom': {singleton: true, requiredVersion: '^18.0.0'},
+        lodash: {singleton: true},
+      },
+    },
+  },
+});
+```
+
+**Remote Application Configuration Example:**
+
+Remote applications expose their modules for consumption by host applications:
+
+```ts
+export default defineConfig({
+  client: {
+    moduleFederation: {
+      name: 'header',
+      publicPath: 'https://cdn.example.com/my-app/',
+      // Expose modules for other applications
+      exposes: {
+        './Header': './src/components/Header',
+        './Navigation': './src/components/Navigation',
+        './UserMenu': './src/components/UserMenu',
+      },
+      shared: {
+        react: {singleton: true, requiredVersion: '^18.0.0'},
+        'react-dom': {singleton: true, requiredVersion: '^18.0.0'},
+        lodash: {singleton: true},
+      },
+    },
+  },
+});
+```
+
+**Bidirectional Configuration Example:**
+
+Applications can be both host and remote simultaneously:
+
+```ts
+export default defineConfig({
+  client: {
+    moduleFederation: {
+      name: 'dashboard',
+      version: '1.5.0',
+      publicPath: 'https://cdn.example.com/my-app/',
+      // Consume remote modules
+      remotes: ['charts', 'notifications'],
+      // Expose own modules
+      exposes: {
+        './DashboardLayout': './src/layouts/DashboardLayout',
+        './DataTable': './src/components/DataTable',
+      },
+      shared: {
+        react: {singleton: true, requiredVersion: '^18.0.0'},
+        'react-dom': {singleton: true, requiredVersion: '^18.0.0'},
+        lodash: {singleton: true},
+      },
+    },
+  },
+});
+```
