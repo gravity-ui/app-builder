@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import {NormalizedClientConfig} from '../models';
 import {S3UploadPlugin} from './webpack-plugin';
 import type {Configuration} from 'webpack';
@@ -29,6 +30,12 @@ export function createS3UploadPlugins(config: NormalizedClientConfig, logger?: L
             };
         }
 
+        let targetPath = cdn.prefix;
+
+        if (config.moduleFederation && targetPath !== undefined) {
+            targetPath = path.join(targetPath, config.moduleFederation.name);
+        }
+
         plugins.push(
             new S3UploadPlugin({
                 exclude: config.hiddenSourceMap ? /\.map$/ : undefined,
@@ -40,7 +47,7 @@ export function createS3UploadPlugins(config: NormalizedClientConfig, logger?: L
                 },
                 s3UploadOptions: {
                     bucket: cdn.bucket,
-                    targetPath: cdn.prefix,
+                    targetPath,
                     cacheControl: cdn.cacheControl,
                 },
                 additionalPattern: cdn.additionalPattern,

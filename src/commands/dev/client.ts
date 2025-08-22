@@ -4,7 +4,7 @@ import webpack from 'webpack';
 import WebpackDevServer from 'webpack-dev-server';
 import {getCompilerHooks} from 'webpack-manifest-plugin';
 import WebpackAssetsManifest from 'webpack-assets-manifest';
-import {deferredPromise} from '../../common/utils';
+import {deferredPromise, getAppRunPath} from '../../common/utils';
 import {getCompilerHooks as getRspackCompilerHooks} from 'rspack-manifest-plugin';
 import {
     DevServer,
@@ -162,7 +162,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
 
     const listenOn = options.port || options.ipc;
     if (!listenOn) {
-        options.ipc = path.resolve(paths.appDist, 'run/client.sock');
+        options.ipc = path.resolve(getAppRunPath(config), 'client.sock');
     }
 
     const proxy = options.proxy || [];

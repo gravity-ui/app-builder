@@ -109,8 +109,6 @@ export async function configureWebpackConfigForStorybook(
         config: config.client,
         configType: mode,
         buildDirectory: config.client.outputPath || paths.appBuild,
-        assetsManifestFile: config.client.assetsManifestFile,
-        entry: config.client.entry,
         entriesDirectory: paths.appEntry,
         isSsr: false,
     };

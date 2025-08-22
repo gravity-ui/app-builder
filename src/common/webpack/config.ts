@@ -35,6 +35,7 @@ import {logConfig} from '../logger/log-config';
 import {resolveTypescript} from '../typescript/utils';
 import {nodeExternals} from './node-externals';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
+import type {moduleFederationPlugin} from '@module-federation/sdk';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -46,8 +47,6 @@ export interface HelperOptions {
     isEnvProduction: boolean;
     configType: `${WebpackMode}`;
     buildDirectory: string;
-    assetsManifestFile: string;
-    entry?: string | string[] | Record<string, string | string[]>;
     entriesDirectory: string;
     isSsr: boolean;
     configPath?: string;
@@ -76,15 +75,19 @@ function getHelperOptions({
     const isEnvDevelopment = webpackMode === WebpackMode.Dev;
     const isEnvProduction = webpackMode === WebpackMode.Prod;
 
+    let buildDirectory = config.outputPath || (isSsr ? paths.appSsrBuild : paths.appBuild);
+
+    if (config.moduleFederation) {
+        buildDirectory = path.resolve(buildDirectory, config.moduleFederation.name);
+    }
+
     return {
         config,
         logger,
         isEnvDevelopment,
         isEnvProduction,
         configType: webpackMode,
-        buildDirectory: config.outputPath || (isSsr ? paths.appSsrBuild : paths.appBuild),
-        assetsManifestFile: config.assetsManifestFile,
-        entry: config.entry,
+        buildDirectory,
         entriesDirectory: isSsr ? paths.appSsrEntry : paths.appEntry,
         isSsr,
         configPath,
@@ -109,14 +112,24 @@ function configureExternals({config, isSsr}: HelperOptions) {
 function configureWebpackCache(options: HelperOptions): webpack.Configuration['cache'] {
     const {config} = options;
 
-    if (typeof config.cache === 'object' && config.cache.type === 'filesystem') {
-        return {
-            ...config.cache,
+    let cache = config.cache;
+
+    if (typeof cache === 'object' && cache.type === 'filesystem') {
+        cache = {
+            ...cache,
             buildDependencies: getCacheBuildDependencies(options),
         };
+
+        if (config.moduleFederation) {
+            cache = {
+                name: config.moduleFederation.name,
+                version: config.moduleFederation.version,
+                ...cache,
+            };
+        }
     }
 
-    return config.cache;
+    return cache;
 }
 
 export async function webpackConfigFactory(
@@ -417,6 +430,11 @@ export function configureResolve({isEnvProduction, config}: HelperOptions) {
     } satisfies webpack.ResolveOptions;
 }
 
+function isModuleFederationEntry(entryName: string, fileName: string) {
+    // Ignore bootstrap file for module federation entries
+    return entryName === fileName || `${entryName}-bootstrap` === fileName;
+}
+
 function createEntryArray(entry: string | string[]) {
     if (typeof entry === 'string') {
         return [require.resolve('./public-path'), entry];
@@ -432,13 +450,13 @@ function addEntry(entry: Record<string, string[]>, file: string) {
     };
 }
 
-function configureEntry({config, entry, entriesDirectory}: HelperOptions) {
-    if (typeof entry === 'string' || Array.isArray(entry)) {
-        return createEntryArray(entry);
+function configureEntry({config, entriesDirectory}: HelperOptions) {
+    if (typeof config.entry === 'string' || Array.isArray(config.entry)) {
+        return createEntryArray(config.entry);
     }
 
-    if (typeof entry === 'object') {
-        return Object.entries(entry).reduce<Record<string, string[]>>(
+    if (typeof config.entry === 'object') {
+        return Object.entries(config.entry).reduce<Record<string, string[]>>(
             (acc, [key, value]) => ({
                 ...acc,
                 [key]: createEntryArray(value),
@@ -447,19 +465,47 @@ function configureEntry({config, entry, entriesDirectory}: HelperOptions) {
         );
     }
 
-    let entries = fs.readdirSync(entriesDirectory).filter((file) => /\.[jt]sx?$/.test(file));
+    let entryFiles = fs.readdirSync(entriesDirectory).filter((file) => /\.[jt]sx?$/.test(file));
+    let result: Record<string, string[]> = {};
 
-    if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
-        entries = entries.filter((file) => config.entryFilter?.includes(file.split('.')[0] ?? ''));
+    if (config.moduleFederation) {
+        const {name, remotes} = config.moduleFederation;
+        const entryFile = entryFiles.find((item) => path.parse(item).name === name);
+
+        if (!entryFile) {
+            throw new Error(`Entry "${name}" not found`);
+        }
+
+        // If remotes are not defined, it means that we are a remote
+        if (!remotes) {
+            return path.resolve(entriesDirectory, entryFile);
+        }
+
+        entryFiles = entryFiles.filter((file) => {
+            const fileName = path.parse(file).name;
+            return (
+                !isModuleFederationEntry(name, fileName) &&
+                remotes.every((remote) => !isModuleFederationEntry(remote, fileName))
+            );
+        });
+        result = {
+            main: createEntryArray(path.resolve(entriesDirectory, entryFile)),
+        };
     }
 
-    if (!entries.length) {
+    if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
+        entryFiles = entryFiles.filter((file) =>
+            config.entryFilter?.includes(path.parse(file).name),
+        );
+    }
+
+    if (!entryFiles.length) {
         throw new Error('No entries were found after applying entry filter');
     }
 
-    return entries.reduce<Record<string, string[]>>(
+    return entryFiles.reduce(
         (acc, file) => addEntry(acc, path.resolve(entriesDirectory, file)),
-        {},
+        result,
     );
 }
 
@@ -477,11 +523,17 @@ function getFileNames({isEnvProduction, isSsr, config}: HelperOptions) {
 }
 
 function configureOutput(options: HelperOptions) {
-    let ssrOptions;
+    let ssrOptions, moduleFederationOptions;
     if (options.isSsr) {
         ssrOptions = {
             library: {type: options.config.ssr?.moduleType === 'esm' ? 'module' : 'commonjs2'},
             chunkFormat: false,
+        } satisfies NonNullable<webpack.Configuration['output']>;
+    }
+    if (options.config.moduleFederation) {
+        moduleFederationOptions = {
+            publicPath: 'auto',
+            uniqueName: options.config.moduleFederation.name,
         } satisfies NonNullable<webpack.Configuration['output']>;
     }
     return {
@@ -489,6 +541,7 @@ function configureOutput(options: HelperOptions) {
         path: options.buildDirectory,
         pathinfo: options.isEnvDevelopment,
         ...ssrOptions,
+        ...moduleFederationOptions,
     } satisfies NonNullable<webpack.Configuration['output']>;
 }
 
@@ -727,15 +780,30 @@ function getCssLoaders(
     const loaders: webpack.RuleSetUseItem[] = [];
 
     if (!config.transformCssWithLightningCss) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const postcssPlugins: Array<[string, Record<string, any>]> = [
+            [require.resolve('postcss-preset-env'), {enableClientSidePolyfills: false}],
+        ];
+
+        if (config.moduleFederation?.isolateStyles) {
+            const {name, isolateStyles} = config.moduleFederation;
+
+            postcssPlugins.push([
+                require.resolve('postcss-prefix-selector'),
+                {
+                    prefix: isolateStyles.getPrefix(name),
+                    transform: isolateStyles.prefixSelector,
+                },
+            ]);
+        }
+
         loaders.push({
             loader: require.resolve('postcss-loader'),
             options: {
                 sourceMap: !config.disableSourceMapGeneration,
                 postcssOptions: {
                     config: false,
-                    plugins: [
-                        [require.resolve('postcss-preset-env'), {enableClientSidePolyfills: false}],
-                    ],
+                    plugins: postcssPlugins,
                 },
             },
         });
@@ -1035,6 +1103,7 @@ interface WebpackPlugins {
     TsCheckerPlugin: typeof ForkTsCheckerWebpackPlugin;
     CSSExtractPlugin: typeof MiniCSSExtractPlugin;
     RSDoctorPlugin: typeof import('@rsdoctor/webpack-plugin').RsdoctorWebpackPlugin;
+    ModuleFederationPlugin: typeof import('@module-federation/enhanced/webpack').ModuleFederationPlugin;
 }
 
 interface RspackPlugins {
@@ -1046,6 +1115,7 @@ interface RspackPlugins {
     TsCheckerPlugin: typeof TsCheckerRspackPlugin;
     CSSExtractPlugin: typeof rspack.CssExtractRspackPlugin;
     RSDoctorPlugin: typeof import('@rsdoctor/rspack-plugin').RsdoctorRspackPlugin;
+    ModuleFederationPlugin: typeof import('@module-federation/enhanced/rspack').ModuleFederationPlugin;
 }
 
 type BundlerPlugins<T extends 'rspack' | 'webpack'> = {
@@ -1129,6 +1199,52 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         }
 
         plugins.push(createMomentTimezoneDataPlugin(config.momentTz));
+
+        if (config.moduleFederation) {
+            const {
+                name,
+                version,
+                publicPath,
+                remotes,
+                originalRemotes,
+                remotesRuntimeVersioning,
+                runtimePlugins,
+                ...restOptions
+            } = config.moduleFederation;
+
+            let actualRemotes = originalRemotes;
+
+            if (remotes) {
+                actualRemotes = remotes.reduce<moduleFederationPlugin.RemotesObject>(
+                    (acc, remoteName) => {
+                        const remoteFilename = remotesRuntimeVersioning
+                            ? 'entry-[version].js'
+                            : 'entry.js';
+                        // eslint-disable-next-line no-param-reassign
+                        acc[remoteName] =
+                            `${remoteName}@${publicPath}${remoteName}/${remoteFilename}`;
+                        return acc;
+                    },
+                    {},
+                );
+            }
+
+            const actualRuntimePlugins = runtimePlugins || [];
+
+            if (remotesRuntimeVersioning) {
+                actualRuntimePlugins.push(require.resolve('./runtime-versioning-plugin'));
+            }
+
+            plugins.push(
+                new bundlerPlugins.ModuleFederationPlugin({
+                    name,
+                    filename: version ? `entry-${version}.js` : 'entry.js',
+                    remotes: actualRemotes,
+                    runtimePlugins: actualRuntimePlugins,
+                    ...restOptions,
+                }),
+            );
+        }
     }
 
     if (isEnvProduction) {
@@ -1191,6 +1307,8 @@ function configureWebpackPlugins(options: HelperOptions): webpack.Configuration[
         TsCheckerPlugin: ForkTsCheckerWebpackPlugin,
         CSSExtractPlugin: MiniCSSExtractPlugin,
         RSDoctorPlugin: require('@rsdoctor/webpack-plugin').RsdoctorWebpackPlugin,
+        ModuleFederationPlugin: require('@module-federation/enhanced/webpack')
+            .ModuleFederationPlugin,
     };
 
     const webpackPlugins: webpack.Configuration['plugins'] = [
@@ -1199,12 +1317,12 @@ function configureWebpackPlugins(options: HelperOptions): webpack.Configuration[
             isEnvProduction
                 ? {
                       entrypoints: true,
-                      output: options.assetsManifestFile,
+                      output: config.assetsManifestFile,
                   }
                 : {
                       entrypoints: true,
                       writeToDisk: true,
-                      output: path.resolve(options.buildDirectory, options.assetsManifestFile),
+                      output: path.resolve(options.buildDirectory, config.assetsManifestFile),
                   },
         ),
         ...(process.env.WEBPACK_PROFILE === 'true' ? [new webpack.debug.ProfilingPlugin()] : []),
@@ -1237,14 +1355,16 @@ function configureRspackPlugins(options: HelperOptions): Rspack.Configuration['p
         TsCheckerPlugin: TsCheckerRspackPlugin,
         CSSExtractPlugin: rspack.CssExtractRspackPlugin,
         RSDoctorPlugin: require('@rsdoctor/rspack-plugin').RsdoctorRspackPlugin,
+        ModuleFederationPlugin: require('@module-federation/enhanced/rspack')
+            .ModuleFederationPlugin,
     };
 
     const rspackPlugins: Rspack.Configuration['plugins'] = [
         ...configureCommonPlugins(options, plugins),
         new RspackManifestPlugin({
             fileName: isEnvProduction
-                ? options.assetsManifestFile
-                : path.resolve(options.buildDirectory, options.assetsManifestFile),
+                ? config.assetsManifestFile
+                : path.resolve(options.buildDirectory, config.assetsManifestFile),
             writeToFileEmit: true,
             useLegacyEmit: true,
             publicPath: '',
@@ -1461,7 +1581,7 @@ function configureRspackOptimization(
 
     const optimization: Rspack.Configuration['optimization'] = {
         splitChunks: getOptimizationSplitChunks(helperOptions),
-        runtimeChunk: 'single',
+        runtimeChunk: helperOptions.config.moduleFederation ? false : 'single',
         minimizer: [new rspack.SwcJsMinimizerRspackPlugin(swcMinifyOptions), cssMinimizer],
     };
 

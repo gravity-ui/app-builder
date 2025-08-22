@@ -2,6 +2,7 @@ import * as path from 'node:path';
 
 import {cosmiconfigSync} from 'cosmiconfig';
 import {TypeScriptLoader as getTsLoader} from 'cosmiconfig-typescript-loader';
+import {stripIndent} from 'common-tags';
 
 import {isLibraryConfig, isServiceConfig} from './models';
 
@@ -20,6 +21,7 @@ import type {
 } from './models';
 import type {CliArgs} from '../create-cli';
 import {getPort} from './utils';
+import logger from './logger';
 
 function splitPaths(paths: string | string[]) {
     return (Array.isArray(paths) ? paths : [paths]).flatMap((p) => p.split(','));
@@ -202,6 +204,24 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
 }
 
 async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build' | string) {
+    let publicPath = client.publicPath || path.normalize(`${client.publicPathPrefix || ''}/build/`);
+
+    if (client.moduleFederation) {
+        publicPath = path.normalize(`${publicPath}${client.moduleFederation.name}/`);
+    }
+
+    let transformCssWithLightningCss = Boolean(client.transformCssWithLightningCss);
+
+    if (client.moduleFederation?.isolateStyles && transformCssWithLightningCss) {
+        transformCssWithLightningCss = false;
+        logger.warning(
+            stripIndent`
+                transformCssWithLightningCss option is disabled because moduleFederation.isolateStyles is enabled.
+                postcss loader will be used instead.
+            `,
+        );
+    }
+
     const normalizedConfig: NormalizedClientConfig = {
         ...client,
         forkTsChecker: client.disableForkTsChecker ? false : client.forkTsChecker,
@@ -209,14 +229,19 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
             ? false
             : (client.reactRefresh ?? ((options) => options)),
         newJsxTransform: client.newJsxTransform ?? true,
-        publicPath: client.publicPath || path.normalize(`${client.publicPathPrefix || ''}/build/`),
-        assetsManifestFile: client.assetsManifestFile || 'assets-manifest.json',
+        publicPath,
+        assetsManifestFile:
+            client.assetsManifestFile ||
+            (client.moduleFederation?.version
+                ? `assets-manifest-${client.moduleFederation.version}.json`
+                : 'assets-manifest.json'),
         modules: client.modules && remapPaths(client.modules),
         includes: client.includes && remapPaths(client.includes),
         images: client.images && remapPaths(client.images),
         hiddenSourceMap: client.hiddenSourceMap ?? true,
         svgr: client.svgr ?? {},
         entryFilter: client.entryFilter && splitPaths(client.entryFilter),
+        transformCssWithLightningCss,
         webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
         rspack: typeof client.rspack === 'function' ? client.rspack : (config) => config,
         babel: typeof client.babel === 'function' ? client.babel : (config) => config,

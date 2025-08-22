@@ -1,5 +1,4 @@
-/* eslint-disable camelcase, prefer-const */
-declare let __webpack_public_path__: string;
+/* eslint-disable camelcase, no-implicit-globals */
 
 // @ts-expect-error
 __webpack_public_path__ = globalThis.__PUBLIC_PATH__ ?? '/build/';

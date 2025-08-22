@@ -3,8 +3,8 @@
   "compilerOptions": {
     "noEmit": true,
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
     "noErrorTruncation": true,
     "resolveJsonModule": true,
     "noUncheckedIndexedAccess": true,
