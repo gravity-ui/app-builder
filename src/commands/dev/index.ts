@@ -4,7 +4,7 @@ import nodemon from 'nodemon';
 import {onExit} from 'signal-exit';
 import {rimraf} from 'rimraf';
 
-import {shouldCompileTarget} from '../../common/utils';
+import {getAppRunPath, shouldCompileTarget} from '../../common/utils';
 import logger from '../../common/logger';
 import paths from '../../common/paths';
 
@@ -19,7 +19,7 @@ export default async function (config: NormalizedServiceConfig) {
     const shouldCompileClient = shouldCompileTarget(config.target, 'client');
     const shouldCompileServer = shouldCompileTarget(config.target, 'server');
 
-    const appRunPath = path.resolve(paths.appRun, config.client.moduleFederation?.name || '');
+    const appRunPath = getAppRunPath(config);
 
     if (shouldCompileClient && shouldCompileServer) {
         try {

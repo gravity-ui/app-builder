@@ -3,9 +3,14 @@ import os from 'node:os';
 import path from 'node:path';
 
 import paths from './paths';
+import type {NormalizedServiceConfig} from './models';
 
-export function createRunFolder(moduleFederationName?: string) {
-    const appRunPath = path.resolve(paths.appRun, moduleFederationName || '');
+export function getAppRunPath(config: NormalizedServiceConfig) {
+    return path.resolve(paths.appRun, config.client.moduleFederation?.name || '');
+}
+
+export function createRunFolder(config: NormalizedServiceConfig) {
+    const appRunPath = getAppRunPath(config);
 
     if (!fs.existsSync(appRunPath)) {
         fs.mkdirSync(appRunPath, {recursive: true});

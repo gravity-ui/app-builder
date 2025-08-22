@@ -38,7 +38,7 @@ compile(ts, {logger, projectPath: ${JSON.stringify(paths.appServer)}});`;
 }
 
 export function buildServer(config: NormalizedServiceConfig): Promise<void> {
-    createRunFolder(config.client.moduleFederation?.name);
+    createRunFolder(config);
 
     return new Promise((resolve, reject) => {
         const build = new ControllableScript(

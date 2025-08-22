@@ -7,4 +7,10 @@ export {createTransformPathsToLocalModules} from './common/typescript/transforme
 export {defineConfig} from './common/models';
 export {babelPreset} from './common/babel';
 
-export type {ProjectConfig, ServiceConfig, LibraryConfig, ProjectFileConfig} from './common/models';
+export type {
+    ProjectConfig,
+    ServiceConfig,
+    LibraryConfig,
+    ModuleFederationConfig,
+    ProjectFileConfig,
+} from './common/models';
