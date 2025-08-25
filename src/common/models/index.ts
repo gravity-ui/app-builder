@@ -20,7 +20,7 @@ import type {WebpackMode} from '../webpack/config';
 import type {UploadOptions} from '../s3-upload/upload';
 import type {TerserOptions} from 'terser-webpack-plugin';
 import type {ReactRefreshPluginOptions} from '@pmmmwh/react-refresh-webpack-plugin/types/lib/types';
-import type {moduleFederationPlugin} from '@module-federation/sdk';
+import type {moduleFederationPlugin} from '@module-federation/enhanced';
 
 type Bundler = 'webpack' | 'rspack';
 type JavaScriptLoader = 'babel' | 'swc';
