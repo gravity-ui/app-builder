@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.30.1](https://github.com/gravity-ui/app-builder/compare/v0.30.0...v0.30.1) (2025-08-25)
+
+
+### Bug Fixes
+
+* return nodenext module resolution ([#255](https://github.com/gravity-ui/app-builder/issues/255)) ([a318790](https://github.com/gravity-ui/app-builder/commit/a318790901a2e686952690f24656d101c87aec9a))
+
 ## [0.30.0](https://github.com/gravity-ui/app-builder/compare/v0.29.3...v0.30.0) (2025-08-22)
 
 
