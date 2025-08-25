@@ -35,7 +35,7 @@ import {logConfig} from '../logger/log-config';
 import {resolveTypescript} from '../typescript/utils';
 import {nodeExternals} from './node-externals';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
-import type {moduleFederationPlugin} from '@module-federation/sdk';
+import type {moduleFederationPlugin} from '@module-federation/enhanced';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;

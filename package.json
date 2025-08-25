@@ -69,7 +69,6 @@
     "@babel/preset-typescript": "^7.26.0",
     "@babel/runtime": "^7.26.0",
     "@module-federation/enhanced": "^0.18.0",
-    "@module-federation/sdk": "^0.18.0",
     "@okikio/sharedworker": "^1.0.7",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@rsdoctor/rspack-plugin": "^1.0.2",
