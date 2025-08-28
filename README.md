@@ -214,6 +214,7 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   - `ipc` (`string`) — the Unix socket to listen to. If `ipc` and `port` are not defined, then the socket `{rootDir}/dist/run/client.sock` is used.
   - `port` (`number | true`) — specify a port number to listen for requests on. If `true`, the free port will be selected automatically.
   - `webSocketPath` (`string`) — tells clients connected to devServer to use the provided path to connect. Default is `${publicPathPrefix}/build/sockjs-node`.
+  - `webSocketClientPort` (`number`) - tells clients to connect to devServer using this port from a browser. Default is `${devServer.port}`
   - `type` (`'https'`) — allow to serve over HTTPS.
   - `options` (`import('https').ServerOptions`) — allow to provide your own certificate.
 - `watchOptions` — a set of options used to customize watch mode, [more](https://webpack.js.org/configuration/watch/#watchoptions)
