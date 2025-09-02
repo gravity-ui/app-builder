@@ -88,6 +88,11 @@ export type ModuleFederationConfig = Omit<
      */
     version?: string;
     /**
+     * Disable manifest file generation
+     * @default false
+     */
+    disableManifest?: boolean;
+    /**
      * Base URL for loading resources of this micro-frontend
      * Should point to a publicly accessible URL where the files will be hosted
      * @example 'https://cdn.example.com/my-app/'
