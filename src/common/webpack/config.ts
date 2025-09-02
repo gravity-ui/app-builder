@@ -383,14 +383,16 @@ function configureRspackExperiments(options: HelperOptions): Rspack.Configuratio
         typeof config.cache === 'object' && config.cache.type === 'filesystem'
             ? config.cache
             : undefined;
-
-    const version = [filesystemCacheOptions?.name, filesystemCacheOptions?.version]
+    const cacheVersion = [
+        config.moduleFederation?.name || filesystemCacheOptions?.name,
+        config.moduleFederation?.version || filesystemCacheOptions?.version,
+    ]
         .filter(Boolean)
         .join('-');
 
     return {
         cache: {
-            version: version || undefined,
+            version: cacheVersion || undefined,
             type: 'persistent',
             snapshot: {
                 managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
