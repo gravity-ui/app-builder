@@ -340,6 +340,7 @@ Module Federation is a Webpack 5 feature that enables micro-frontend architectur
 - `moduleFederation` (`object`) — Module Federation configuration
   - `name` (`string`) — unique name of the application in the Module Federation ecosystem. Required parameter.
   - `version` (`string`) — application version. When specified, the entry file will be named `entry-{version}.js` instead of `entry.js`.
+  - `disableManifest` (`boolean`) — disable manifest file generation. When `true`, uses regular `.js` files for remote entry instead of manifest files. Default is `false`.
   - `publicPath` (`string`) — base URL for loading resources of this micro-frontend. Required parameter.
   - `remotes` (`string[]`) — list of remote application names that this application can load. Simplified alternative to `originalRemotes`.
   - `originalRemotes` (`RemotesObject`) — full configuration of remote applications in Module Federation Plugin format.

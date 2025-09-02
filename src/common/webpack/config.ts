@@ -1204,6 +1204,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
             const {
                 name,
                 version,
+                disableManifest,
                 publicPath,
                 remotes,
                 originalRemotes,
@@ -1215,14 +1216,24 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
             let actualRemotes = originalRemotes;
 
             if (remotes) {
+                let remoteFile: string;
+
+                if (disableManifest) {
+                    if (remotesRuntimeVersioning) {
+                        remoteFile = `entry-[version].js`;
+                    } else {
+                        remoteFile = 'entry.js';
+                    }
+                } else if (remotesRuntimeVersioning) {
+                    remoteFile = `mf-manifest-[version].json`;
+                } else {
+                    remoteFile = 'mf-manifest.json';
+                }
+
                 actualRemotes = remotes.reduce<moduleFederationPlugin.RemotesObject>(
                     (acc, remoteName) => {
-                        const remoteFilename = remotesRuntimeVersioning
-                            ? 'entry-[version].js'
-                            : 'entry.js';
                         // eslint-disable-next-line no-param-reassign
-                        acc[remoteName] =
-                            `${remoteName}@${publicPath}${remoteName}/${remoteFilename}`;
+                        acc[remoteName] = `${remoteName}@${publicPath}${remoteName}/${remoteFile}`;
                         return acc;
                     },
                     {},
@@ -1239,6 +1250,13 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 new bundlerPlugins.ModuleFederationPlugin({
                     name,
                     filename: version ? `entry-${version}.js` : 'entry.js',
+                    manifest: disableManifest
+                        ? undefined
+                        : {
+                              fileName: version
+                                  ? `mf-manifest-${version}.json`
+                                  : 'mf-manifest.json',
+                          },
                     remotes: actualRemotes,
                     runtimePlugins: actualRuntimePlugins,
                     ...restOptions,
