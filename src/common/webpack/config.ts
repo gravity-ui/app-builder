@@ -1462,7 +1462,7 @@ export function configureOptimization(helperOptions: HelperOptions): Optimizatio
 
     const optimization: Optimization = {
         splitChunks: getOptimizationSplitChunks(helperOptions),
-        runtimeChunk: 'single',
+        runtimeChunk: helperOptions.config.moduleFederation ? false : 'single',
         minimizer: [
             (compiler) => {
                 // CssMinimizerWebpackPlugin works with MiniCSSExtractPlugin, so only relevant for production builds.
