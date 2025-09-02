@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.30.2](https://github.com/gravity-ui/app-builder/compare/v0.30.1...v0.30.2) (2025-09-02)
+
+
+### Bug Fixes
+
+* fix cache versioning for rspack ([#261](https://github.com/gravity-ui/app-builder/issues/261)) ([c950207](https://github.com/gravity-ui/app-builder/commit/c9502076c5e799bbf38650964f4431f32d314431))
+* fix runtimeOption for webpack and MF ([#258](https://github.com/gravity-ui/app-builder/issues/258)) ([88c917a](https://github.com/gravity-ui/app-builder/commit/88c917ae14a2f325dc6e97f282ac554a98371e89))
+* support manifest for MF ([#260](https://github.com/gravity-ui/app-builder/issues/260)) ([dc1da4f](https://github.com/gravity-ui/app-builder/commit/dc1da4f60f31ee4ebbaf4cbdb0c44e4a25be526e))
+
 ## [0.30.1](https://github.com/gravity-ui/app-builder/compare/v0.30.0...v0.30.1) (2025-08-25)
 
 
