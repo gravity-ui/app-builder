@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.30.3](https://github.com/gravity-ui/app-builder/compare/v0.30.2...v0.30.3) (2025-09-03)
+
+
+### Bug Fixes
+
+* fix run folder creation for client-only compilation ([#262](https://github.com/gravity-ui/app-builder/issues/262)) ([762e006](https://github.com/gravity-ui/app-builder/commit/762e006986987edda27e5e76032793132c727e35))
+
 ## [0.30.2](https://github.com/gravity-ui/app-builder/compare/v0.30.1...v0.30.2) (2025-09-02)
 
 
