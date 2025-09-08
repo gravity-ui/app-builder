@@ -48,6 +48,8 @@ watch(
         onAfterFilesEmitted: () => {
             process.send({type: 'Emitted'});
         },
+        additionalPaths: ${JSON.stringify(config.server.swcOptions?.additionalPaths)},
+        exclude: ${JSON.stringify(config.server.swcOptions?.exclude)},
     }
 );`;
 }

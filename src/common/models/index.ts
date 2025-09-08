@@ -365,11 +365,21 @@ export interface ServerConfig {
     watchThrottle?: number;
     inspect?: number | true;
     inspectBrk?: number | true;
+
     /**
      * Compiler for server code compilation
      * @default 'typescript'
      */
     compiler?: ServerCompiler;
+
+    /**
+     * Additional options for SWC compilation.
+     * Works only if `compiler` is 'swc'.
+     */
+    swcOptions?: {
+        additionalPaths?: string[];
+        exclude?: string | string[];
+    };
 }
 export interface ServiceConfig {
     target?: 'client' | 'server';
