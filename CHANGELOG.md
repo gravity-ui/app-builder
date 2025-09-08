@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.31.0](https://github.com/gravity-ui/app-builder/compare/v0.30.3...v0.31.0) (2025-09-08)
+
+
+### Features
+
+* additional paths for SWC server compilation ([#264](https://github.com/gravity-ui/app-builder/issues/264)) ([4e388cb](https://github.com/gravity-ui/app-builder/commit/4e388cbb475ed935b6bd1ee9dd4c5215387c2e12))
+
 ## [0.30.3](https://github.com/gravity-ui/app-builder/compare/v0.30.2...v0.30.3) (2025-09-03)
 
 
