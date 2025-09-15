@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.31.1](https://github.com/gravity-ui/app-builder/compare/v0.31.0...v0.31.1) (2025-09-15)
+
+
+### Bug Fixes
+
+* **module-federation:** fix configuryEntry when using originalRemotes ([#266](https://github.com/gravity-ui/app-builder/issues/266)) ([6be9f4f](https://github.com/gravity-ui/app-builder/commit/6be9f4ff5aee3a795b09514ce836451fd2a26a44))
+
 ## [0.31.0](https://github.com/gravity-ui/app-builder/compare/v0.30.3...v0.31.0) (2025-09-08)
 
 
