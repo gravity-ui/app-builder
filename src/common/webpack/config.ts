@@ -471,15 +471,18 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
     let result: Record<string, string[]> = {};
 
     if (config.moduleFederation) {
-        const {name, remotes} = config.moduleFederation;
+        const {name, remotes, originalRemotes} = config.moduleFederation;
         const entryFile = entryFiles.find((item) => path.parse(item).name === name);
 
         if (!entryFile) {
             throw new Error(`Entry "${name}" not found`);
         }
 
-        // If remotes are not defined, it means that we are a remote
-        if (!remotes) {
+        const remoteNames: string[] | undefined =
+            remotes || (originalRemotes && Object.keys(originalRemotes)) || undefined;
+
+        // If remotes are empty, it means that we are a remote
+        if (!remoteNames || remoteNames.length === 0) {
             return path.resolve(entriesDirectory, entryFile);
         }
 
@@ -487,7 +490,7 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
             const fileName = path.parse(file).name;
             return (
                 !isModuleFederationEntry(name, fileName) &&
-                remotes.every((remote) => !isModuleFederationEntry(remote, fileName))
+                remoteNames.every((remote) => !isModuleFederationEntry(remote, fileName))
             );
         });
         result = {
