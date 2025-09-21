@@ -204,10 +204,14 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
 }
 
 async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build' | string) {
+    const cdnConfig = Array.isArray(client.cdn) ? client.cdn[0] : client.cdn;
+
     let publicPath = client.publicPath || path.normalize(`${client.publicPathPrefix || ''}/build/`);
+    let browserPublicPath = cdnConfig?.publicPath || publicPath;
 
     if (client.moduleFederation) {
         publicPath = path.normalize(`${publicPath}${client.moduleFederation.name}/`);
+        browserPublicPath = path.normalize(`${browserPublicPath}${client.moduleFederation.name}/`);
     }
 
     let transformCssWithLightningCss = Boolean(client.transformCssWithLightningCss);
@@ -230,6 +234,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
             : (client.reactRefresh ?? ((options) => options)),
         newJsxTransform: client.newJsxTransform ?? true,
         publicPath,
+        browserPublicPath,
         assetsManifestFile:
             client.assetsManifestFile ||
             (client.moduleFederation?.version

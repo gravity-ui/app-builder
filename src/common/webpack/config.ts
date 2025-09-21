@@ -1029,6 +1029,7 @@ function getDefinitions({config, isSsr}: HelperOptions) {
     return {
         'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
         'process.env.IS_SSR': JSON.stringify(isSsr),
+        'process.env.PUBLIC_PATH': JSON.stringify(config.browserPublicPath),
         ...config.definitions,
     };
 }
@@ -1218,13 +1219,11 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
             } = config.moduleFederation;
 
             // Remove micro-frontend name from public path
-            const localPublicPath = config.publicPath.replace(`${name}/`, '');
-            const cdnConfig = Array.isArray(config.cdn) ? config.cdn[0] : config.cdn;
-            const publicPath = cdnConfig?.publicPath || localPublicPath;
+            const commonPublicPath = config.browserPublicPath.replace(`${name}/`, '');
 
             let actualRemotes = originalRemotes;
 
-            if (remotes) {
+            if (!actualRemotes && remotes) {
                 let remoteFile: string;
 
                 if (disableManifest) {
@@ -1242,14 +1241,15 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 actualRemotes = remotes.reduce<moduleFederationPlugin.RemotesObject>(
                     (acc, remoteName) => {
                         // eslint-disable-next-line no-param-reassign
-                        acc[remoteName] = `${remoteName}@${publicPath}${remoteName}/${remoteFile}`;
+                        acc[remoteName] =
+                            `${remoteName}@${commonPublicPath}${remoteName}/${remoteFile}`;
                         return acc;
                     },
                     {},
                 );
             }
 
-            const actualRuntimePlugins = runtimePlugins || [];
+            const actualRuntimePlugins = runtimePlugins.slice() || [];
 
             if (remotesRuntimeVersioning) {
                 actualRuntimePlugins.push(require.resolve('./runtime-versioning-plugin'));

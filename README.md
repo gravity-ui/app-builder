@@ -349,7 +349,7 @@ Module Federation is a Webpack 5 feature that enables micro-frontend architectur
     - `getPrefix` (`(entryName: string) => string`) — function to generate CSS class prefix.
     - `prefixSelector` (`(prefix: string, selector: string, prefixedSelector: string, filePath: string) => string`) — function to add prefix to CSS selectors.
   - Also supports all standard options from [@module-federation/enhanced](https://module-federation.io/), except `name` and `remotes`, such as:
-    - `filename` — entry file name (default `remoteEntry.js`)
+    - `filename` — entry file name (default `entry.js`)
     - `exposes` — modules that this application exports
     - `shared` — shared dependencies between applications
     - `runtimePlugins` — plugins for Module Federation runtime
@@ -385,9 +385,9 @@ export default defineConfig({
       version: '2.1.0',
       // Detailed remotes configuration
       originalRemotes: {
-        header: 'header@https://cdn.example.com/header/remoteEntry.js',
-        footer: 'footer@https://cdn.example.com/footer/remoteEntry.js',
-        userProfile: 'userProfile@https://cdn.example.com/user-profile/remoteEntry.js',
+        header: 'header@https://cdn.example.com/header/entry.js',
+        footer: 'footer@https://cdn.example.com/footer/entry.js',
+        userProfile: 'userProfile@https://cdn.example.com/user-profile/entry.js',
       },
       remotesRuntimeVersioning: true,
       isolateStyles: {

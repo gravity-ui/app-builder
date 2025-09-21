@@ -101,7 +101,7 @@ export type ModuleFederationConfig = Omit<
     /**
      * Full configuration of remote applications in Module Federation format
      * Allows more detailed configuration of each remote application
-     * @example { header: 'header@https://header.example.com/remoteEntry.js' }
+     * @example { header: 'header@https://header.example.com/entry.js' }
      */
     originalRemotes?: moduleFederationPlugin.ModuleFederationPluginOptions['remotes'];
     /**
@@ -401,8 +401,9 @@ export type NormalizedClientConfig = Omit<
 > & {
     bundler: Bundler;
     javaScriptLoader: JavaScriptLoader;
-    // TODO(DakEnviy): Use cdn to calculate publicPath
+    // TODO(DakEnviy): Use cdn to calculate publicPath and merge with browserPublicPath
     publicPath: string;
+    browserPublicPath: string;
     assetsManifestFile: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
