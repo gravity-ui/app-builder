@@ -50,6 +50,7 @@ watch(
         },
         additionalPaths: ${JSON.stringify(config.server.swcOptions?.additionalPaths)},
         exclude: ${JSON.stringify(config.server.swcOptions?.exclude)},
+        publicPath: ${JSON.stringify(config.client.browserPublicPath)},
     }
 );`;
 }
