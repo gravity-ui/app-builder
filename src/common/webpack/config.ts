@@ -432,11 +432,6 @@ export function configureResolve({isEnvProduction, config}: HelperOptions) {
     } satisfies webpack.ResolveOptions;
 }
 
-function isModuleFederationEntry(entryName: string, fileName: string) {
-    // Ignore bootstrap file for module federation entries
-    return entryName === fileName || `${entryName}-bootstrap` === fileName;
-}
-
 function createEntryArray(entry: string | string[]) {
     if (typeof entry === 'string') {
         return [require.resolve('./public-path'), entry];
@@ -468,7 +463,6 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
     }
 
     let entryFiles = fs.readdirSync(entriesDirectory).filter((file) => /\.[jt]sx?$/.test(file));
-    let result: Record<string, string[]> = {};
 
     if (config.moduleFederation) {
         const {name, remotes, originalRemotes} = config.moduleFederation;
@@ -489,13 +483,14 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
         entryFiles = entryFiles.filter((file) => {
             const fileName = path.parse(file).name;
             return (
-                !isModuleFederationEntry(name, fileName) &&
-                remoteNames.every((remote) => !isModuleFederationEntry(remote, fileName))
+                // Ignore bootstrap file for module federation host
+                fileName !== `${name}-bootstrap` &&
+                remoteNames.every(
+                    // Ignore bootstrap and entry files for module federation remotes
+                    (remote) => remote !== fileName && `${remote}-bootstrap` !== fileName,
+                )
             );
         });
-        result = {
-            main: createEntryArray(path.resolve(entriesDirectory, entryFile)),
-        };
     }
 
     if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
@@ -508,9 +503,9 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
         throw new Error('No entries were found after applying entry filter');
     }
 
-    return entryFiles.reduce(
+    return entryFiles.reduce<Record<string, string[]>>(
         (acc, file) => addEntry(acc, path.resolve(entriesDirectory, file)),
-        result,
+        {},
     );
 }
 
