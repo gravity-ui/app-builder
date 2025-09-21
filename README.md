@@ -343,6 +343,7 @@ Module Federation is a Webpack 5 feature that enables micro-frontend architectur
   - `version` (`string`) — application version. When specified, the entry file will be named `entry-{version}.js` instead of `entry.js`.
   - `disableManifest` (`boolean`) — disable manifest file generation. When `true`, uses regular `.js` files for remote entry instead of manifest files. Default is `false`.
   - `remotes` (`string[]`) — list of remote application names that this application can load. Simplified alternative to `originalRemotes`.
+  - `enabledRemotes` (`string[]`) — list of enabled remotes for module federation. If not specified, all remotes will be enabled by default. It used only for development mode.
   - `originalRemotes` (`RemotesObject`) — full configuration of remote applications in Module Federation Plugin format.
   - `remotesRuntimeVersioning` (`boolean`) — enables runtime versioning for remote applications.
   - `isolateStyles` (`object`) — CSS style isolation settings to prevent conflicts between micro-frontends.

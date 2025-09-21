@@ -99,6 +99,13 @@ export type ModuleFederationConfig = Omit<
      */
     remotes?: string[];
     /**
+     * List of enabled remotes for module federation
+     * If not specified, all remotes will be enabled by default
+     * It used only for development mode
+     * @example ['header', 'navigation']
+     */
+    enabledRemotes?: string[];
+    /**
      * Full configuration of remote applications in Module Federation format
      * Allows more detailed configuration of each remote application
      * @example { header: 'header@https://header.example.com/entry.js' }
@@ -402,7 +409,21 @@ export type NormalizedClientConfig = Omit<
     bundler: Bundler;
     javaScriptLoader: JavaScriptLoader;
     // TODO(DakEnviy): Use cdn to calculate publicPath and merge with browserPublicPath
+    /**
+     * Build public path
+     * (concatenated with micro-frontend name if module federation is configured).
+     */
     publicPath: string;
+    /**
+     * Public path for CDN,
+     * it presents even if CDN is disabled.
+     */
+    cdnPublicPath?: string;
+    /**
+     * Final public path for browser,
+     * it is based on cdnPublicPath if CDN is enabled or publicPath otherwise
+     * (concatenated with micro-frontend name if module federation is configured).
+     */
     browserPublicPath: string;
     assetsManifestFile: string;
     hiddenSourceMap: boolean;

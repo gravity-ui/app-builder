@@ -145,6 +145,10 @@ export async function getProjectConfig(
         },
     };
 
+    if (projectConfig.client?.moduleFederation && argv.mfRemotes) {
+        projectConfig.client.moduleFederation.enabledRemotes = argv.mfRemotes;
+    }
+
     return normalizeConfig(projectConfig, command);
 }
 
@@ -203,11 +207,12 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
     return config;
 }
 
+// TODO(DakEnviy): Make mode type strict
 async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build' | string) {
     const cdnConfig = Array.isArray(client.cdn) ? client.cdn[0] : client.cdn;
 
     let publicPath = client.publicPath || path.normalize(`${client.publicPathPrefix || ''}/build/`);
-    let browserPublicPath = cdnConfig?.publicPath || publicPath;
+    let browserPublicPath = (mode !== 'dev' && cdnConfig?.publicPath) || publicPath;
 
     if (client.moduleFederation) {
         publicPath = path.normalize(`${publicPath}${client.moduleFederation.name}/`);
@@ -234,6 +239,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
             : (client.reactRefresh ?? ((options) => options)),
         newJsxTransform: client.newJsxTransform ?? true,
         publicPath,
+        cdnPublicPath: cdnConfig?.publicPath,
         browserPublicPath,
         assetsManifestFile:
             client.assetsManifestFile ||

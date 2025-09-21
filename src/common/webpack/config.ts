@@ -1207,18 +1207,19 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 version,
                 disableManifest,
                 remotes,
+                enabledRemotes = remotes,
                 originalRemotes,
                 remotesRuntimeVersioning,
                 runtimePlugins,
                 ...restOptions
             } = config.moduleFederation;
 
-            // Remove micro-frontend name from public path
-            const commonPublicPath = config.browserPublicPath.replace(`${name}/`, '');
-
             let actualRemotes = originalRemotes;
 
-            if (!actualRemotes && remotes) {
+            if (!actualRemotes && remotes && enabledRemotes) {
+                // Remove micro-frontend name from public path
+                const commonPublicPath = config.browserPublicPath.replace(`${name}/`, '');
+
                 let remoteFile: string;
 
                 if (disableManifest) {
@@ -1234,10 +1235,24 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 }
 
                 actualRemotes = remotes.reduce<moduleFederationPlugin.RemotesObject>(
-                    (acc, remoteName) => {
+                    (acc, remote) => {
+                        let remotePath: string | undefined;
+
+                        if (isEnvDevelopment) {
+                            if (enabledRemotes.includes(remote)) {
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                remotePath = `${commonPublicPath}${remote}/${remoteFile.replace('[version]', version!)}`;
+                            } else if (config.cdnPublicPath) {
+                                remotePath = `${config.cdnPublicPath}${remote}/${remoteFile}`;
+                            }
+                        }
+
+                        if (!remotePath) {
+                            remotePath = `${commonPublicPath}${remote}/${remoteFile}`;
+                        }
+
                         // eslint-disable-next-line no-param-reassign
-                        acc[remoteName] =
-                            `${remoteName}@${commonPublicPath}${remoteName}/${remoteFile}`;
+                        acc[remote] = `${remote}@${remotePath}`;
                         return acc;
                     },
                     {},
