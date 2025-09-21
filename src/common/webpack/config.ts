@@ -1210,13 +1210,17 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 name,
                 version,
                 disableManifest,
-                publicPath,
                 remotes,
                 originalRemotes,
                 remotesRuntimeVersioning,
                 runtimePlugins,
                 ...restOptions
             } = config.moduleFederation;
+
+            // Remove micro-frontend name from public path
+            const localPublicPath = config.publicPath.replace(`${name}/`, '');
+            const cdnConfig = Array.isArray(config.cdn) ? config.cdn[0] : config.cdn;
+            const publicPath = cdnConfig?.publicPath || localPublicPath;
 
             let actualRemotes = originalRemotes;
 
