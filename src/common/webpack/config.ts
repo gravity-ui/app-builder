@@ -1210,6 +1210,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 enabledRemotes = remotes,
                 originalRemotes,
                 remotesRuntimeVersioning,
+                isolateStyles: _isolateStyles, // Omit isolateStyles from restOptions
                 runtimePlugins,
                 ...restOptions
             } = config.moduleFederation;
@@ -1259,7 +1260,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 );
             }
 
-            const actualRuntimePlugins = runtimePlugins.slice() || [];
+            const actualRuntimePlugins = runtimePlugins?.slice() || [];
 
             if (remotesRuntimeVersioning) {
                 actualRuntimePlugins.push(require.resolve('./runtime-versioning-plugin'));
