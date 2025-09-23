@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.0](https://github.com/gravity-ui/app-builder/compare/v0.31.1...v0.32.0) (2025-09-23)
+
+
+### Features
+
+* **module-federation:** config improvements ([#268](https://github.com/gravity-ui/app-builder/issues/268)) ([9df47b5](https://github.com/gravity-ui/app-builder/commit/9df47b5d3c63574d4fe78fc3854fcdfd9b9068a4))
+
 ## [0.31.1](https://github.com/gravity-ui/app-builder/compare/v0.31.0...v0.31.1) (2025-09-15)
 
 
