@@ -2,10 +2,10 @@ import type {Logger} from '../logger';
 import {elapsedTime} from '../logger/pretty-time';
 // @ts-ignore @swc/cli is not typed
 import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptionsFromTsconfig} from './utils';
-import type {GetSwcOptionsFromTsconfigOptions} from './utils';
+import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils';
+import type {GetSwcOptionsParams} from './utils';
 
-type SwcCompileOptions = Pick<GetSwcOptionsFromTsconfigOptions, 'additionalPaths' | 'exclude'> & {
+type SwcCompileOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
     projectPath: string;
     outputPath: string;
     logger: Logger;
@@ -17,14 +17,16 @@ export async function compile({
     logger,
     additionalPaths,
     exclude,
+    publicPath,
 }: SwcCompileOptions): Promise<void> {
     const start = process.hrtime.bigint();
     logger.message('Start compilation');
 
-    const {swcOptions, directoriesToCompile} = getSwcOptionsFromTsconfig({
+    const {swcOptions, directoriesToCompile} = getSwcOptions({
         projectPath,
         additionalPaths,
         exclude,
+        publicPath,
     });
 
     const cliOptions = {

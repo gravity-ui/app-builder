@@ -93,21 +93,22 @@ export type ModuleFederationConfig = Omit<
      */
     disableManifest?: boolean;
     /**
-     * Base URL for loading resources of this micro-frontend
-     * Should point to a publicly accessible URL where the files will be hosted
-     * @example 'https://cdn.example.com/my-app/'
-     */
-    publicPath: string;
-    /**
      * List of remote application names that this application can load
      * Simplified alternative to originalRemotes - only names are specified
      * @example ['header', 'footer', 'navigation']
      */
     remotes?: string[];
     /**
+     * List of enabled remotes for module federation
+     * If not specified, all remotes will be enabled by default
+     * It used only for development mode
+     * @example ['header', 'navigation']
+     */
+    enabledRemotes?: string[];
+    /**
      * Full configuration of remote applications in Module Federation format
      * Allows more detailed configuration of each remote application
-     * @example { header: 'header@https://header.example.com/remoteEntry.js' }
+     * @example { header: 'header@https://header.example.com/entry.js' }
      */
     originalRemotes?: moduleFederationPlugin.ModuleFederationPluginOptions['remotes'];
     /**
@@ -276,6 +277,7 @@ export interface ClientConfig {
          */
         watchPackages?: boolean;
     };
+    // TODO(DakEnviy): Allow only one cdn config
     cdn?: CdnUploadConfig | CdnUploadConfig[];
     /**
      * use webpack 5 Web Workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
@@ -351,6 +353,7 @@ export interface CdnUploadConfig {
     prefix?: string;
     region?: string;
     endpoint?: string;
+    publicPath?: string;
     compress?: boolean;
     cacheControl?: UploadOptions['cacheControl'];
     /**
@@ -405,7 +408,23 @@ export type NormalizedClientConfig = Omit<
 > & {
     bundler: Bundler;
     javaScriptLoader: JavaScriptLoader;
+    // TODO(DakEnviy): Use cdn to calculate publicPath and merge with browserPublicPath
+    /**
+     * Build public path
+     * (concatenated with micro-frontend name if module federation is configured).
+     */
     publicPath: string;
+    /**
+     * Public path for CDN,
+     * it presents even if CDN is disabled.
+     */
+    cdnPublicPath?: string;
+    /**
+     * Final public path for browser,
+     * it is based on cdnPublicPath if CDN is enabled or publicPath otherwise
+     * (concatenated with micro-frontend name if module federation is configured).
+     */
+    browserPublicPath: string;
     assetsManifestFile: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
@@ -422,7 +441,7 @@ export type NormalizedClientConfig = Omit<
     ) => Configuration | Promise<Configuration>;
     rspack: (
         config: RspackConfiguration,
-        options: {configType: `${WebpackMode}`},
+        options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => RspackConfiguration | Promise<RspackConfiguration>;
     debugWebpack?: boolean;
     babel: (

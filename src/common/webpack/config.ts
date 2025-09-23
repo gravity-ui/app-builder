@@ -432,11 +432,6 @@ export function configureResolve({isEnvProduction, config}: HelperOptions) {
     } satisfies webpack.ResolveOptions;
 }
 
-function isModuleFederationEntry(entryName: string, fileName: string) {
-    // Ignore bootstrap file for module federation entries
-    return entryName === fileName || `${entryName}-bootstrap` === fileName;
-}
-
 function createEntryArray(entry: string | string[]) {
     if (typeof entry === 'string') {
         return [require.resolve('./public-path'), entry];
@@ -468,7 +463,6 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
     }
 
     let entryFiles = fs.readdirSync(entriesDirectory).filter((file) => /\.[jt]sx?$/.test(file));
-    let result: Record<string, string[]> = {};
 
     if (config.moduleFederation) {
         const {name, remotes, originalRemotes} = config.moduleFederation;
@@ -489,13 +483,14 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
         entryFiles = entryFiles.filter((file) => {
             const fileName = path.parse(file).name;
             return (
-                !isModuleFederationEntry(name, fileName) &&
-                remoteNames.every((remote) => !isModuleFederationEntry(remote, fileName))
+                // Ignore bootstrap file for module federation host
+                fileName !== `${name}-bootstrap` &&
+                remoteNames.every(
+                    // Ignore bootstrap and entry files for module federation remotes
+                    (remote) => remote !== fileName && `${remote}-bootstrap` !== fileName,
+                )
             );
         });
-        result = {
-            main: createEntryArray(path.resolve(entriesDirectory, entryFile)),
-        };
     }
 
     if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
@@ -508,9 +503,9 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
         throw new Error('No entries were found after applying entry filter');
     }
 
-    return entryFiles.reduce(
+    return entryFiles.reduce<Record<string, string[]>>(
         (acc, file) => addEntry(acc, path.resolve(entriesDirectory, file)),
-        result,
+        {},
     );
 }
 
@@ -1029,6 +1024,7 @@ function getDefinitions({config, isSsr}: HelperOptions) {
     return {
         'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
         'process.env.IS_SSR': JSON.stringify(isSsr),
+        'process.env.PUBLIC_PATH': JSON.stringify(config.browserPublicPath),
         ...config.definitions,
     };
 }
@@ -1210,17 +1206,21 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 name,
                 version,
                 disableManifest,
-                publicPath,
                 remotes,
+                enabledRemotes = remotes,
                 originalRemotes,
                 remotesRuntimeVersioning,
+                isolateStyles: _isolateStyles, // Omit isolateStyles from restOptions
                 runtimePlugins,
                 ...restOptions
             } = config.moduleFederation;
 
             let actualRemotes = originalRemotes;
 
-            if (remotes) {
+            if (!actualRemotes && remotes && enabledRemotes) {
+                // Remove micro-frontend name from public path
+                const commonPublicPath = config.browserPublicPath.replace(`${name}/`, '');
+
                 let remoteFile: string;
 
                 if (disableManifest) {
@@ -1236,16 +1236,31 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 }
 
                 actualRemotes = remotes.reduce<moduleFederationPlugin.RemotesObject>(
-                    (acc, remoteName) => {
+                    (acc, remote) => {
+                        let remotePath: string | undefined;
+
+                        if (isEnvDevelopment) {
+                            if (enabledRemotes.includes(remote)) {
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                remotePath = `${commonPublicPath}${remote}/${remoteFile.replace('[version]', version!)}`;
+                            } else if (config.cdnPublicPath) {
+                                remotePath = `${config.cdnPublicPath}${remote}/${remoteFile}`;
+                            }
+                        }
+
+                        if (!remotePath) {
+                            remotePath = `${commonPublicPath}${remote}/${remoteFile}`;
+                        }
+
                         // eslint-disable-next-line no-param-reassign
-                        acc[remoteName] = `${remoteName}@${publicPath}${remoteName}/${remoteFile}`;
+                        acc[remote] = `${remote}@${remotePath}`;
                         return acc;
                     },
                     {},
                 );
             }
 
-            const actualRuntimePlugins = runtimePlugins || [];
+            const actualRuntimePlugins = runtimePlugins?.slice() || [];
 
             if (remotesRuntimeVersioning) {
                 actualRuntimePlugins.push(require.resolve('./runtime-versioning-plugin'));

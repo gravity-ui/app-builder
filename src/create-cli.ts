@@ -134,6 +134,12 @@ export function createCli(argv: string[]) {
                         group: 'Client',
                         type: 'boolean',
                         describe: 'Display final webpack configurations for debugging purposes',
+                    })
+                    .option('mf-remotes', {
+                        group: 'Client',
+                        type: 'string',
+                        describe: 'Enabled remotes for module federation (all remotes by default)',
+                        array: true,
                     }),
             handler: handlerP(
                 getCommandHandler('dev', (args, cmd) => {

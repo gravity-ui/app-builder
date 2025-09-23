@@ -16,25 +16,40 @@ function resolvePaths(paths: Record<string, string[]>, baseUrl: string) {
     return entries;
 }
 
-export type GetSwcOptionsFromTsconfigOptions = {
+export interface GetSwcOptionsParams {
     projectPath: string;
     filename?: string;
     additionalPaths?: string[];
     exclude?: string | string[];
-};
+    publicPath: string;
+}
 
-export function getSwcOptionsFromTsconfig({
+export function getSwcOptions({
     projectPath,
     filename = 'tsconfig.json',
     additionalPaths,
     exclude,
-}: GetSwcOptionsFromTsconfigOptions) {
+    publicPath,
+}: GetSwcOptionsParams) {
     const swcOptions = convert(filename, projectPath);
     swcOptions.exclude = swcOptions.exclude || [];
     swcOptions.jsc = {
         ...swcOptions.jsc,
         // SWC requires absolute path as baseUrl
         baseUrl: projectPath,
+        transform: {
+            ...swcOptions.jsc?.transform,
+            optimizer: {
+                ...swcOptions.jsc?.transform?.optimizer,
+                globals: {
+                    ...swcOptions.jsc?.transform?.optimizer?.globals,
+                    vars: {
+                        'process.env.PUBLIC_PATH': JSON.stringify(publicPath),
+                        ...swcOptions.jsc?.transform?.optimizer?.globals?.vars,
+                    },
+                },
+            },
+        },
     };
 
     let customExclude: string[] = [];
