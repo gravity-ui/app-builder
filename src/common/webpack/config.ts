@@ -1207,13 +1207,15 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 version,
                 disableManifest,
                 remotes,
-                enabledRemotes = remotes,
                 originalRemotes,
                 remotesRuntimeVersioning,
                 isolateStyles: _isolateStyles, // Omit isolateStyles from restOptions
                 runtimePlugins,
                 ...restOptions
             } = config.moduleFederation;
+
+            const enabledRemotes =
+                (isEnvDevelopment && config.moduleFederation.enabledRemotes) || remotes;
 
             let actualRemotes = originalRemotes;
 
@@ -1239,7 +1241,8 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                     (acc, remote) => {
                         let remotePath: string | undefined;
 
-                        if (isEnvDevelopment) {
+                        // Use local paths when CDN is disabled, regardless of environment
+                        if (!config.cdn) {
                             if (enabledRemotes.includes(remote)) {
                                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                                 remotePath = `${commonPublicPath}${remote}/${remoteFile.replace('[version]', version!)}`;

@@ -407,12 +407,22 @@ Module Federation is a Webpack 5 feature that enables micro-frontend architectur
     - Allows selective enabling/disabling of specific remotes during development
     - Useful for debugging, testing individual micro-frontends, or working with partial system setups
     - Helps reduce development startup time by loading only needed remotes
-    - Can be overridden via CLI flag: `--mf-remotes=header,footer`
+    - Can be overridden via CLI flag: `--mf-remotes header footer`
 
     **Loading behavior:**
 
-    - **Enabled remotes**: Loaded from local development server (auto-started by app-builder)
-    - **Disabled remotes**: Loaded from CDN (if `publicPathPrefix` or CDN configuration is available), allowing you to use stable production versions while developing specific parts locally
+    **When CDN is disabled:**
+
+    - **Enabled remotes**: Loaded from local development server with version-specific paths
+    - **Disabled remotes**: Loaded from `cdnPublicPath` (if configured), otherwise fallback to local paths
+
+    **When CDN is enabled:**
+
+    - **All remotes**: Use common public path, `enabledRemotes` selection has no effect on URLs
+
+    **In production builds:**
+
+    - This option is completely ignored, all configured remotes are included in the bundle
 
     **Example:**
 
@@ -428,7 +438,7 @@ Module Federation is a Webpack 5 feature that enables micro-frontend architectur
 
     ```bash
     # Override enabledRemotes from command line
-    npx app-builder dev --mf-remotes=header,navigation
+    npx app-builder dev --mf-remotes header navigation
     ```
 
     **Note:** This option has no effect in production builds - all configured remotes will be included in the production bundle configuration.
@@ -474,6 +484,12 @@ Module Federation is a Webpack 5 feature that enables micro-frontend architectur
     - **Cache busting**: Different versions get different URLs, preventing browser caching issues
     - **Rollback capability**: Can load specific versions of remotes
     - **Deployment safety**: Gradual rollouts with version-specific remote loading
+
+    **Important considerations:**
+
+    - **Without CDN**: Version is inlined immediately during build time, as single build cannot contain multiple application versions
+    - **With CDN**: True runtime versioning is possible, versions are resolved dynamically at runtime
+    - **Recommendation**: Use `remotesRuntimeVersioning` together with CDN configuration for full dynamic versioning capabilities
 
     **Example with versioning enabled:**
 
@@ -690,7 +706,7 @@ export default defineConfig({
 npx app-builder dev
 
 # Start host with only specific remotes (faster development)
-npx app-builder dev --mf-remotes=header,sidebar
+npx app-builder dev --mf-remotes header sidebar
 
 # The above is equivalent to setting enabledRemotes in config:
 # enabledRemotes: ['header', 'sidebar']
