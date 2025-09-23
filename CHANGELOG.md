@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.1](https://github.com/gravity-ui/app-builder/compare/v0.32.0...v0.32.1) (2025-09-23)
+
+
+### Bug Fixes
+
+* **module-federation:** fix enabledRemotes for CDN ([#270](https://github.com/gravity-ui/app-builder/issues/270)) ([9506a50](https://github.com/gravity-ui/app-builder/commit/9506a500dc82a7bbd918caa9f4bdc24da9147ccb))
+
 ## [0.32.0](https://github.com/gravity-ui/app-builder/compare/v0.31.1...v0.32.0) (2025-09-23)
 
 
