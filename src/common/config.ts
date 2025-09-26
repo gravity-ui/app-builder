@@ -215,8 +215,8 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
     let browserPublicPath = (mode !== 'dev' && cdnConfig?.publicPath) || publicPath;
 
     if (client.moduleFederation) {
-        publicPath = path.normalize(`${publicPath}${client.moduleFederation.name}/`);
-        browserPublicPath = path.normalize(`${browserPublicPath}${client.moduleFederation.name}/`);
+        publicPath = `${publicPath}${client.moduleFederation.name}/`;
+        browserPublicPath = `${browserPublicPath}${client.moduleFederation.name}/`;
     }
 
     let transformCssWithLightningCss = Boolean(client.transformCssWithLightningCss);
