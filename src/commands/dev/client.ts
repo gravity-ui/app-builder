@@ -111,7 +111,6 @@ async function buildDevServer(config: NormalizedServiceConfig) {
             if (config.client.lazyCompilation && bundler === 'rspack') {
                 const lazyCompilationMiddleware = rspack.experiments.lazyCompilationMiddleware(
                     compiler as RspackCompiler,
-                    rspackConfigs[0]?.experiments?.lazyCompilation,
                 );
 
                 return [lazyCompilationMiddleware, ...middlewares];
