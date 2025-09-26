@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.2](https://github.com/gravity-ui/app-builder/compare/v0.32.1...v0.32.2) (2025-09-26)
+
+
+### Bug Fixes
+
+* **module-federation:** fix public path normalization ([#272](https://github.com/gravity-ui/app-builder/issues/272)) ([5bbd60f](https://github.com/gravity-ui/app-builder/commit/5bbd60faeddcc09505c76b0c4b87acc80741a11c))
+
 ## [0.32.1](https://github.com/gravity-ui/app-builder/compare/v0.32.0...v0.32.1) (2025-09-23)
 
 
