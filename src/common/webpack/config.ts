@@ -287,7 +287,11 @@ function getCacheBuildDependencies({config, configPath}: HelperOptions) {
 
     const dependenciesGroups: Record<string, string[]> = {
         appBuilderConfig: configPath ? [configPath] : [],
-        packageJson: [path.join(paths.app, 'package.json')],
+        packageJson: [
+            path.join(paths.app, 'package.json'),
+            path.join(paths.app, 'package-lock.json'),
+            path.join(paths.app, 'pnpm-lock.yaml'),
+        ],
         tsconfig: [
             path.join(paths.app, 'tsconfig.json'),
             path.join(paths.appClient, 'tsconfig.json'),
@@ -609,7 +613,10 @@ async function createJavaScriptLoader({
         );
 
         if (config.bundler === 'rspack') {
-            const rspackSwcConfig: Rspack.SwcLoaderOptions = swcConfig;
+            const rspackSwcConfig: Rspack.SwcLoaderOptions = {
+                ...swcConfig,
+                isModule: swcConfig.isModule === 'commonjs' ? false : swcConfig.isModule,
+            };
 
             if (!isSsr && isEnvProduction) {
                 rspackSwcConfig.rspackExperiments = {
