@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.33.1](https://github.com/gravity-ui/app-builder/compare/v0.33.0...v0.33.1) (2025-10-16)
+
+
+### Bug Fixes
+
+* skip wildcard path when compile with SWC ([#277](https://github.com/gravity-ui/app-builder/issues/277)) ([46d4ac2](https://github.com/gravity-ui/app-builder/commit/46d4ac2b538c06101394ce7b55b493e4012939d6))
+
 ## [0.33.0](https://github.com/gravity-ui/app-builder/compare/v0.32.2...v0.33.0) (2025-10-03)
 
 
