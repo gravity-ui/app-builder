@@ -7,7 +7,11 @@ export const EXTENSIONS_TO_COMPILE = ['.js', '.ts', '.mts', '.mjs', '.cjs'];
 
 function resolvePaths(paths: Record<string, string[]>, baseUrl: string) {
     const entries = [];
-    for (const targets of Object.values(paths)) {
+    for (const [key, targets] of Object.entries(paths)) {
+        if (key === '*') {
+            continue;
+        }
+
         for (const target of targets) {
             const resolvedPath = path.resolve(baseUrl, target.replace(/\*$/, ''));
             entries.push(resolvedPath);
