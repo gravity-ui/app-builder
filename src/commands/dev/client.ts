@@ -41,6 +41,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
     const {publicPath} = config.client;
     const {
         webSocketPath = path.normalize(`/${publicPath}/sockjs-node`),
+        webSocketClientPort,
         writeToDisk,
         ...devServer
     } = config.client.devServer || {};
@@ -138,7 +139,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         hot: true,
         client: {
             logging: config.verbose ? 'log' : 'error',
-            webSocketURL: {pathname: webSocketPath},
+            webSocketURL: {pathname: webSocketPath, port: webSocketClientPort},
             overlay: {
                 runtimeErrors: config.verbose,
                 warnings: config.verbose,
