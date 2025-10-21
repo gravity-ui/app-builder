@@ -1188,7 +1188,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         if (config.polyfill?.process) {
             plugins.push(
                 new bundlerPlugins.ProvidePlugin({
-                    process: 'process/browser.js',
+                    process: require.resolve('process/browser.js'),
                 }),
             );
         }
