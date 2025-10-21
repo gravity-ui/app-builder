@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.33.2](https://github.com/gravity-ui/app-builder/compare/v0.33.1...v0.33.2) (2025-10-21)
+
+
+### Bug Fixes
+
+* use process polyfill ([#279](https://github.com/gravity-ui/app-builder/issues/279)) ([a6f50b1](https://github.com/gravity-ui/app-builder/commit/a6f50b14f61bbda43df854dc2853f53d8157c381))
+
 ## [0.33.1](https://github.com/gravity-ui/app-builder/compare/v0.33.0...v0.33.1) (2025-10-16)
 
 
