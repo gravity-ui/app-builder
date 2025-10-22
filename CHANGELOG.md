@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.33.3](https://github.com/gravity-ui/app-builder/compare/v0.33.2...v0.33.3) (2025-10-22)
+
+
+### Bug Fixes
+
+* remove micro-frontend name form public path ([#281](https://github.com/gravity-ui/app-builder/issues/281)) ([a4d55f1](https://github.com/gravity-ui/app-builder/commit/a4d55f1a1a79af651274fb438cecf67b82c1dc58))
+
 ## [0.33.2](https://github.com/gravity-ui/app-builder/compare/v0.33.1...v0.33.2) (2025-10-21)
 
 
