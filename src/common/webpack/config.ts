@@ -1228,7 +1228,11 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
 
             if (!actualRemotes && remotes && enabledRemotes) {
                 // Remove micro-frontend name from public path
-                const commonPublicPath = config.browserPublicPath.replace(`${name}/`, '');
+                const mfNamePos = config.browserPublicPath.lastIndexOf(`${name}/`);
+                const commonPublicPath =
+                    mfNamePos === -1
+                        ? config.browserPublicPath
+                        : config.browserPublicPath.slice(0, mfNamePos);
 
                 let remoteFile: string;
 
