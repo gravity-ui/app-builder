@@ -1110,6 +1110,7 @@ interface WebpackPlugins {
     ManifestPlugin: typeof WebpackManifestPlugin;
     TsCheckerPlugin: typeof ForkTsCheckerWebpackPlugin;
     CSSExtractPlugin: typeof MiniCSSExtractPlugin;
+    // @ts-ignore
     RSDoctorPlugin: typeof import('@rsdoctor/webpack-plugin').RsdoctorWebpackPlugin;
     ModuleFederationPlugin: typeof import('@module-federation/enhanced/webpack').ModuleFederationPlugin;
 }
@@ -1122,6 +1123,7 @@ interface RspackPlugins {
     ManifestPlugin: typeof RspackManifestPlugin;
     TsCheckerPlugin: typeof TsCheckerRspackPlugin;
     CSSExtractPlugin: typeof rspack.CssExtractRspackPlugin;
+    // @ts-ignore
     RSDoctorPlugin: typeof import('@rsdoctor/rspack-plugin').RsdoctorRspackPlugin;
     ModuleFederationPlugin: typeof import('@module-federation/enhanced/rspack').ModuleFederationPlugin;
 }
@@ -1328,7 +1330,20 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         if (config.analyzeBundle === 'rsdoctor') {
             plugins.push(
                 new bundlerPlugins.RSDoctorPlugin({
-                    mode: 'brief',
+                    output: {
+                        mode: 'brief',
+                        reportDir: path.resolve(options.buildDirectory, 'rsdoctor'),
+                        options: {
+                            type: ['html', 'json'],
+                            htmlOptions: {
+                                reportHtmlName: 'report.html',
+                                writeDataJson: true,
+                            },
+                            jsonOptions: {
+                                fileName: 'report.json',
+                            },
+                        },
+                    },
                 }),
             );
         }
