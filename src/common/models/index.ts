@@ -89,11 +89,10 @@ export type ModuleFederationConfig = Omit<
      */
     version?: string;
     /**
-     * Base URL for loading resources of this micro-frontend
-     * Should point to a publicly accessible URL where the files will be hosted
-     * @example 'https://cdn.example.com/my-app/'
+     * Disable manifest file generation
+     * @default false
      */
-    publicPath: string;
+    disableManifest?: boolean;
     /**
      * List of remote application names that this application can load
      * Simplified alternative to originalRemotes - only names are specified
@@ -101,9 +100,16 @@ export type ModuleFederationConfig = Omit<
      */
     remotes?: string[];
     /**
+     * List of enabled remotes for module federation
+     * If not specified, all remotes will be enabled by default
+     * It used only for development mode
+     * @example ['header', 'navigation']
+     */
+    enabledRemotes?: string[];
+    /**
      * Full configuration of remote applications in Module Federation format
      * Allows more detailed configuration of each remote application
-     * @example { header: 'header@https://header.example.com/remoteEntry.js' }
+     * @example { header: 'header@https://header.example.com/entry.js' }
      */
     originalRemotes?: moduleFederationPlugin.ModuleFederationPluginOptions['remotes'];
     /**
@@ -272,6 +278,7 @@ export interface ClientConfig {
          */
         watchPackages?: boolean;
     };
+    // TODO(DakEnviy): Allow only one cdn config
     cdn?: CdnUploadConfig | CdnUploadConfig[];
     /**
      * use webpack 5 Web Workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
@@ -347,6 +354,7 @@ export interface CdnUploadConfig {
     prefix?: string;
     region?: string;
     endpoint?: string;
+    publicPath?: string;
     compress?: boolean;
     cacheControl?: UploadOptions['cacheControl'];
     /**
@@ -361,11 +369,21 @@ export interface ServerConfig {
     watchThrottle?: number;
     inspect?: number | true;
     inspectBrk?: number | true;
+
     /**
      * Compiler for server code compilation
      * @default 'typescript'
      */
     compiler?: ServerCompiler;
+
+    /**
+     * Additional options for SWC compilation.
+     * Works only if `compiler` is 'swc'.
+     */
+    swcOptions?: {
+        additionalPaths?: string[];
+        exclude?: string | string[];
+    };
 }
 export interface ServiceConfig {
     target?: 'client' | 'server';
@@ -391,7 +409,23 @@ export type NormalizedClientConfig = Omit<
 > & {
     bundler: Bundler;
     javaScriptLoader: JavaScriptLoader;
+    // TODO(DakEnviy): Use cdn to calculate publicPath and merge with browserPublicPath
+    /**
+     * Build public path
+     * (concatenated with micro-frontend name if module federation is configured).
+     */
     publicPath: string;
+    /**
+     * Public path for CDN,
+     * it presents even if CDN is disabled.
+     */
+    cdnPublicPath?: string;
+    /**
+     * Final public path for browser,
+     * it is based on cdnPublicPath if CDN is enabled or publicPath otherwise
+     * (concatenated with micro-frontend name if module federation is configured).
+     */
+    browserPublicPath: string;
     assetsManifestFile: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
@@ -408,7 +442,7 @@ export type NormalizedClientConfig = Omit<
     ) => Configuration | Promise<Configuration>;
     rspack: (
         config: RspackConfiguration,
-        options: {configType: `${WebpackMode}`},
+        options: {configType: `${WebpackMode}`; isSsr: boolean},
     ) => RspackConfiguration | Promise<RspackConfiguration>;
     debugWebpack?: boolean;
     babel: (

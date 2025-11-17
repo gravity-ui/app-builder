@@ -287,7 +287,11 @@ function getCacheBuildDependencies({config, configPath}: HelperOptions) {
 
     const dependenciesGroups: Record<string, string[]> = {
         appBuilderConfig: configPath ? [configPath] : [],
-        packageJson: [path.join(paths.app, 'package.json')],
+        packageJson: [
+            path.join(paths.app, 'package.json'),
+            path.join(paths.app, 'package-lock.json'),
+            path.join(paths.app, 'pnpm-lock.yaml'),
+        ],
         tsconfig: [
             path.join(paths.app, 'tsconfig.json'),
             path.join(paths.appClient, 'tsconfig.json'),
@@ -383,14 +387,16 @@ function configureRspackExperiments(options: HelperOptions): Rspack.Configuratio
         typeof config.cache === 'object' && config.cache.type === 'filesystem'
             ? config.cache
             : undefined;
-
-    const version = [filesystemCacheOptions?.name, filesystemCacheOptions?.version]
+    const cacheVersion = [
+        config.moduleFederation?.name || filesystemCacheOptions?.name,
+        config.moduleFederation?.version || filesystemCacheOptions?.version,
+    ]
         .filter(Boolean)
         .join('-');
 
     return {
         cache: {
-            version: version || undefined,
+            version: cacheVersion || undefined,
             type: 'persistent',
             snapshot: {
                 managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
@@ -430,11 +436,6 @@ export function configureResolve({isEnvProduction, config}: HelperOptions) {
     } satisfies webpack.ResolveOptions;
 }
 
-function isModuleFederationEntry(entryName: string, fileName: string) {
-    // Ignore bootstrap file for module federation entries
-    return entryName === fileName || `${entryName}-bootstrap` === fileName;
-}
-
 function createEntryArray(entry: string | string[]) {
     if (typeof entry === 'string') {
         return [require.resolve('./public-path'), entry];
@@ -466,31 +467,34 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
     }
 
     let entryFiles = fs.readdirSync(entriesDirectory).filter((file) => /\.[jt]sx?$/.test(file));
-    let result: Record<string, string[]> = {};
 
     if (config.moduleFederation) {
-        const {name, remotes} = config.moduleFederation;
+        const {name, remotes, originalRemotes} = config.moduleFederation;
         const entryFile = entryFiles.find((item) => path.parse(item).name === name);
 
         if (!entryFile) {
             throw new Error(`Entry "${name}" not found`);
         }
 
-        // If remotes are not defined, it means that we are a remote
-        if (!remotes) {
+        const remoteNames: string[] | undefined =
+            remotes || (originalRemotes && Object.keys(originalRemotes)) || undefined;
+
+        // If remotes are empty, it means that we are a remote
+        if (!remoteNames || remoteNames.length === 0) {
             return path.resolve(entriesDirectory, entryFile);
         }
 
         entryFiles = entryFiles.filter((file) => {
             const fileName = path.parse(file).name;
             return (
-                !isModuleFederationEntry(name, fileName) &&
-                remotes.every((remote) => !isModuleFederationEntry(remote, fileName))
+                // Ignore bootstrap file for module federation host
+                fileName !== `${name}-bootstrap` &&
+                remoteNames.every(
+                    // Ignore bootstrap and entry files for module federation remotes
+                    (remote) => remote !== fileName && `${remote}-bootstrap` !== fileName,
+                )
             );
         });
-        result = {
-            main: createEntryArray(path.resolve(entriesDirectory, entryFile)),
-        };
     }
 
     if (Array.isArray(config.entryFilter) && config.entryFilter.length) {
@@ -503,9 +507,9 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
         throw new Error('No entries were found after applying entry filter');
     }
 
-    return entryFiles.reduce(
+    return entryFiles.reduce<Record<string, string[]>>(
         (acc, file) => addEntry(acc, path.resolve(entriesDirectory, file)),
-        result,
+        {},
     );
 }
 
@@ -609,7 +613,10 @@ async function createJavaScriptLoader({
         );
 
         if (config.bundler === 'rspack') {
-            const rspackSwcConfig: Rspack.SwcLoaderOptions = swcConfig;
+            const rspackSwcConfig: Rspack.SwcLoaderOptions = {
+                ...swcConfig,
+                isModule: swcConfig.isModule === 'commonjs' ? false : swcConfig.isModule,
+            };
 
             if (!isSsr && isEnvProduction) {
                 rspackSwcConfig.rspackExperiments = {
@@ -1024,6 +1031,7 @@ function getDefinitions({config, isSsr}: HelperOptions) {
     return {
         'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
         'process.env.IS_SSR': JSON.stringify(isSsr),
+        'process.env.PUBLIC_PATH': JSON.stringify(config.browserPublicPath),
         ...config.definitions,
     };
 }
@@ -1180,7 +1188,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         if (config.polyfill?.process) {
             plugins.push(
                 new bundlerPlugins.ProvidePlugin({
-                    process: 'process/browser.js',
+                    process: require.resolve('process/browser.js'),
                 }),
             );
         }
@@ -1204,32 +1212,69 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
             const {
                 name,
                 version,
-                publicPath,
+                disableManifest,
                 remotes,
                 originalRemotes,
                 remotesRuntimeVersioning,
+                isolateStyles: _isolateStyles, // Omit isolateStyles from restOptions
                 runtimePlugins,
                 ...restOptions
             } = config.moduleFederation;
 
+            const enabledRemotes =
+                (isEnvDevelopment && config.moduleFederation.enabledRemotes) || remotes;
+
             let actualRemotes = originalRemotes;
 
-            if (remotes) {
+            if (!actualRemotes && remotes && enabledRemotes) {
+                // Remove micro-frontend name from public path
+                const mfNamePos = config.browserPublicPath.lastIndexOf(`${name}/`);
+                const commonPublicPath =
+                    mfNamePos === -1
+                        ? config.browserPublicPath
+                        : config.browserPublicPath.slice(0, mfNamePos);
+
+                let remoteFile: string;
+
+                if (disableManifest) {
+                    if (remotesRuntimeVersioning) {
+                        remoteFile = `entry-[version].js`;
+                    } else {
+                        remoteFile = 'entry.js';
+                    }
+                } else if (remotesRuntimeVersioning) {
+                    remoteFile = `mf-manifest-[version].json`;
+                } else {
+                    remoteFile = 'mf-manifest.json';
+                }
+
                 actualRemotes = remotes.reduce<moduleFederationPlugin.RemotesObject>(
-                    (acc, remoteName) => {
-                        const remoteFilename = remotesRuntimeVersioning
-                            ? 'entry-[version].js'
-                            : 'entry.js';
+                    (acc, remote) => {
+                        let remotePath: string | undefined;
+
+                        // Use local paths when CDN is disabled, regardless of environment
+                        if (!config.cdn) {
+                            if (enabledRemotes.includes(remote)) {
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                remotePath = `${commonPublicPath}${remote}/${remoteFile.replace('[version]', version!)}`;
+                            } else if (config.cdnPublicPath) {
+                                remotePath = `${config.cdnPublicPath}${remote}/${remoteFile}`;
+                            }
+                        }
+
+                        if (!remotePath) {
+                            remotePath = `${commonPublicPath}${remote}/${remoteFile}`;
+                        }
+
                         // eslint-disable-next-line no-param-reassign
-                        acc[remoteName] =
-                            `${remoteName}@${publicPath}${remoteName}/${remoteFilename}`;
+                        acc[remote] = `${remote}@${remotePath}`;
                         return acc;
                     },
                     {},
                 );
             }
 
-            const actualRuntimePlugins = runtimePlugins || [];
+            const actualRuntimePlugins = runtimePlugins?.slice() || [];
 
             if (remotesRuntimeVersioning) {
                 actualRuntimePlugins.push(require.resolve('./runtime-versioning-plugin'));
@@ -1239,6 +1284,13 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 new bundlerPlugins.ModuleFederationPlugin({
                     name,
                     filename: version ? `entry-${version}.js` : 'entry.js',
+                    manifest: disableManifest
+                        ? undefined
+                        : {
+                              fileName: version
+                                  ? `mf-manifest-${version}.json`
+                                  : 'mf-manifest.json',
+                          },
                     remotes: actualRemotes,
                     runtimePlugins: actualRuntimePlugins,
                     ...restOptions,
@@ -1462,7 +1514,7 @@ export function configureOptimization(helperOptions: HelperOptions): Optimizatio
 
     const optimization: Optimization = {
         splitChunks: getOptimizationSplitChunks(helperOptions),
-        runtimeChunk: 'single',
+        runtimeChunk: helperOptions.config.moduleFederation ? false : 'single',
         minimizer: [
             (compiler) => {
                 // CssMinimizerWebpackPlugin works with MiniCSSExtractPlugin, so only relevant for production builds.

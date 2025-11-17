@@ -1,20 +1,33 @@
 import type {Logger} from '../logger';
 // @ts-ignore @swc/cli is not typed
 import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptionsFromTsconfig} from './utils';
+import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils';
+import type {GetSwcOptionsParams} from './utils';
 
-interface SwcWatchOptions {
+type SwcWatchOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
     outputPath: string;
     logger: Logger;
     onAfterFilesEmitted?: () => void;
-}
+};
 
 export async function watch(
     projectPath: string,
-    {outputPath, logger, onAfterFilesEmitted}: SwcWatchOptions,
+    {
+        outputPath,
+        logger,
+        onAfterFilesEmitted,
+        additionalPaths,
+        exclude,
+        publicPath,
+    }: SwcWatchOptions,
 ) {
     logger.message('Start compilation in watch mode');
-    const {swcOptions, directoriesToCompile} = getSwcOptionsFromTsconfig(projectPath);
+    const {swcOptions, directoriesToCompile} = getSwcOptions({
+        projectPath,
+        additionalPaths,
+        exclude,
+        publicPath,
+    });
 
     const cliOptions = {
         filenames: directoriesToCompile,

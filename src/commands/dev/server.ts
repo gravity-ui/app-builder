@@ -2,7 +2,6 @@ import * as path from 'node:path';
 import {rimraf} from 'rimraf';
 
 import {ControllableScript} from '../../common/child-process/controllable-script';
-import {createRunFolder} from '../../common/utils';
 import paths from '../../common/paths';
 
 import type {NormalizedServiceConfig} from '../../common/models';
@@ -49,6 +48,9 @@ watch(
         onAfterFilesEmitted: () => {
             process.send({type: 'Emitted'});
         },
+        additionalPaths: ${JSON.stringify(config.server.swcOptions?.additionalPaths)},
+        exclude: ${JSON.stringify(config.server.swcOptions?.exclude)},
+        publicPath: ${JSON.stringify(config.client.browserPublicPath)},
     }
 );`;
 }
@@ -58,8 +60,6 @@ export async function watchServerCompilation(
 ): Promise<ControllableScript> {
     const serverPath = path.resolve(paths.appDist, 'server');
     rimraf.sync(serverPath);
-
-    createRunFolder(config);
 
     const build = new ControllableScript(
         config.server.compiler === 'swc'

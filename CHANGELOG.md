@@ -1,5 +1,84 @@
 # Changelog
 
+## [0.33.3](https://github.com/gravity-ui/app-builder/compare/v0.33.2...v0.33.3) (2025-10-22)
+
+
+### Bug Fixes
+
+* remove micro-frontend name form public path ([#281](https://github.com/gravity-ui/app-builder/issues/281)) ([a4d55f1](https://github.com/gravity-ui/app-builder/commit/a4d55f1a1a79af651274fb438cecf67b82c1dc58))
+
+## [0.33.2](https://github.com/gravity-ui/app-builder/compare/v0.33.1...v0.33.2) (2025-10-21)
+
+
+### Bug Fixes
+
+* use process polyfill ([#279](https://github.com/gravity-ui/app-builder/issues/279)) ([a6f50b1](https://github.com/gravity-ui/app-builder/commit/a6f50b14f61bbda43df854dc2853f53d8157c381))
+
+## [0.33.1](https://github.com/gravity-ui/app-builder/compare/v0.33.0...v0.33.1) (2025-10-16)
+
+
+### Bug Fixes
+
+* skip wildcard path when compile with SWC ([#277](https://github.com/gravity-ui/app-builder/issues/277)) ([46d4ac2](https://github.com/gravity-ui/app-builder/commit/46d4ac2b538c06101394ce7b55b493e4012939d6))
+
+## [0.33.0](https://github.com/gravity-ui/app-builder/compare/v0.32.2...v0.33.0) (2025-10-03)
+
+
+### Features
+
+* bump rspack to 1.5.5 ([#274](https://github.com/gravity-ui/app-builder/issues/274)) ([d6279be](https://github.com/gravity-ui/app-builder/commit/d6279be51988084d5d2e77ca5b0543e0aee1f8dc))
+
+## [0.32.2](https://github.com/gravity-ui/app-builder/compare/v0.32.1...v0.32.2) (2025-09-26)
+
+
+### Bug Fixes
+
+* **module-federation:** fix public path normalization ([#272](https://github.com/gravity-ui/app-builder/issues/272)) ([5bbd60f](https://github.com/gravity-ui/app-builder/commit/5bbd60faeddcc09505c76b0c4b87acc80741a11c))
+
+## [0.32.1](https://github.com/gravity-ui/app-builder/compare/v0.32.0...v0.32.1) (2025-09-23)
+
+
+### Bug Fixes
+
+* **module-federation:** fix enabledRemotes for CDN ([#270](https://github.com/gravity-ui/app-builder/issues/270)) ([9506a50](https://github.com/gravity-ui/app-builder/commit/9506a500dc82a7bbd918caa9f4bdc24da9147ccb))
+
+## [0.32.0](https://github.com/gravity-ui/app-builder/compare/v0.31.1...v0.32.0) (2025-09-23)
+
+
+### Features
+
+* **module-federation:** config improvements ([#268](https://github.com/gravity-ui/app-builder/issues/268)) ([9df47b5](https://github.com/gravity-ui/app-builder/commit/9df47b5d3c63574d4fe78fc3854fcdfd9b9068a4))
+
+## [0.31.1](https://github.com/gravity-ui/app-builder/compare/v0.31.0...v0.31.1) (2025-09-15)
+
+
+### Bug Fixes
+
+* **module-federation:** fix configuryEntry when using originalRemotes ([#266](https://github.com/gravity-ui/app-builder/issues/266)) ([6be9f4f](https://github.com/gravity-ui/app-builder/commit/6be9f4ff5aee3a795b09514ce836451fd2a26a44))
+
+## [0.31.0](https://github.com/gravity-ui/app-builder/compare/v0.30.3...v0.31.0) (2025-09-08)
+
+
+### Features
+
+* additional paths for SWC server compilation ([#264](https://github.com/gravity-ui/app-builder/issues/264)) ([4e388cb](https://github.com/gravity-ui/app-builder/commit/4e388cbb475ed935b6bd1ee9dd4c5215387c2e12))
+
+## [0.30.3](https://github.com/gravity-ui/app-builder/compare/v0.30.2...v0.30.3) (2025-09-03)
+
+
+### Bug Fixes
+
+* fix run folder creation for client-only compilation ([#262](https://github.com/gravity-ui/app-builder/issues/262)) ([762e006](https://github.com/gravity-ui/app-builder/commit/762e006986987edda27e5e76032793132c727e35))
+
+## [0.30.2](https://github.com/gravity-ui/app-builder/compare/v0.30.1...v0.30.2) (2025-09-02)
+
+
+### Bug Fixes
+
+* fix cache versioning for rspack ([#261](https://github.com/gravity-ui/app-builder/issues/261)) ([c950207](https://github.com/gravity-ui/app-builder/commit/c9502076c5e799bbf38650964f4431f32d314431))
+* fix runtimeOption for webpack and MF ([#258](https://github.com/gravity-ui/app-builder/issues/258)) ([88c917a](https://github.com/gravity-ui/app-builder/commit/88c917ae14a2f325dc6e97f282ac554a98371e89))
+* support manifest for MF ([#260](https://github.com/gravity-ui/app-builder/issues/260)) ([dc1da4f](https://github.com/gravity-ui/app-builder/commit/dc1da4f60f31ee4ebbaf4cbdb0c44e4a25be526e))
+
 ## [0.30.1](https://github.com/gravity-ui/app-builder/compare/v0.30.0...v0.30.1) (2025-08-25)
 
 
