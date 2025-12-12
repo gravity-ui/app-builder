@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.34.0](https://github.com/gravity-ui/app-builder/compare/v0.33.3...v0.34.0) (2025-12-12)
+
+
+### Features
+
+* change `newWebWorkerSyntax` flag to `webWorkerHandle` enum ([#284](https://github.com/gravity-ui/app-builder/issues/284)) ([f04720b](https://github.com/gravity-ui/app-builder/commit/f04720b09fefdbe7a56073d5ea05405b9bdde97f))
+* **webWorkerHandle:** add `none` option ([#286](https://github.com/gravity-ui/app-builder/issues/286)) ([0c061e8](https://github.com/gravity-ui/app-builder/commit/0c061e8370c7d9f00081975fd19161aac6d0c2a3))
+
 ## [0.33.3](https://github.com/gravity-ui/app-builder/compare/v0.33.2...v0.33.3) (2025-10-22)
 
 
