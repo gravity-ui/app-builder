@@ -29,7 +29,7 @@ import {babelPreset} from '../babel';
 import type {NormalizedClientConfig, WebWorkerHandle} from '../models';
 import type {Logger} from '../logger';
 import {createProgressPlugin} from './progress-plugin';
-import {resolveTsConfigPathsToAlias} from './utils';
+import {getNormalizedWorkerOption, resolveTsConfigPathsToAlias} from './utils';
 import {createS3UploadPlugins} from '../s3-upload';
 import {logConfig} from '../logger/log-config';
 import {resolveTypescript} from '../typescript/utils';
@@ -82,16 +82,6 @@ function getHelperOptions({
         buildDirectory = path.resolve(buildDirectory, config.moduleFederation.name);
     }
 
-    let webWorkerHandle: WebWorkerHandle = 'loader';
-
-    if (config.newWebWorkerSyntax) {
-        webWorkerHandle = 'cdn-compat';
-    }
-
-    if (config.webWorkerHandle) {
-        webWorkerHandle = config.webWorkerHandle;
-    }
-
     return {
         config,
         logger,
@@ -102,7 +92,7 @@ function getHelperOptions({
         entriesDirectory: isSsr ? paths.appSsrEntry : paths.appEntry,
         isSsr,
         configPath,
-        webWorkerHandle,
+        webWorkerHandle: getNormalizedWorkerOption(config),
     };
 }
 
