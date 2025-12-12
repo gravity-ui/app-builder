@@ -145,7 +145,7 @@ export type ModuleFederationConfig = Omit<
     };
 };
 
-export type WebWorkerHandle = 'loader' | 'cdn-compat';
+export type WebWorkerHandle = 'loader' | 'cdn-compat' | 'none';
 
 export interface ClientConfig {
     modules?: string[];

@@ -743,6 +743,8 @@ async function createWorkerRule(options: HelperOptions): Promise<webpack.RuleSet
                 loader: require.resolve('./worker/worker-loader'),
             });
             break;
+        case 'none':
+            break;
     }
 
     return {

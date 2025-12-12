@@ -337,6 +337,8 @@ import {Worker} from '@gravity-ui/app-builder/worker';
 const MyWorker = new Worker(new URL('./my.worker', import.meta.url));
 ```
 
+- `none` - disable worker-specific handling.
+
 To use the web worker in your main script, you need to communicate with it using the postMessage and onmessage methods. For example:
 
 ```ts
