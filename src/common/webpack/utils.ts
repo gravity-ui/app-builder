@@ -6,6 +6,7 @@ import {getTsProjectConfig} from '../typescript/utils';
 import type * as Webpack from 'webpack';
 import type {Logger} from '../logger';
 import {MultiStats} from '@rspack/core';
+import {NormalizedClientConfig, WebWorkerHandle} from '../models';
 
 export function compilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
     return async (err?: Error | null, stats?: Webpack.MultiStats | MultiStats) => {
@@ -100,4 +101,18 @@ export function resolveTsConfigPathsToAlias(projectPath: string, filename = 'tsc
     }
 
     return {aliases, modules};
+}
+
+export function getNormalizedWorkerOption(config: NormalizedClientConfig) {
+    let webWorkerHandle: WebWorkerHandle = 'loader';
+
+    if (config.newWebWorkerSyntax) {
+        webWorkerHandle = 'cdn-compat';
+    }
+
+    if (config.webWorkerHandle) {
+        webWorkerHandle = config.webWorkerHandle;
+    }
+
+    return webWorkerHandle;
 }

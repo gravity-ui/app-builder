@@ -26,10 +26,10 @@ import type * as Babel from '@babel/core';
 
 import paths from '../paths';
 import {babelPreset} from '../babel';
-import type {NormalizedClientConfig} from '../models';
+import type {NormalizedClientConfig, WebWorkerHandle} from '../models';
 import type {Logger} from '../logger';
 import {createProgressPlugin} from './progress-plugin';
-import {resolveTsConfigPathsToAlias} from './utils';
+import {getNormalizedWorkerOption, resolveTsConfigPathsToAlias} from './utils';
 import {createS3UploadPlugins} from '../s3-upload';
 import {logConfig} from '../logger/log-config';
 import {resolveTypescript} from '../typescript/utils';
@@ -50,6 +50,7 @@ export interface HelperOptions {
     entriesDirectory: string;
     isSsr: boolean;
     configPath?: string;
+    webWorkerHandle: WebWorkerHandle;
 }
 
 export const enum WebpackMode {
@@ -91,6 +92,7 @@ function getHelperOptions({
         entriesDirectory: isSsr ? paths.appSsrEntry : paths.appEntry,
         isSsr,
         configPath,
+        webWorkerHandle: getNormalizedWorkerOption(config),
     };
 }
 
@@ -723,24 +725,30 @@ function createSourceMapRules(shouldUseSourceMap: boolean): webpack.RuleSetRule[
 }
 
 async function createWorkerRule(options: HelperOptions): Promise<webpack.RuleSetRule> {
+    const ruleset: webpack.RuleSetUse = [];
+
+    switch (options.webWorkerHandle) {
+        case 'loader':
+            ruleset.push({
+                loader: require.resolve('worker-rspack-loader'),
+                // currently workers located on cdn are not working properly, so we are enforcing loading workers from
+                // service instead
+                options: {
+                    inline: 'no-fallback',
+                },
+            });
+            break;
+        case 'cdn-compat':
+            ruleset.push({
+                loader: require.resolve('./worker/worker-loader'),
+            });
+            break;
+    }
+
     return {
         test: /\.worker\.[jt]sx?$/,
         exclude: /node_modules/,
-        use: [
-            options.config.newWebWorkerSyntax
-                ? {
-                      loader: require.resolve('./worker/worker-loader'),
-                  }
-                : {
-                      loader: require.resolve('worker-rspack-loader'),
-                      // currently workers located on cdn are not working properly, so we are enforcing loading workers from
-                      // service instead
-                      options: {
-                          inline: 'no-fallback',
-                      },
-                  },
-            await createJavaScriptLoader(options),
-        ],
+        use: [...ruleset, await createJavaScriptLoader(options)],
     };
 }
 
