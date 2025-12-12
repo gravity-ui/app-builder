@@ -304,9 +304,9 @@ self.onmessage = async (ev) => {
 ```
 
 `app-builder` provides built-in support for web workers for files with the `.worker.[jt]s` suffix. You can choose
-between two variants of getting web workers by setting the `newWebWorkerSyntax` option:
+between two variants of getting web workers by setting the `webWorkerHandle` option:
 
-- `newWebWorkerSyntax: false` (default) - use the `worker-loader` to import web workers.
+- `loader` (default) - use the `worker-loader` to import web workers.
   Content of worker file will be included in main bundle as blob. This variant does not
   support dynamic imports inside worker. For example:
 
@@ -328,7 +328,7 @@ declare module '*.worker.ts' {
 }
 ```
 
-- `newWebWorkerSyntax: true` - use the webpack 5 web workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
+- `cdn-compat` - use the webpack 5 web workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
   to import web workers. This variant allows to use dynamic imports inside worker and load worker bundle from CDN. For example:
 
 ```ts

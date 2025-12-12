@@ -145,6 +145,8 @@ export type ModuleFederationConfig = Omit<
     };
 };
 
+export type WebWorkerHandle = 'loader' | 'cdn-compat';
+
 export interface ClientConfig {
     modules?: string[];
     /**
@@ -281,8 +283,22 @@ export interface ClientConfig {
     cdn?: CdnUploadConfig | CdnUploadConfig[];
     /**
      * use webpack 5 Web Workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
+     *
+     * @deprecated use `webWorkerHandle` instead
      */
     newWebWorkerSyntax?: boolean;
+    /**
+     * How workers are handled
+     * Worker entry point should have `.worker.ts` postfix
+     *
+     * Files, that match this pattern would be handle with one of the strategies:
+     * - 'loader' - `worker-rspack-loader` would be used
+     * - 'cdn-compat' - bundler will handle WebWorker syntax, but we also rebuild this worker, to correctly handle publicPath from variable for imports inside worker
+     *
+     * @see https://www.npmjs.com/package/worker-rspack-loader
+     * @see https://webpack.js.org/guides/web-workers/
+     */
+    webWorkerHandle?: WebWorkerHandle;
     babelCacheDirectory?: boolean | string;
     cache?: boolean | FileCacheOptions | MemoryCacheOptions;
     /** Use [Lighting CSS](https://lightningcss.dev) to transform and minimize css instead of PostCSS and cssnano*/
