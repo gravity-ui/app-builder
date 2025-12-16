@@ -21,7 +21,9 @@ export const generateAssetsManifest: ManifestPluginOptions['generate'] = (seed, 
             ...previous,
             [name]: {
                 assets: {
-                    js: entries[name]!.filter((file) => file.endsWith('.js')),
+                    js: entries[name]!.filter(
+                        (file) => file.endsWith('.js') && !file.endsWith('.hot-update.js'),
+                    ),
                     css: entries[name]!.filter((file) => file.endsWith('.css')),
                 },
             },
