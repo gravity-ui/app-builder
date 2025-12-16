@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.35.0](https://github.com/gravity-ui/app-builder/compare/v0.34.0...v0.35.0) (2025-12-16)
+
+
+### Features
+
+* support test in lazy compilation ([#287](https://github.com/gravity-ui/app-builder/issues/287)) ([7fab7d7](https://github.com/gravity-ui/app-builder/commit/7fab7d787607ae2d50f767da99e6a09245234cd0))
+
 ## [0.34.0](https://github.com/gravity-ui/app-builder/compare/v0.33.3...v0.34.0) (2025-12-12)
 
 
