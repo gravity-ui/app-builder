@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.35.1](https://github.com/gravity-ui/app-builder/compare/v0.35.0...v0.35.1) (2025-12-16)
+
+
+### Bug Fixes
+
+* remove HMR files from rspack manifest ([#289](https://github.com/gravity-ui/app-builder/issues/289)) ([a5cbd8b](https://github.com/gravity-ui/app-builder/commit/a5cbd8b4bb20cb6e2a93d4739632dc50ef2bd642))
+
 ## [0.35.0](https://github.com/gravity-ui/app-builder/compare/v0.34.0...v0.35.0) (2025-12-16)
 
 
