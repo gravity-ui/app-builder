@@ -4,6 +4,7 @@ import type {IFeatureDefinition} from 'monaco-editor-webpack-plugin/out/types';
 import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plugin';
 import type {Configuration, DefinePlugin, FileCacheOptions, MemoryCacheOptions} from 'webpack';
 import type {
+    LazyCompilationOptions,
     LightningCssMinimizerRspackPluginOptions,
     Configuration as RspackConfiguration,
     SwcJsMinimizerRspackPluginOptions,
@@ -63,13 +64,9 @@ export interface LibraryConfig {
     verbose?: boolean;
 }
 
-interface LazyCompilationConfig {
+interface LazyCompilationConfig
+    extends Pick<LazyCompilationOptions, 'imports' | 'entries' | 'test'> {
     port?: number;
-    /**
-     * @default true
-     * disable lazy compilation for entries
-     */
-    entries?: boolean;
 }
 
 export type ModuleFederationConfig = Omit<

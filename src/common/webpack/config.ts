@@ -382,6 +382,7 @@ function configureRspackExperiments(options: HelperOptions): Rspack.Configuratio
             entries: false,
             imports: true,
             prefix: '/build/lazy-',
+            test: config.lazyCompilation?.test ?? undefined,
         };
     }
 
