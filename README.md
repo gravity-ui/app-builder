@@ -523,6 +523,7 @@ Module Federation is a Webpack 5 feature that enables micro-frontend architectur
     - Enables loading different versions of the same remote in different environments
     - Works with both `remotes` and `originalRemotes` configurations
 
+  - `isolateAssets` (`boolean`) - put all assets to a folder with the name of Module Federation app name
   - `isolateStyles` (`object`) — CSS style isolation settings to prevent conflicts between micro-frontends.
     - `getPrefix` (`(entryName: string) => string`) — function to generate CSS class prefix.
     - `prefixSelector` (`(prefix: string, selector: string, prefixedSelector: string, filePath: string) => string`) — function to add prefix to CSS selectors.

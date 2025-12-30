@@ -20,7 +20,7 @@ import type {
     ServiceConfig,
 } from './models';
 import type {CliArgs} from '../create-cli';
-import {getPort} from './utils';
+import {getPort, hasMFAssetsIsolation} from './utils';
 import logger from './logger';
 
 function splitPaths(paths: string | string[]) {
@@ -214,7 +214,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
     let publicPath = client.publicPath || path.normalize(`${client.publicPathPrefix || ''}/build/`);
     let browserPublicPath = (mode !== 'dev' && cdnConfig?.publicPath) || publicPath;
 
-    if (client.moduleFederation) {
+    if (hasMFAssetsIsolation(client.moduleFederation)) {
         publicPath = `${publicPath}${client.moduleFederation.name}/`;
         browserPublicPath = `${browserPublicPath}${client.moduleFederation.name}/`;
     }

@@ -140,6 +140,12 @@ export type ModuleFederationConfig = Omit<
             filePath: string,
         ) => string;
     };
+    /**
+     * Put all assets to a folder with the name of Module Federation app name
+     *
+     * @default true
+     */
+    isolateAssets?: boolean;
 };
 
 export type WebWorkerHandle = 'loader' | 'cdn-compat' | 'none';
