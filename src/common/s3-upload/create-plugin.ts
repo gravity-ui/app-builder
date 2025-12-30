@@ -3,6 +3,7 @@ import {NormalizedClientConfig} from '../models';
 import {S3UploadPlugin} from './webpack-plugin';
 import type {Configuration} from 'webpack';
 import type {Logger} from '../logger';
+import {hasMFAssetsIsolation} from '../utils';
 
 export function createS3UploadPlugins(config: NormalizedClientConfig, logger?: Logger) {
     const plugins: Required<Configuration['plugins']> = [];
@@ -32,7 +33,7 @@ export function createS3UploadPlugins(config: NormalizedClientConfig, logger?: L
 
         let targetPath = cdn.prefix;
 
-        if (config.moduleFederation && targetPath !== undefined) {
+        if (hasMFAssetsIsolation(config.moduleFederation) && targetPath !== undefined) {
             targetPath = path.join(targetPath, config.moduleFederation.name);
         }
 

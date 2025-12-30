@@ -36,6 +36,7 @@ import {resolveTypescript} from '../typescript/utils';
 import {nodeExternals} from './node-externals';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
 import type {moduleFederationPlugin} from '@module-federation/enhanced';
+import {hasMFAssetsIsolation} from '../utils';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -78,7 +79,7 @@ function getHelperOptions({
 
     let buildDirectory = config.outputPath || (isSsr ? paths.appSsrBuild : paths.appBuild);
 
-    if (config.moduleFederation) {
+    if (hasMFAssetsIsolation(config.moduleFederation)) {
         buildDirectory = path.resolve(buildDirectory, config.moduleFederation.name);
     }
 
