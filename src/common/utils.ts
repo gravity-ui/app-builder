@@ -3,10 +3,21 @@ import os from 'node:os';
 import path from 'node:path';
 
 import paths from './paths';
-import type {NormalizedServiceConfig} from './models';
+import type {ModuleFederationConfig, NormalizedServiceConfig} from './models';
+
+export function hasMFAssetsIsolation(
+    mfConfig: ModuleFederationConfig | undefined,
+): mfConfig is ModuleFederationConfig {
+    return mfConfig?.name ? mfConfig.isolateAssets !== false : false;
+}
 
 export function getAppRunPath(config: NormalizedServiceConfig) {
-    return path.resolve(paths.appRun, config.client.moduleFederation?.name || '');
+    return path.resolve(
+        paths.appRun,
+        hasMFAssetsIsolation(config.client.moduleFederation)
+            ? config.client.moduleFederation?.name
+            : '',
+    );
 }
 
 export function createRunFolder(config: NormalizedServiceConfig) {
