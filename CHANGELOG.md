@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.36.0](https://github.com/gravity-ui/app-builder/compare/v0.35.1...v0.36.0) (2026-01-16)
+
+
+### Features
+
+* add `moduleFederation.isolateAssets` option ([#291](https://github.com/gravity-ui/app-builder/issues/291)) ([9f48c9b](https://github.com/gravity-ui/app-builder/commit/9f48c9b60c352c41acc40e39c3fb0f1a674417eb))
+
 ## [0.35.1](https://github.com/gravity-ui/app-builder/compare/v0.35.0...v0.35.1) (2025-12-16)
 
 
