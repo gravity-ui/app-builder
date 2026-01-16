@@ -1229,6 +1229,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 originalRemotes,
                 remotesRuntimeVersioning,
                 isolateStyles: _isolateStyles, // Omit isolateStyles from restOptions
+                isolateAssets: _isolateAssets, // Omit isolateAssets from restOptions
                 runtimePlugins,
                 ...restOptions
             } = config.moduleFederation;
