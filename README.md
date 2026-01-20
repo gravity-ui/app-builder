@@ -156,7 +156,7 @@ All server settings are used only in dev mode:
 
 - `port` (`number | true`) — specify port that server listens. The port will be used to
   pass through requests from the client to the server. If set to `true`, the port will be selected automatically.
-  The server is started with the command `APP_PORT=${port} node dist/server/index.js --port ${port}`.
+  The server is started with the command `APP_PORT=${port} node dist/${outputPath}/index.js --port ${port}`.
 - `watch` (`string[]`) — by default `app-builder` monitors only `src/server` directory.
   If you need to watch other directories, specify them here.
 - `watchThrottle` (`number`) — use to add an extra throttle, or delay restarting.
@@ -164,6 +164,8 @@ All server settings are used only in dev mode:
   If specified `true`, try to listen on `9229`.
 - `compiler` (`'typescript' | 'swc'`) — choose TypeScript compiler for server code compilation.
   Default is `'typescript'`. Set to `'swc'` for faster compilation with SWC.
+- `outputPath` (`string`) — custom output path for compiled server code relative to `dist` directory.
+  Default: `server`. Use this when your `server` entrypoint changed from `dist/server` to a different location (e.g., `package/src/server` for path `dist/package/src/server` in monorepo setups).
 
 ### Client
 
