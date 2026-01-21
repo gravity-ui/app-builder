@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.37.0](https://github.com/gravity-ui/app-builder/compare/v0.36.0...v0.37.0) (2026-01-21)
+
+
+### Features
+
+* add config server outputPath option ([#293](https://github.com/gravity-ui/app-builder/issues/293)) ([19c1bdd](https://github.com/gravity-ui/app-builder/commit/19c1bdde700fc38d005c82ffc2b4d27c2169e142))
+
 ## [0.36.0](https://github.com/gravity-ui/app-builder/compare/v0.35.1...v0.36.0) (2026-01-16)
 
 
