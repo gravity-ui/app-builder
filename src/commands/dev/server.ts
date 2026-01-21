@@ -1,4 +1,3 @@
-import * as path from 'node:path';
 import {rimraf} from 'rimraf';
 
 import {ControllableScript} from '../../common/child-process/controllable-script';
@@ -58,7 +57,7 @@ watch(
 export async function watchServerCompilation(
     config: NormalizedServiceConfig,
 ): Promise<ControllableScript> {
-    const serverPath = path.resolve(paths.appDist, 'server');
+    const serverPath = config.server.outputPath;
     rimraf.sync(serverPath);
 
     const build = new ControllableScript(

@@ -402,6 +402,14 @@ export interface ServerConfig {
         additionalPaths?: string[];
         exclude?: string | string[];
     };
+
+    /**
+     * Custom output path for compiled server code.
+     * Can be only relative to dist path.
+     * @default 'server'
+     * @example 'package/src/server'
+     */
+    outputPath?: string;
 }
 export interface ServiceConfig {
     target?: 'client' | 'server';
@@ -476,13 +484,14 @@ export type NormalizedClientConfig = Omit<
 
 export type NormalizedServerConfig = Omit<
     ServerConfig,
-    'port' | 'inspect' | 'inspectBrk' | 'compiler'
+    'port' | 'inspect' | 'inspectBrk' | 'compiler' | 'outputPath'
 > & {
     port?: number;
     verbose?: boolean;
     inspect?: number;
     inspectBrk?: number;
     compiler: ServerCompiler;
+    outputPath: string;
 };
 
 export type NormalizedServiceConfig = Omit<ServiceConfig, 'client' | 'server'> & {

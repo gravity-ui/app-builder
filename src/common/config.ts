@@ -5,6 +5,7 @@ import {TypeScriptLoader as getTsLoader} from 'cosmiconfig-typescript-loader';
 import {stripIndent} from 'common-tags';
 
 import {isLibraryConfig, isServiceConfig} from './models';
+import paths from './paths';
 
 import type {Loader} from 'cosmiconfig';
 import type {CosmiconfigResult} from 'cosmiconfig/dist/types';
@@ -177,6 +178,10 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
             inspect: undefined,
             inspectBrk: undefined,
             compiler: serverConfig.compiler || 'typescript',
+            outputPath: path.resolve(
+                paths.appDist,
+                serverConfig.outputPath ? serverConfig.outputPath : 'server',
+            ),
         };
         if (mode === 'dev') {
             if (serverConfig.port === true) {
