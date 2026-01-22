@@ -38,6 +38,7 @@ interface DevServerConfig {
     ipc?: string;
     port?: number | true;
     webSocketPath?: string;
+    webSocketClientPort?: number;
     type?: 'https';
     options?: import('https').ServerOptions;
     writeToDisk?: boolean | ((targetPath: string) => boolean);
