@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.38.0](https://github.com/gravity-ui/app-builder/compare/v0.37.0...v0.38.0) (2026-02-02)
+
+
+### Features
+
+* add option to define web socket client port for dev server ([#257](https://github.com/gravity-ui/app-builder/issues/257)) ([1f83b77](https://github.com/gravity-ui/app-builder/commit/1f83b779f5978201ea8eeb01471ee0f2e3c3a557))
+
 ## [0.37.0](https://github.com/gravity-ui/app-builder/compare/v0.36.0...v0.37.0) (2026-01-21)
 
 
