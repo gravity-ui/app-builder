@@ -156,7 +156,7 @@ All server settings are used only in dev mode:
 
 - `port` (`number | true`) — specify port that server listens. The port will be used to
   pass through requests from the client to the server. If set to `true`, the port will be selected automatically.
-  The server is started with the command `APP_PORT=${port} node dist/server/index.js --port ${port}`.
+  The server is started with the command `APP_PORT=${port} node dist/${outputPath}/index.js --port ${port}`.
 - `watch` (`string[]`) — by default `app-builder` monitors only `src/server` directory.
   If you need to watch other directories, specify them here.
 - `watchThrottle` (`number`) — use to add an extra throttle, or delay restarting.
@@ -164,6 +164,8 @@ All server settings are used only in dev mode:
   If specified `true`, try to listen on `9229`.
 - `compiler` (`'typescript' | 'swc'`) — choose TypeScript compiler for server code compilation.
   Default is `'typescript'`. Set to `'swc'` for faster compilation with SWC.
+- `outputPath` (`string`) — custom output path for compiled server code relative to `dist` directory.
+  Default: `server`. Use this when your `server` entrypoint changed from `dist/server` to a different location (e.g., `package/src/server` for path `dist/package/src/server` in monorepo setups).
 
 ### Client
 
@@ -305,9 +307,9 @@ self.onmessage = async (ev) => {
 ```
 
 `app-builder` provides built-in support for web workers for files with the `.worker.[jt]s` suffix. You can choose
-between two variants of getting web workers by setting the `newWebWorkerSyntax` option:
+between two variants of getting web workers by setting the `webWorkerHandle` option:
 
-- `newWebWorkerSyntax: false` (default) - use the `worker-loader` to import web workers.
+- `loader` (default) - use the `worker-loader` to import web workers.
   Content of worker file will be included in main bundle as blob. This variant does not
   support dynamic imports inside worker. For example:
 
@@ -329,7 +331,7 @@ declare module '*.worker.ts' {
 }
 ```
 
-- `newWebWorkerSyntax: true` - use the webpack 5 web workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
+- `cdn-compat` - use the webpack 5 web workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
   to import web workers. This variant allows to use dynamic imports inside worker and load worker bundle from CDN. For example:
 
 ```ts
@@ -337,6 +339,8 @@ import {Worker} from '@gravity-ui/app-builder/worker';
 
 const MyWorker = new Worker(new URL('./my.worker', import.meta.url));
 ```
+
+- `none` - disable worker-specific handling.
 
 To use the web worker in your main script, you need to communicate with it using the postMessage and onmessage methods. For example:
 
@@ -522,6 +526,7 @@ Module Federation is a Webpack 5 feature that enables micro-frontend architectur
     - Enables loading different versions of the same remote in different environments
     - Works with both `remotes` and `originalRemotes` configurations
 
+  - `isolateAssets` (`boolean`) - put all assets to a folder with the name of Module Federation app name
   - `isolateStyles` (`object`) — CSS style isolation settings to prevent conflicts between micro-frontends.
     - `getPrefix` (`(entryName: string) => string`) — function to generate CSS class prefix.
     - `prefixSelector` (`(prefix: string, selector: string, prefixedSelector: string, filePath: string) => string`) — function to add prefix to CSS selectors.

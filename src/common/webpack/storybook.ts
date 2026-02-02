@@ -11,6 +11,7 @@ import paths from '../paths';
 import type {HelperOptions} from './config';
 import type {ClientConfig} from '../models';
 import type * as Webpack from 'webpack';
+import {getNormalizedWorkerOption} from './utils';
 
 type Mode = `${WebpackMode}`;
 
@@ -111,6 +112,7 @@ export async function configureWebpackConfigForStorybook(
         buildDirectory: config.client.outputPath || paths.appBuild,
         entriesDirectory: paths.appEntry,
         isSsr: false,
+        webWorkerHandle: getNormalizedWorkerOption(config.client),
     };
 
     return {

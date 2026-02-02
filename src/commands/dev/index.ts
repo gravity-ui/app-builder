@@ -1,4 +1,3 @@
-import * as path from 'node:path';
 import * as fs from 'node:fs';
 import nodemon from 'nodemon';
 import {onExit} from 'signal-exit';
@@ -6,7 +5,6 @@ import {rimraf} from 'rimraf';
 
 import {createRunFolder, getAppRunPath, shouldCompileTarget} from '../../common/utils';
 import logger from '../../common/logger';
-import paths from '../../common/paths';
 
 import type WebpackDevServer from 'webpack-dev-server';
 import type {NormalizedServiceConfig} from '../../common/models';
@@ -38,7 +36,7 @@ export default async function (config: NormalizedServiceConfig) {
     let serverCompiled = !shouldCompileServer;
     let needToStartNodemon = shouldCompileServer;
 
-    const serverPath = path.resolve(paths.appDist, 'server');
+    const serverPath = config.server.outputPath;
     const {inspect, inspectBrk} = config.server;
 
     const startNodemon = () => {

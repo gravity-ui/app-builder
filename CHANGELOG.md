@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.37.0](https://github.com/gravity-ui/app-builder/compare/v0.36.0...v0.37.0) (2026-01-21)
+
+
+### Features
+
+* add config server outputPath option ([#293](https://github.com/gravity-ui/app-builder/issues/293)) ([19c1bdd](https://github.com/gravity-ui/app-builder/commit/19c1bdde700fc38d005c82ffc2b4d27c2169e142))
+
+## [0.36.0](https://github.com/gravity-ui/app-builder/compare/v0.35.1...v0.36.0) (2026-01-16)
+
+
+### Features
+
+* add `moduleFederation.isolateAssets` option ([#291](https://github.com/gravity-ui/app-builder/issues/291)) ([9f48c9b](https://github.com/gravity-ui/app-builder/commit/9f48c9b60c352c41acc40e39c3fb0f1a674417eb))
+
+## [0.35.1](https://github.com/gravity-ui/app-builder/compare/v0.35.0...v0.35.1) (2025-12-16)
+
+
+### Bug Fixes
+
+* remove HMR files from rspack manifest ([#289](https://github.com/gravity-ui/app-builder/issues/289)) ([a5cbd8b](https://github.com/gravity-ui/app-builder/commit/a5cbd8b4bb20cb6e2a93d4739632dc50ef2bd642))
+
+## [0.35.0](https://github.com/gravity-ui/app-builder/compare/v0.34.0...v0.35.0) (2025-12-16)
+
+
+### Features
+
+* support test in lazy compilation ([#287](https://github.com/gravity-ui/app-builder/issues/287)) ([7fab7d7](https://github.com/gravity-ui/app-builder/commit/7fab7d787607ae2d50f767da99e6a09245234cd0))
+
+## [0.34.0](https://github.com/gravity-ui/app-builder/compare/v0.33.3...v0.34.0) (2025-12-12)
+
+
+### Features
+
+* change `newWebWorkerSyntax` flag to `webWorkerHandle` enum ([#284](https://github.com/gravity-ui/app-builder/issues/284)) ([f04720b](https://github.com/gravity-ui/app-builder/commit/f04720b09fefdbe7a56073d5ea05405b9bdde97f))
+* **webWorkerHandle:** add `none` option ([#286](https://github.com/gravity-ui/app-builder/issues/286)) ([0c061e8](https://github.com/gravity-ui/app-builder/commit/0c061e8370c7d9f00081975fd19161aac6d0c2a3))
+
 ## [0.33.3](https://github.com/gravity-ui/app-builder/compare/v0.33.2...v0.33.3) (2025-10-22)
 
 

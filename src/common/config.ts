@@ -5,6 +5,7 @@ import {TypeScriptLoader as getTsLoader} from 'cosmiconfig-typescript-loader';
 import {stripIndent} from 'common-tags';
 
 import {isLibraryConfig, isServiceConfig} from './models';
+import paths from './paths';
 
 import type {Loader} from 'cosmiconfig';
 import type {CosmiconfigResult} from 'cosmiconfig/dist/types';
@@ -20,7 +21,7 @@ import type {
     ServiceConfig,
 } from './models';
 import type {CliArgs} from '../create-cli';
-import {getPort} from './utils';
+import {getPort, hasMFAssetsIsolation} from './utils';
 import logger from './logger';
 
 function splitPaths(paths: string | string[]) {
@@ -177,6 +178,10 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
             inspect: undefined,
             inspectBrk: undefined,
             compiler: serverConfig.compiler || 'typescript',
+            outputPath: path.resolve(
+                paths.appDist,
+                serverConfig.outputPath ? serverConfig.outputPath : 'server',
+            ),
         };
         if (mode === 'dev') {
             if (serverConfig.port === true) {
@@ -214,7 +219,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
     let publicPath = client.publicPath || path.normalize(`${client.publicPathPrefix || ''}/build/`);
     let browserPublicPath = (mode !== 'dev' && cdnConfig?.publicPath) || publicPath;
 
-    if (client.moduleFederation) {
+    if (hasMFAssetsIsolation(client.moduleFederation)) {
         publicPath = `${publicPath}${client.moduleFederation.name}/`;
         browserPublicPath = `${browserPublicPath}${client.moduleFederation.name}/`;
     }

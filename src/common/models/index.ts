@@ -4,6 +4,7 @@ import type {IFeatureDefinition} from 'monaco-editor-webpack-plugin/out/types';
 import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plugin';
 import type {Configuration, DefinePlugin, FileCacheOptions, MemoryCacheOptions} from 'webpack';
 import type {
+    LazyCompilationOptions,
     LightningCssMinimizerRspackPluginOptions,
     Configuration as RspackConfiguration,
     SwcJsMinimizerRspackPluginOptions,
@@ -64,13 +65,9 @@ export interface LibraryConfig {
     verbose?: boolean;
 }
 
-interface LazyCompilationConfig {
+interface LazyCompilationConfig
+    extends Pick<LazyCompilationOptions, 'imports' | 'entries' | 'test'> {
     port?: number;
-    /**
-     * @default true
-     * disable lazy compilation for entries
-     */
-    entries?: boolean;
 }
 
 export type ModuleFederationConfig = Omit<
@@ -144,7 +141,15 @@ export type ModuleFederationConfig = Omit<
             filePath: string,
         ) => string;
     };
+    /**
+     * Put all assets to a folder with the name of Module Federation app name
+     *
+     * @default true
+     */
+    isolateAssets?: boolean;
 };
+
+export type WebWorkerHandle = 'loader' | 'cdn-compat' | 'none';
 
 export interface ClientConfig {
     modules?: string[];
@@ -282,8 +287,22 @@ export interface ClientConfig {
     cdn?: CdnUploadConfig | CdnUploadConfig[];
     /**
      * use webpack 5 Web Workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
+     *
+     * @deprecated use `webWorkerHandle` instead
      */
     newWebWorkerSyntax?: boolean;
+    /**
+     * How workers are handled
+     * Worker entry point should have `.worker.ts` postfix
+     *
+     * Files, that match this pattern would be handle with one of the strategies:
+     * - 'loader' - `worker-rspack-loader` would be used
+     * - 'cdn-compat' - bundler will handle WebWorker syntax, but we also rebuild this worker, to correctly handle publicPath from variable for imports inside worker
+     *
+     * @see https://www.npmjs.com/package/worker-rspack-loader
+     * @see https://webpack.js.org/guides/web-workers/
+     */
+    webWorkerHandle?: WebWorkerHandle;
     babelCacheDirectory?: boolean | string;
     cache?: boolean | FileCacheOptions | MemoryCacheOptions;
     /** Use [Lighting CSS](https://lightningcss.dev) to transform and minimize css instead of PostCSS and cssnano*/
@@ -384,6 +403,14 @@ export interface ServerConfig {
         additionalPaths?: string[];
         exclude?: string | string[];
     };
+
+    /**
+     * Custom output path for compiled server code.
+     * Can be only relative to dist path.
+     * @default 'server'
+     * @example 'package/src/server'
+     */
+    outputPath?: string;
 }
 export interface ServiceConfig {
     target?: 'client' | 'server';
@@ -458,13 +485,14 @@ export type NormalizedClientConfig = Omit<
 
 export type NormalizedServerConfig = Omit<
     ServerConfig,
-    'port' | 'inspect' | 'inspectBrk' | 'compiler'
+    'port' | 'inspect' | 'inspectBrk' | 'compiler' | 'outputPath'
 > & {
     port?: number;
     verbose?: boolean;
     inspect?: number;
     inspectBrk?: number;
     compiler: ServerCompiler;
+    outputPath: string;
 };
 
 export type NormalizedServiceConfig = Omit<ServiceConfig, 'client' | 'server'> & {

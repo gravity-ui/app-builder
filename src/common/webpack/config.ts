@@ -26,16 +26,17 @@ import type * as Babel from '@babel/core';
 
 import paths from '../paths';
 import {babelPreset} from '../babel';
-import type {NormalizedClientConfig} from '../models';
+import type {NormalizedClientConfig, WebWorkerHandle} from '../models';
 import type {Logger} from '../logger';
 import {createProgressPlugin} from './progress-plugin';
-import {resolveTsConfigPathsToAlias} from './utils';
+import {getNormalizedWorkerOption, resolveTsConfigPathsToAlias} from './utils';
 import {createS3UploadPlugins} from '../s3-upload';
 import {logConfig} from '../logger/log-config';
 import {resolveTypescript} from '../typescript/utils';
 import {nodeExternals} from './node-externals';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
 import type {moduleFederationPlugin} from '@module-federation/enhanced';
+import {hasMFAssetsIsolation} from '../utils';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -50,6 +51,7 @@ export interface HelperOptions {
     entriesDirectory: string;
     isSsr: boolean;
     configPath?: string;
+    webWorkerHandle: WebWorkerHandle;
 }
 
 export const enum WebpackMode {
@@ -77,7 +79,7 @@ function getHelperOptions({
 
     let buildDirectory = config.outputPath || (isSsr ? paths.appSsrBuild : paths.appBuild);
 
-    if (config.moduleFederation) {
+    if (hasMFAssetsIsolation(config.moduleFederation)) {
         buildDirectory = path.resolve(buildDirectory, config.moduleFederation.name);
     }
 
@@ -91,6 +93,7 @@ function getHelperOptions({
         entriesDirectory: isSsr ? paths.appSsrEntry : paths.appEntry,
         isSsr,
         configPath,
+        webWorkerHandle: getNormalizedWorkerOption(config),
     };
 }
 
@@ -380,6 +383,7 @@ function configureRspackExperiments(options: HelperOptions): Rspack.Configuratio
             entries: false,
             imports: true,
             prefix: '/build/lazy-',
+            test: config.lazyCompilation?.test ?? undefined,
         };
     }
 
@@ -723,24 +727,32 @@ function createSourceMapRules(shouldUseSourceMap: boolean): webpack.RuleSetRule[
 }
 
 async function createWorkerRule(options: HelperOptions): Promise<webpack.RuleSetRule> {
+    const ruleset: webpack.RuleSetUse = [];
+
+    switch (options.webWorkerHandle) {
+        case 'loader':
+            ruleset.push({
+                loader: require.resolve('worker-rspack-loader'),
+                // currently workers located on cdn are not working properly, so we are enforcing loading workers from
+                // service instead
+                options: {
+                    inline: 'no-fallback',
+                },
+            });
+            break;
+        case 'cdn-compat':
+            ruleset.push({
+                loader: require.resolve('./worker/worker-loader'),
+            });
+            break;
+        case 'none':
+            break;
+    }
+
     return {
         test: /\.worker\.[jt]sx?$/,
         exclude: /node_modules/,
-        use: [
-            options.config.newWebWorkerSyntax
-                ? {
-                      loader: require.resolve('./worker/worker-loader'),
-                  }
-                : {
-                      loader: require.resolve('worker-rspack-loader'),
-                      // currently workers located on cdn are not working properly, so we are enforcing loading workers from
-                      // service instead
-                      options: {
-                          inline: 'no-fallback',
-                      },
-                  },
-            await createJavaScriptLoader(options),
-        ],
+        use: [...ruleset, await createJavaScriptLoader(options)],
     };
 }
 
@@ -1217,6 +1229,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 originalRemotes,
                 remotesRuntimeVersioning,
                 isolateStyles: _isolateStyles, // Omit isolateStyles from restOptions
+                isolateAssets: _isolateAssets, // Omit isolateAssets from restOptions
                 runtimePlugins,
                 ...restOptions
             } = config.moduleFederation;
