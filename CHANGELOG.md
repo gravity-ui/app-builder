@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.39.1](https://github.com/gravity-ui/app-builder/compare/v0.39.0...v0.39.1) (2026-02-04)
+
+
+### Bug Fixes
+
+* bump module-federation to 0.22.1 ([#298](https://github.com/gravity-ui/app-builder/issues/298)) ([535d3d2](https://github.com/gravity-ui/app-builder/commit/535d3d2e2f68a8949e5ac91773c4017e8e844669))
+
 ## [0.39.0](https://github.com/gravity-ui/app-builder/compare/v0.38.0...v0.39.0) (2026-02-04)
 
 
