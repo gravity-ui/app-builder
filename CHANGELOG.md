@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.39.0](https://github.com/gravity-ui/app-builder/compare/v0.38.0...v0.39.0) (2026-02-04)
+
+
+### Features
+
+* bump rspack to 1.6.8 ([#296](https://github.com/gravity-ui/app-builder/issues/296)) ([4c0f86e](https://github.com/gravity-ui/app-builder/commit/4c0f86efd885090834a799e8f2f04ffd1978f772))
+
 ## [0.38.0](https://github.com/gravity-ui/app-builder/compare/v0.37.0...v0.38.0) (2026-02-02)
 
 
