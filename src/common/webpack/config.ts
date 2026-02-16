@@ -1211,9 +1211,11 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 new MonacoEditorWebpackPlugin({
                     filename: isEnvProduction ? '[name].[hash:8].worker.js' : undefined,
                     ...config.monaco,
-                    // currently, workers located on cdn are not working properly, so we are enforcing loading workers from
-                    // service instead
-                    publicPath: config.publicPath,
+                    // When cdn-compat is enabled, don't override publicPath —
+                    // let the plugin use __webpack_public_path__ (CDN URL at runtime).
+                    // The plugin handles cross-origin via blob URL automatically.
+                    publicPath:
+                        config.webWorkerHandle === 'cdn-compat' ? undefined : config.publicPath,
                 }),
             );
         }
