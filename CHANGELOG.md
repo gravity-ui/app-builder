@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.40.0](https://github.com/gravity-ui/app-builder/compare/v0.39.1...v0.40.0) (2026-02-16)
+
+
+### Features
+
+* support CDN workers for Monaco editor in cdn-compat mode ([#301](https://github.com/gravity-ui/app-builder/issues/301)) ([e5222a1](https://github.com/gravity-ui/app-builder/commit/e5222a1c05c9bbcf8086bf41b3febb1e7c91486b))
+
 ## [0.39.1](https://github.com/gravity-ui/app-builder/compare/v0.39.0...v0.39.1) (2026-02-04)
 
 
