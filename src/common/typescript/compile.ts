@@ -31,16 +31,11 @@ export function compile(
         reportDiagnostic,
     );
     compilerHost.readFile = displayFilename(compilerHost.readFile, 'Reading', logger);
-    // @ts-expect-error We invoke method from overrided function
-    compilerHost.readFile.enableDisplay();
     const solutionBuilder = ts.createSolutionBuilder(
         compilerHost,
         [getTsProjectConfigPath(ts, projectPath, configFileName)],
         {noEmitOnError: true},
     );
-    // @ts-expect-error We invoke method from overrided function
-    const filesCount = compilerHost.readFile.disableDisplay();
-    logger.verbose(`Program created, read ${filesCount} files`);
 
     logger.verbose('We finished making the program! Emitting...');
     const transformPathsToLocalModules = createTransformPathsToLocalModules(ts);
@@ -48,7 +43,16 @@ export function compile(
     let project = solutionBuilder.getNextInvalidatedProject();
     do {
         if (project?.kind === ts.InvalidatedProjectKind.Build) {
+            const configPath = project.project.replace(process.cwd(), '');
+
+            // @ts-expect-error We invoke method from overrided function
+            compilerHost.readFile.enableDisplay();
+
             const program = project.getProgram();
+
+            // @ts-expect-error We invoke method from overrided function
+            const filesCount = compilerHost.readFile.disableDisplay();
+            logger.verbose(`Program created, read ${filesCount} files`);
 
             if (!program) {
                 next();
@@ -58,9 +62,7 @@ export function compile(
             let allDiagnostics = ts.getPreEmitDiagnostics(program);
 
             if (!hasErrors(allDiagnostics)) {
-                logger.verbose(
-                    `We finished making the program for ${project.project}! Emitting...`,
-                );
+                logger.verbose(`We finished making the program for ${configPath}! Emitting...`);
 
                 const emitResult = project.emit(undefined, undefined, undefined, undefined, {
                     after: [transformPathsToLocalModules],
@@ -80,7 +82,7 @@ export function compile(
                 logger.error(`Error compile, elapsed time ${elapsedTime(start)}`);
                 process.exit(1);
             } else {
-                logger.success(`Compiled successfully ${project.project} in ${elapsedTime(start)}`);
+                logger.success(`Compiled successfully ${configPath} in ${elapsedTime(start)}`);
             }
         }
 
