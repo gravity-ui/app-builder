@@ -48,31 +48,44 @@ export function compile(
     let project = solutionBuilder.getNextInvalidatedProject();
     do {
         if (project?.kind === ts.InvalidatedProjectKind.Build) {
-            const emitResult = project.emit(undefined, undefined, undefined, undefined, {
-                after: [transformPathsToLocalModules],
-                afterDeclarations: [transformPathsToLocalModules],
-            });
+            const program = project.getProgram();
 
-            if (emitResult?.diagnostics) {
-                const diagnostics = ts.sortAndDeduplicateDiagnostics(emitResult?.diagnostics);
+            if (!program) {
+                next();
+                continue;
+            }
 
-                if (hasErrors(diagnostics)) {
-                    logger.error(`Error compile, elapsed time ${elapsedTime(start)}`);
-                    process.exit(1);
-                } else {
-                    logger.success(
-                        `Compiled successfully ${project.project} in ${elapsedTime(start)}`,
+            let allDiagnostics = ts.getPreEmitDiagnostics(program);
+
+            if (!hasErrors(allDiagnostics)) {
+                logger.verbose(
+                    `We finished making the program for ${project.project}! Emitting...`,
+                );
+
+                const emitResult = project.emit(undefined, undefined, undefined, undefined, {
+                    after: [transformPathsToLocalModules],
+                    afterDeclarations: [transformPathsToLocalModules],
+                });
+
+                logger.verbose('Emit complete!');
+
+                if (emitResult?.diagnostics) {
+                    allDiagnostics = ts.sortAndDeduplicateDiagnostics(
+                        allDiagnostics.concat(emitResult?.diagnostics),
                     );
                 }
             }
+
+            if (hasErrors(allDiagnostics)) {
+                logger.error(`Error compile, elapsed time ${elapsedTime(start)}`);
+                process.exit(1);
+            } else {
+                logger.success(`Compiled successfully ${project.project} in ${elapsedTime(start)}`);
+            }
         }
 
-        project?.done();
-
-        project = solutionBuilder.getNextInvalidatedProject();
+        next();
     } while (project);
-
-    logger.verbose('Emit complete!');
 
     function reportDiagnostic(diagnostic: Typescript.Diagnostic) {
         const formatHost = {
@@ -89,5 +102,10 @@ export function compile(
 
     function hasErrors(diagnostics: readonly Typescript.Diagnostic[]) {
         return diagnostics.some(({category}) => category === ts.DiagnosticCategory.Error);
+    }
+
+    function next() {
+        project?.done();
+        project = solutionBuilder.getNextInvalidatedProject();
     }
 }
