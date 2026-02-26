@@ -37,7 +37,6 @@ export function compile(
         {noEmitOnError: true},
     );
 
-    logger.verbose('We finished making the program! Emitting...');
     const transformPathsToLocalModules = createTransformPathsToLocalModules(ts);
 
     let project = solutionBuilder.getNextInvalidatedProject();
