@@ -1,6 +1,6 @@
 import type Typescript from 'typescript';
 import type {Logger} from '../logger';
-import {displayFilename, getTsProjectConfig} from './utils';
+import {displayFilename, getTsProjectConfigPath} from './utils';
 import {createTransformPathsToLocalModules} from './transformers';
 import {elapsedTime} from '../logger/pretty-time';
 import {formatDiagnosticBrief} from './diagnostic';
@@ -9,59 +9,68 @@ interface CompileOptions {
     projectPath: string;
     configFileName?: string;
     logger: Logger;
-    optionsToExtend?: Typescript.CompilerOptions;
 }
 
 export function compile(
     ts: typeof Typescript,
-    {projectPath, configFileName = 'tsconfig.json', optionsToExtend, logger}: CompileOptions,
+    {projectPath, configFileName = 'tsconfig.json', logger}: CompileOptions,
 ) {
     const start = process.hrtime.bigint();
     logger.message('Start compilation');
     logger.message(`Typescript v${ts.version}`);
 
     logger.verbose(`Searching for the ${configFileName} in ${projectPath}`);
-    const parsedConfig = getTsProjectConfig(ts, projectPath, configFileName, {
-        noEmit: false,
-        noEmitOnError: true,
-        ...optionsToExtend,
-    });
 
     logger.verbose('Config found and parsed');
 
     logger.verbose("We're about to create the program");
-    const compilerHost = ts.createCompilerHost(parsedConfig.options);
+    const compilerHost = ts.createSolutionBuilderHost(
+        ts.sys,
+        ts.createEmitAndSemanticDiagnosticsBuilderProgram,
+        reportDiagnostic,
+        reportDiagnostic,
+    );
     compilerHost.readFile = displayFilename(compilerHost.readFile, 'Reading', logger);
-    // @ts-expect-error
+    // @ts-expect-error We invoke method from overrided function
     compilerHost.readFile.enableDisplay();
-    const program = ts.createProgram(parsedConfig.fileNames, parsedConfig.options, compilerHost);
-    // @ts-expect-error
+    const solutionBuilder = ts.createSolutionBuilder(
+        compilerHost,
+        [getTsProjectConfigPath(ts, projectPath, configFileName)],
+        {noEmitOnError: true},
+    );
+    // @ts-expect-error We invoke method from overrided function
     const filesCount = compilerHost.readFile.disableDisplay();
-    let allDiagnostics = ts.getPreEmitDiagnostics(program);
     logger.verbose(`Program created, read ${filesCount} files`);
 
-    if (!hasErrors(allDiagnostics)) {
-        logger.verbose('We finished making the program! Emitting...');
-        const transformPathsToLocalModules = createTransformPathsToLocalModules(ts);
-        const emitResult = program.emit(undefined, undefined, undefined, undefined, {
-            after: [transformPathsToLocalModules],
-            afterDeclarations: [transformPathsToLocalModules],
-        });
-        logger.verbose('Emit complete!');
+    logger.verbose('We finished making the program! Emitting...');
+    const transformPathsToLocalModules = createTransformPathsToLocalModules(ts);
 
-        allDiagnostics = ts.sortAndDeduplicateDiagnostics(
-            allDiagnostics.concat(emitResult.diagnostics),
-        );
-    }
+    let project = solutionBuilder.getNextInvalidatedProject();
+    do {
+        if (project?.kind === ts.InvalidatedProjectKind.Build) {
+            const emitResult = project.emit(undefined, undefined, undefined, undefined, {
+                after: [transformPathsToLocalModules],
+                afterDeclarations: [transformPathsToLocalModules],
+            });
 
-    allDiagnostics.forEach(reportDiagnostic);
+            if (emitResult?.diagnostics) {
+                const diagnostics = ts.sortAndDeduplicateDiagnostics(emitResult?.diagnostics);
 
-    if (hasErrors(allDiagnostics)) {
-        logger.error(`Error compile, elapsed time ${elapsedTime(start)}`);
-        process.exit(1);
-    } else {
-        logger.success(`Compiled successfully in ${elapsedTime(start)}`);
-    }
+                if (hasErrors(diagnostics)) {
+                    logger.error(`Error compile, elapsed time ${elapsedTime(start)}`);
+                    process.exit(1);
+                } else {
+                    logger.success(`Compiled successfully in ${elapsedTime(start)}`);
+                }
+            }
+        }
+
+        project?.done();
+
+        project = solutionBuilder.getNextInvalidatedProject();
+    } while (project);
+
+    logger.verbose('Emit complete!');
 
     function reportDiagnostic(diagnostic: Typescript.Diagnostic) {
         const formatHost = {
