@@ -43,7 +43,7 @@ export function compile(
 
     if (!project) {
         logger.warning(
-            "Seems like files was already emitted and didn't changed since then. Emitting skipped.",
+            "Seems like files have already been emitted and haven't changed since then. Emitting skipped.",
         );
     }
 
