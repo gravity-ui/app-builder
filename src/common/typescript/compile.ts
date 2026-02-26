@@ -40,6 +40,13 @@ export function compile(
     const transformPathsToLocalModules = createTransformPathsToLocalModules(ts);
 
     let project = solutionBuilder.getNextInvalidatedProject();
+
+    if (!project) {
+        logger.warning(
+            "Seems like files was already emitted and didn't changed since then. Emitting skipped.",
+        );
+    }
+
     do {
         if (project?.kind === ts.InvalidatedProjectKind.Build) {
             const configPath = project.project.replace(process.cwd(), '');
