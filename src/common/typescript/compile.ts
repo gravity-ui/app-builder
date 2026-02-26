@@ -30,7 +30,7 @@ export function compile(
         reportDiagnostic,
         reportDiagnostic,
     );
-    compilerHost.readFile = displayFilename(compilerHost.readFile, 'Reading', logger);
+
     const solutionBuilder = ts.createSolutionBuilder(
         compilerHost,
         [getTsProjectConfigPath(ts, projectPath, configFileName)],
@@ -44,6 +44,8 @@ export function compile(
         if (project?.kind === ts.InvalidatedProjectKind.Build) {
             const configPath = project.project.replace(process.cwd(), '');
 
+            const originalReadFile = compilerHost.readFile;
+            compilerHost.readFile = displayFilename(originalReadFile, 'Reading', logger);
             // @ts-expect-error We invoke method from overrided function
             compilerHost.readFile.enableDisplay();
 
@@ -54,6 +56,7 @@ export function compile(
 
                 // @ts-expect-error We invoke method from overrided function
                 compilerHost.readFile.disableDisplay();
+                compilerHost.readFile = originalReadFile;
 
                 next();
                 continue;
@@ -61,6 +64,7 @@ export function compile(
 
             // @ts-expect-error We invoke method from overrided function
             const filesCount = compilerHost.readFile.disableDisplay();
+            compilerHost.readFile = originalReadFile;
             logger.verbose(`Program created, read ${filesCount} files`);
 
             let allDiagnostics = ts.getPreEmitDiagnostics(program);
