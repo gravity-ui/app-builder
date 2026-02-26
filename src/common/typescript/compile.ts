@@ -60,7 +60,9 @@ export function compile(
                     logger.error(`Error compile, elapsed time ${elapsedTime(start)}`);
                     process.exit(1);
                 } else {
-                    logger.success(`Compiled successfully in ${elapsedTime(start)}`);
+                    logger.success(
+                        `Compiled successfully ${project.project} in ${elapsedTime(start)}`,
+                    );
                 }
             }
         }
