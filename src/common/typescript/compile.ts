@@ -49,14 +49,19 @@ export function compile(
 
             const program = project.getProgram();
 
-            // @ts-expect-error We invoke method from overrided function
-            const filesCount = compilerHost.readFile.disableDisplay();
-            logger.verbose(`Program created, read ${filesCount} files`);
-
             if (!program) {
+                logger.verbose(`Program was not created, skip emitting for ${configPath}`);
+
+                // @ts-expect-error We invoke method from overrided function
+                compilerHost.readFile.disableDisplay();
+
                 next();
                 continue;
             }
+
+            // @ts-expect-error We invoke method from overrided function
+            const filesCount = compilerHost.readFile.disableDisplay();
+            logger.verbose(`Program created, read ${filesCount} files`);
 
             let allDiagnostics = ts.getPreEmitDiagnostics(program);
 
