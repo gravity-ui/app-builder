@@ -354,6 +354,13 @@ export interface ClientConfig {
         options: LightningCssMinimizerRspackPluginOptions,
     ) => LightningCssMinimizerRspackPluginOptions;
 
+    /**
+     * CSS Loader configuration options
+     * Allows to override default css-loader settings
+     * @see https://github.com/webpack/css-loader#options
+     */
+    cssLoader?: Partial<CssLoaderOptions>;
+
     ssr?: {
         noExternal?: string | RegExp | (string | RegExp)[] | true;
         moduleType?: 'commonjs' | 'esm';
@@ -463,6 +470,10 @@ export type NormalizedClientConfig = Omit<
     };
     verbose?: boolean;
     transformCssWithLightningCss: boolean;
+    /**
+     * CSS Loader configuration with default values merged with user overrides
+     */
+    cssLoaderConfig: CssLoaderOptions;
     webpack: (
         config: Configuration,
         options: {configType: `${WebpackMode}`; isSsr: boolean},
@@ -522,4 +533,171 @@ export function isLibraryConfig(config: ProjectConfig): config is LibraryConfig 
 
 export function defineConfig(config: ProjectFileConfig) {
     return config;
+}
+
+/**
+ * CSS Loader options interface
+ * @see https://github.com/webpack/css-loader#options
+ */
+export interface CssLoaderOptions {
+    /**
+     * Allows to enables/disables `url()`/`image-set()` functions handling.
+     * @see https://github.com/webpack/css-loader#url
+     */
+    url?: boolean | {filter: (url: string, resourcePath: string) => boolean};
+
+    /**
+     * Allows to enables/disables `@import` at-rules handling.
+     * @see https://github.com/webpack/css-loader#import
+     */
+    import?: boolean | {filter: (url: string, media: string, resourcePath: string) => boolean};
+
+    /**
+     * Allows to enable/disable CSS Modules or ICSS and setup configuration.
+     * @see https://github.com/webpack/css-loader#modules
+     */
+    modules?: boolean | 'local' | 'global' | 'pure' | 'icss' | CssLoaderModulesOptions;
+
+    /**
+     * Allows to enable/disable source maps.
+     * @see https://github.com/webpack/css-loader#sourcemap
+     */
+    sourceMap?: boolean;
+
+    /**
+     * Use the ES modules syntax.
+     * @see https://github.com/webpack/css-loader#esmodule
+     */
+    esModule?: boolean;
+
+    /**
+     * Allows exporting styles as array with modules, string or constructable stylesheet (i.e. `CSSStyleSheet`).
+     * @see https://github.com/webpack/css-loader#exporttype
+     */
+    exportType?: 'array' | 'string' | 'css-style-sheet';
+}
+
+/**
+ * CSS Modules configuration options
+ * @see https://github.com/webpack/css-loader#modules
+ */
+export interface CssLoaderModulesOptions {
+    /**
+     * Allows auto enable CSS modules based on filename.
+     * @see https://github.com/webpack/css-loader#auto
+     */
+    auto?: RegExp | ((resourcePath: string) => boolean) | boolean;
+
+    /**
+     * Setup `mode` option.
+     * @see https://github.com/webpack/css-loader#mode
+     */
+    mode?:
+        | 'local'
+        | 'global'
+        | 'pure'
+        | 'icss'
+        | ((resourcePath: string) => 'local' | 'global' | 'pure' | 'icss');
+
+    /**
+     * Allows to configure the generated local ident name.
+     * @see https://github.com/webpack/css-loader#localidentname
+     */
+    localIdentName?: string;
+
+    /**
+     * Allows to redefine basic loader context for local ident name.
+     * @see https://github.com/webpack/css-loader#localidentcontext
+     */
+    localIdentContext?: string;
+
+    /**
+     * Allows to add custom hash to generate more unique classes.
+     * @see https://github.com/webpack/css-loader#localidenthashsalt
+     */
+    localIdentHashSalt?: string;
+
+    /**
+     * Allows to specify hash function to generate classes.
+     * @see https://github.com/webpack/css-loader#localidenthashfunction
+     */
+    localIdentHashFunction?: string;
+
+    /**
+     * Allows to specify hash digest to generate classes.
+     * @see https://github.com/webpack/css-loader#localidenthashdigest
+     */
+    localIdentHashDigest?: string;
+
+    /**
+     * Allows to specify hash digest length to generate classes.
+     * @see https://github.com/webpack/css-loader#localidenthashdigestlength
+     */
+    localIdentHashDigestLength?: number;
+
+    /**
+     * Allows to specify should localName be used when computing the hash.
+     * @see https://github.com/webpack/css-loader#hashstrategy
+     */
+    hashStrategy?: 'resource-path-and-local-name' | 'minimal-subset';
+
+    /**
+     * Allows to specify custom RegExp for local ident name.
+     * @see https://github.com/webpack/css-loader#localidentregexp
+     */
+    localIdentRegExp?: string | RegExp;
+
+    /**
+     * Allows to specify a function to generate the classname.
+     * @see https://github.com/webpack/css-loader#getlocalident
+     */
+    getLocalIdent?: (
+        context: {
+            resourcePath: string;
+            resourceQuery: string;
+        },
+        localIdentName: string,
+        localName: string,
+        options: CssLoaderModulesOptions,
+    ) => string;
+
+    /**
+     * Enables/disables ES modules named export for locals.
+     * @see https://github.com/webpack/css-loader#namedexport
+     */
+    namedExport?: boolean;
+
+    /**
+     * Allows to export names from global class or id, so you can use that as local name.
+     * @see https://github.com/webpack/css-loader#exportglobals
+     */
+    exportGlobals?: boolean;
+
+    /**
+     * Style of exported classnames.
+     * @see https://github.com/webpack/css-loader#localsconvention
+     */
+    exportLocalsConvention?:
+        | 'asIs'
+        | 'as-is'
+        | 'camelCase'
+        | 'camel-case'
+        | 'camelCaseOnly'
+        | 'camel-case-only'
+        | 'dashes'
+        | 'dashesOnly'
+        | 'dashes-only'
+        | ((className: string) => string);
+
+    /**
+     * Export only locals.
+     * @see https://github.com/webpack/css-loader#exportonlylocals
+     */
+    exportOnlyLocals?: boolean;
+
+    /**
+     * Allows outputting of CSS modules mapping through a callback.
+     * @see https://github.com/webpack/css-loader#getJSON
+     */
+    getJSON?: (cssModules: Record<string, string>) => void;
 }

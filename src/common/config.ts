@@ -266,6 +266,28 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
         lazyCompilation: undefined,
         bundler: client.bundler || 'webpack',
         javaScriptLoader: client.javaScriptLoader || 'babel',
+        cssLoaderConfig: {
+            url: client.cssLoader?.url ?? {
+                filter: (url: string) => !url.startsWith('data:'),
+            },
+            sourceMap: client.cssLoader?.sourceMap ?? !client.disableSourceMapGeneration,
+            modules:
+                typeof client.cssLoader?.modules === 'object'
+                    ? {
+                          auto: true,
+                          localIdentName: '[name]__[local]--[hash:base64:5]',
+                          exportLocalsConvention: 'camelCase',
+                          ...client.cssLoader.modules,
+                      }
+                    : (client.cssLoader?.modules ?? {
+                          auto: true,
+                          localIdentName: '[name]__[local]--[hash:base64:5]',
+                          exportLocalsConvention: 'camelCase',
+                      }),
+            import: client.cssLoader?.import,
+            esModule: client.cssLoader?.esModule,
+            exportType: client.cssLoader?.exportType,
+        },
     };
 
     if (mode === 'dev') {
