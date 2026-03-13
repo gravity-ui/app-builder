@@ -79,33 +79,6 @@ export function displayFilename(
     return displayFunction;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function onHostEvent<F extends string, T extends {[key in F]?: (...args: any[]) => any}>(
-    host: T,
-    functionName: F,
-    before?: (...args: Parameters<NonNullable<T[F]>>) => void,
-    after?: (res: ReturnType<NonNullable<T[F]>>) => void,
-) {
-    const originalFunction = host[functionName];
-
-    // eslint-disable-next-line no-param-reassign
-    host[functionName] = ((...args: Parameters<NonNullable<T[F]>>) => {
-        if (before) {
-            before(...args);
-        }
-
-        let result;
-        if (typeof originalFunction === 'function') {
-            result = originalFunction(...args);
-        }
-
-        if (after) {
-            after(result);
-        }
-        return result;
-    }) as T[F];
-}
-
 export function resolveTypescript() {
     try {
         return require.resolve(path.resolve(paths.appNodeModules, 'typescript'));

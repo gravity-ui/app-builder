@@ -1,7 +1,7 @@
 import type Typescript from 'typescript';
 import type {Logger} from '../logger';
 import {createTransformPathsToLocalModules} from './transformers';
-import {displayFilename, getTsProjectConfigPath, onHostEvent} from './utils';
+import {displayFilename, getTsProjectConfigPath} from './utils';
 import {formatDiagnosticBrief} from './diagnostic';
 
 export function watch(
@@ -19,58 +19,78 @@ export function watch(
 
     const createProgram = ts.createEmitAndSemanticDiagnosticsBuilderProgram;
 
-    const host = ts.createWatchCompilerHost(
-        configPath,
-        {
-            noEmit: false,
-            noEmitOnError: false,
-            inlineSourceMap: enableSourceMap,
-            inlineSources: enableSourceMap,
-            ...(enableSourceMap ? {sourceMap: false} : undefined),
-        },
+    const host = ts.createSolutionBuilderWithWatchHost(
         ts.sys,
         createProgram,
+        reportDiagnostic,
         reportDiagnostic,
         reportWatchStatusChanged,
     );
 
-    host.readFile = displayFilename(host.readFile, 'Reading', logger);
+    const transformPathsToLocalModules = createTransformPathsToLocalModules(ts);
 
-    onHostEvent(
-        host,
-        'createProgram',
-        () => {
+    // `createSolutionBuilderWithWatch` creates an initial program, watches files, and updates
+    // the program over time.
+    const solutionBuilder = ts.createSolutionBuilderWithWatch(host, [configPath], {
+        noEmit: false,
+        noEmitOnError: false,
+        inlineSourceMap: enableSourceMap,
+        inlineSources: enableSourceMap,
+        ...(enableSourceMap ? {sourceMap: false} : undefined),
+    });
+
+    let project = solutionBuilder.getNextInvalidatedProject();
+
+    do {
+        if (project?.kind === ts.InvalidatedProjectKind.Build) {
+            const projectConfigPath = project.project.replace(process.cwd(), '');
+
+            const originalReadFile = host.readFile;
+            host.readFile = displayFilename(originalReadFile, 'Reading', logger);
+
             logger.verbose("We're about to create the program");
-            // @ts-expect-error
+            // @ts-expect-error We invoke method from overrided function
             host.readFile.enableDisplay();
-        },
-        () => {
+
+            const program = project.getProgram();
+
+            if (!program) {
+                logger.verbose(`Program was not created, skip emitting for ${projectConfigPath}`);
+
+                // @ts-expect-error We invoke method from overrided function
+                host.readFile.disableDisplay();
+                host.readFile = originalReadFile;
+
+                logger.verbose(
+                    `We finished making the program for ${projectConfigPath}! Emitting...`,
+                );
+
+                next();
+
+                continue;
+            }
+
             // @ts-expect-error
             const count = host.readFile.disableDisplay();
+            host.readFile = originalReadFile;
             logger.verbose(`Program created, read ${count} files`);
-        },
-    );
 
-    onHostEvent(
-        host,
-        'afterProgramCreate',
-        (program) => {
-            logger.verbose('We finished making the program! Emitting...');
-            const transformPathsToLocalModules = createTransformPathsToLocalModules(ts);
-            program.emit(undefined, undefined, undefined, undefined, {
+            project.emit(undefined, undefined, undefined, undefined, {
                 after: [transformPathsToLocalModules],
                 afterDeclarations: [transformPathsToLocalModules],
             });
-            logger.verbose('Emit completed!');
-        },
-        () => {
-            onAfterFilesEmitted?.();
-        },
-    );
 
-    // `createWatchProgram` creates an initial program, watches files, and updates
-    // the program over time.
-    ts.createWatchProgram(host);
+            logger.verbose('Emit completed!');
+
+            next();
+        }
+    } while (project);
+
+    onAfterFilesEmitted?.();
+
+    function next() {
+        project = solutionBuilder.getNextInvalidatedProject();
+    }
 
     function reportDiagnostic(diagnostic: Typescript.Diagnostic) {
         const formatHost = {
