@@ -51,8 +51,13 @@ export function watch(
     );
 
     onHostEvent(host, 'afterProgramEmitAndDiagnostics', (program) => {
-        const project = program.getCompilerOptions().project;
-        logger.verbose(`Emit completed for ${project}!`);
+        const project = program.getCompilerOptions().configFilePath;
+
+        logger.verbose(
+            typeof project === 'string'
+                ? `Emit completed for ${project.replace(process.cwd(), '')}!`
+                : 'Emit completed!',
+        );
     });
 
     // `createSolutionBuilderWithWatch` creates an initial program, watches files, and updates
