@@ -94,6 +94,8 @@ export function compile(
             }
 
             if (hasErrors(allDiagnostics)) {
+                allDiagnostics.forEach(reportDiagnostic);
+
                 logger.error(`Error compile, elapsed time ${elapsedTime(start)}`);
                 process.exit(1);
             } else {
