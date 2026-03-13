@@ -84,7 +84,7 @@ export function onHostEvent<F extends string, T extends {[key in F]?: (...args: 
     host: T,
     functionName: F,
     before?: (...args: Parameters<NonNullable<T[F]>>) => void,
-    after?: (res: ReturnType<NonNullable<T[F]>>) => void,
+    after?: (res: ReturnType<NonNullable<T[F]>>, ...args: Parameters<NonNullable<T[F]>>) => void,
 ) {
     const originalFunction = host[functionName];
 
@@ -100,7 +100,7 @@ export function onHostEvent<F extends string, T extends {[key in F]?: (...args: 
         }
 
         if (after) {
-            after(result);
+            after(result, ...args);
         }
         return result;
     }) as T[F];

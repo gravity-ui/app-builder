@@ -27,33 +27,33 @@ export function watch(
         reportWatchStatusChanged,
     );
 
-    host.readFile = displayFilename(host.readFile, 'Reading', logger);
-
     onHostEvent(
         host,
         'createProgram',
-        () => {
+        (_rootnames, _options, host) => {
             logger.verbose("We're about to create the program");
-            // @ts-expect-error
-            host.readFile.enableDisplay();
+
+            if (host) {
+                host.readFile = displayFilename(host.readFile, 'Reading', logger);
+
+                // @ts-expect-error
+                host.readFile.enableDisplay();
+            }
         },
-        () => {
-            // @ts-expect-error
-            const count = host.readFile.disableDisplay();
-            logger.verbose(`Program created, read ${count} files`);
+        (_result, _rootnames, _options, host) => {
+            if (host) {
+                // @ts-expect-error
+                const count = host.readFile.disableDisplay();
+
+                logger.verbose(`Program created, read ${count} files`);
+            }
         },
     );
 
-    onHostEvent(
-        host,
-        'afterProgramEmitAndDiagnostics',
-        () => {
-            logger.verbose('Emit completed!');
-        },
-        () => {
-            onAfterFilesEmitted?.();
-        },
-    );
+    onHostEvent(host, 'afterProgramEmitAndDiagnostics', (program) => {
+        const project = program.getCompilerOptions().project;
+        logger.verbose(`Emit completed for ${project}!`);
+    });
 
     // `createSolutionBuilderWithWatch` creates an initial program, watches files, and updates
     // the program over time.
@@ -92,6 +92,10 @@ export function watch(
     function reportWatchStatusChanged(diagnostic: Typescript.Diagnostic) {
         if (diagnostic.messageText) {
             logger.message(ts.flattenDiagnosticMessageText(diagnostic.messageText, ts.sys.newLine));
+        }
+
+        if (diagnostic.code === 6194 || diagnostic.code === 6193) {
+            onAfterFilesEmitted?.();
         }
     }
 }
