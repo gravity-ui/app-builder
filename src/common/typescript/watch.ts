@@ -4,6 +4,12 @@ import {createTransformPathsToLocalModules} from './transformers';
 import {displayFilename, getTsProjectConfigPath, onHostEvent} from './utils';
 import {formatDiagnosticBrief} from './diagnostic';
 
+/** @see https://github.com/microsoft/TypeScript/blob/9059e5bda0bb603ae6b41eca09dcd2a071af45fd/src/compiler/diagnosticMessages.json#L5400-L5403 */
+const COMPILATION_COMPLETE_WITH_ERROR = 6193;
+
+/** @see https://github.com/microsoft/TypeScript/blob/9059e5bda0bb603ae6b41eca09dcd2a071af45fd/src/compiler/diagnosticMessages.json#L5404-L5407 */
+const COMPILATION_COMPLETE_WITH_N_ERRORS = 6194;
+
 export function watch(
     ts: typeof Typescript,
     projectPath: string,
@@ -99,7 +105,10 @@ export function watch(
             logger.message(ts.flattenDiagnosticMessageText(diagnostic.messageText, ts.sys.newLine));
         }
 
-        if (diagnostic.code === 6194 || diagnostic.code === 6193) {
+        if (
+            diagnostic.code === COMPILATION_COMPLETE_WITH_ERROR ||
+            diagnostic.code === COMPILATION_COMPLETE_WITH_N_ERRORS
+        ) {
             onAfterFilesEmitted?.();
         }
     }
