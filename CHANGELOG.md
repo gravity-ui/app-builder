@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.42.0](https://github.com/gravity-ui/app-builder/compare/v0.41.0...v0.42.0) (2026-03-16)
+
+
+### Features
+
+* **dev:** add support for projects w/ `"references"` ([#306](https://github.com/gravity-ui/app-builder/issues/306)) ([6bdcf1f](https://github.com/gravity-ui/app-builder/commit/6bdcf1f3c290d835a7a153b9d9dd29925ae548e6))
+
+
+### Bug Fixes
+
+* **build:** manually report errors ([#307](https://github.com/gravity-ui/app-builder/issues/307)) ([ede2e47](https://github.com/gravity-ui/app-builder/commit/ede2e47f12eeeaecd9270b57aacf4c9e00350dce))
+
 ## [0.41.0](https://github.com/gravity-ui/app-builder/compare/v0.40.0...v0.41.0) (2026-02-27)
 
 
