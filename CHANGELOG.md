@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.42.1](https://github.com/gravity-ui/app-builder/compare/v0.42.0...v0.42.1) (2026-04-03)
+
+
+### Bug Fixes
+
+* **dev:** clean up stale IPC socket and abort on client dev server fa… ([#309](https://github.com/gravity-ui/app-builder/issues/309)) ([e7c9d75](https://github.com/gravity-ui/app-builder/commit/e7c9d755f687ff4ecec190ca6e0e953db863011a))
+
 ## [0.42.0](https://github.com/gravity-ui/app-builder/compare/v0.41.0...v0.42.0) (2026-03-16)
 
 
