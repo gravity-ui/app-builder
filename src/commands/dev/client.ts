@@ -165,6 +165,16 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         options.ipc = path.resolve(getAppRunPath(config), 'client.sock');
     }
 
+    // Remove stale socket file from a previous process to avoid EADDRINUSE error
+    // when restarting the dev server while the old process is still running.
+    if (options.ipc && typeof options.ipc === 'string') {
+        try {
+            fs.unlinkSync(options.ipc);
+        } catch {
+            // ignore if file doesn't exist
+        }
+    }
+
     const proxy = options.proxy || [];
     if (config.client.lazyCompilation && bundler !== 'rspack') {
         proxy.push({
@@ -212,11 +222,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         );
     }
 
-    try {
-        await server.start();
-    } catch (e) {
-        logger.logError(`Cannot start ${bundler} dev server`, e);
-    }
+    await server.start();
 
     if (options.ipc && typeof options.ipc === 'string') {
         fs.chmod(options.ipc, 0o666, (e) => logger.logError('', e));

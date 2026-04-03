@@ -83,11 +83,17 @@ export default async function (config: NormalizedServiceConfig) {
     let clientCompilation: WebpackDevServer | RspackDevServer | undefined;
     if (shouldCompileClient) {
         const {watchClientCompilation} = await import('./client.js');
-        clientCompilation = await watchClientCompilation(config, () => {
-            logger.success('Manifest was compiled successfully');
-            clientCompiled = true;
-            startNodemon();
-        });
+        try {
+            clientCompilation = await watchClientCompilation(config, () => {
+                logger.success('Manifest was compiled successfully');
+                clientCompiled = true;
+                startNodemon();
+            });
+        } catch (e) {
+            logger.logError('Failed to start client dev server', e);
+            await serverCompilation?.stop('SIGTERM');
+            process.exit(1);
+        }
     }
 
     process.on('SIGINT', async () => {
