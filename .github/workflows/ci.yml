@@ -74,5 +74,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build app-builder
         run: pnpm run build
+      - name: Rebuild bin links
+        run: pnpm install --frozen-lockfile
       - name: Build examples
         run: pnpm --filter "@examples/*" build
