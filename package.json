@@ -159,6 +159,7 @@
     "@gravity-ui/prettier-config": "^1.1.0",
     "@gravity-ui/tsconfig": "^1.0.0",
     "@sentry/webpack-plugin": "^2.7.1",
+    "@types/babel__core": "^7.20.5",
     "@types/babel__helper-plugin-utils": "^7.10.3",
     "@types/circular-dependency-plugin": "^5.0.8",
     "@types/common-tags": "^1.8.4",

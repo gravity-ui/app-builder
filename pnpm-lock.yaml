@@ -308,6 +308,9 @@ importers:
       '@sentry/webpack-plugin':
         specifier: ^2.7.1
         version: 2.23.1(webpack@5.95.0(@swc/core@1.14.0))
+      '@types/babel__core':
+        specifier: ^7.20.5
+        version: 7.20.5
       '@types/babel__helper-plugin-utils':
         specifier: ^7.10.3
         version: 7.10.3
