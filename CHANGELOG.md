@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.43.0](https://github.com/gravity-ui/app-builder/compare/v0.42.1...v0.43.0) (2026-04-06)
+
+
+### Features
+
+* migrate to pnpm ([#311](https://github.com/gravity-ui/app-builder/issues/311)) ([0eb05c6](https://github.com/gravity-ui/app-builder/commit/0eb05c65d065b6c64fb9dcf1f485554121d50ec7))
+
 ## [0.42.1](https://github.com/gravity-ui/app-builder/compare/v0.42.0...v0.42.1) (2026-04-03)
 
 
