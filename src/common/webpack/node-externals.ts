@@ -68,6 +68,7 @@ function readPackagesNames(dirName: string) {
                         return fs.readdirSync(path.join(dirName, module)).map(function (scopedMod) {
                             return module + '/' + scopedMod;
                         });
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     } catch (e) {
                         return [module];
                     }
@@ -76,6 +77,7 @@ function readPackagesNames(dirName: string) {
             })
             .flat()
             .filter((v) => v !== undefined);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         return [];
     }

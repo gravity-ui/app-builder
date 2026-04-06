@@ -25,7 +25,7 @@ import type {NormalizedServiceConfig} from '../../common/models';
 export async function watchClientCompilation(
     config: NormalizedServiceConfig,
     onManifestReady: () => void,
-) {
+): Promise<WebpackDevServer | RspackDevServer> {
     const clientCompilation = await buildDevServer(config);
 
     const compiler = clientCompilation.compiler;
