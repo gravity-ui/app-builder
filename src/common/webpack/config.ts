@@ -836,20 +836,15 @@ function getCssLoaders(
     loaders.unshift({
         loader: require.resolve('css-loader'),
         options: {
-            url: {
-                filter: (url: string) => {
-                    // ignore data uri
-                    return !url.startsWith('data:');
-                },
-            },
-            sourceMap: !config.disableSourceMapGeneration,
+            ...config.cssLoaderConfig,
             importLoaders,
-            modules: {
-                auto: true,
-                localIdentName: '[name]__[local]--[hash:base64:5]',
-                exportLocalsConvention: 'camelCase',
-                exportOnlyLocals: isSsr,
-            },
+            modules:
+                typeof config.cssLoaderConfig.modules === 'object'
+                    ? {
+                          ...config.cssLoaderConfig.modules,
+                          exportOnlyLocals: isSsr,
+                      }
+                    : config.cssLoaderConfig.modules,
         },
     });
 
