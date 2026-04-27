@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.45.0](https://github.com/gravity-ui/app-builder/compare/v0.44.0...v0.45.0) (2026-04-27)
+
+
+### Features
+
+* support react-compiler ([#315](https://github.com/gravity-ui/app-builder/issues/315)) ([0042455](https://github.com/gravity-ui/app-builder/commit/004245594b556782a05e643184cbd881cc933ef1))
+
 ## [0.44.0](https://github.com/gravity-ui/app-builder/compare/v0.43.0...v0.44.0) (2026-04-21)
 
 
