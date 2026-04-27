@@ -63,6 +63,8 @@
     "@aws-sdk/client-s3": "^3.353.0",
     "@babel/core": "^7.26.0",
     "@babel/helper-plugin-utils": "^7.26.0",
+    "@babel/plugin-syntax-jsx": "^7.25.9",
+    "@babel/plugin-syntax-typescript": "^7.25.9",
     "@babel/plugin-transform-dynamic-import": "^7.25.0",
     "@babel/plugin-transform-modules-commonjs": "^7.26.0",
     "@babel/plugin-transform-runtime": "^7.25.0",

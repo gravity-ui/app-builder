@@ -25,6 +25,12 @@ importers:
       '@babel/helper-plugin-utils':
         specifier: ^7.26.0
         version: 7.28.6
+      '@babel/plugin-syntax-jsx':
+        specifier: ^7.25.9
+        version: 7.28.6(@babel/core@7.29.0)
+      '@babel/plugin-syntax-typescript':
+        specifier: ^7.25.9
+        version: 7.28.6(@babel/core@7.29.0)
       '@babel/plugin-transform-dynamic-import':
         specifier: ^7.25.0
         version: 7.27.1(@babel/core@7.29.0)
