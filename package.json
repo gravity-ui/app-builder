@@ -63,6 +63,8 @@
     "@aws-sdk/client-s3": "^3.353.0",
     "@babel/core": "^7.26.0",
     "@babel/helper-plugin-utils": "^7.26.0",
+    "@babel/plugin-syntax-jsx": "^7.25.9",
+    "@babel/plugin-syntax-typescript": "^7.25.9",
     "@babel/plugin-transform-dynamic-import": "^7.25.0",
     "@babel/plugin-transform-modules-commonjs": "^7.26.0",
     "@babel/plugin-transform-runtime": "^7.25.0",
@@ -90,6 +92,7 @@
     "@swc/plugin-transform-imports": "12.0.1",
     "babel-loader": "^9.2.1",
     "babel-plugin-import": "^1.13.8",
+    "babel-plugin-react-compiler": "^1.0.0",
     "babel-plugin-inline-react-svg": "^2.0.2",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
     "babel-plugin-tsconfig-paths-module-resolver": "^1.0.4",
@@ -189,7 +192,8 @@
   "peerDependencies": {
     "@sentry/webpack-plugin": "^2.7.1",
     "lightningcss": "^1.21.5",
-    "monaco-editor-webpack-plugin": "*"
+    "monaco-editor-webpack-plugin": "*",
+    "react-compiler-runtime": "*"
   },
   "peerDependenciesMeta": {
     "lightningcss": {
@@ -199,6 +203,9 @@
       "optional": true
     },
     "@sentry/webpack-plugin": {
+      "optional": true
+    },
+    "react-compiler-runtime": {
       "optional": true
     }
   },

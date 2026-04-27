@@ -266,6 +266,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
         lazyCompilation: undefined,
         bundler: client.bundler || 'webpack',
         javaScriptLoader: client.javaScriptLoader || 'babel',
+        reactCompiler: client.reactCompiler ?? false,
     };
 
     if (mode === 'dev') {
