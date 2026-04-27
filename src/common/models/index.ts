@@ -22,6 +22,7 @@ import type {UploadOptions} from '../s3-upload/upload';
 import type {TerserOptions} from 'terser-webpack-plugin';
 import type {ReactRefreshPluginOptions} from '@pmmmwh/react-refresh-webpack-plugin/types/lib/types';
 import type {moduleFederationPlugin} from '@module-federation/enhanced';
+import type {PluginOptions as ReactCompilerOptions} from 'babel-plugin-react-compiler';
 
 type Bundler = 'webpack' | 'rspack';
 type JavaScriptLoader = 'babel' | 'swc';
@@ -256,6 +257,24 @@ export interface ClientConfig {
     /** Disable or configure react-refresh in dev mode */
     reactRefresh?: false | ((options: ReactRefreshPluginOptions) => ReactRefreshPluginOptions);
     /**
+     * Enable React Compiler (babel-plugin-react-compiler).
+     *
+     * For React 17/18 set `target` and install `react-compiler-runtime`:
+     * ```ts
+     * reactCompiler: { target: '18' }
+     * ```
+     *
+     * For gradual adoption use `sources` to limit compilation to specific files:
+     * ```ts
+     * // compile only files inside a specific directory
+     * reactCompiler: { sources: (filename) => filename.includes('/src/features/my-feature/') }
+     *
+     * // or pass an array of directory paths
+     * reactCompiler: { sources: ['src/features/new-feature', 'src/components/Button'] }
+     * ```
+     */
+    reactCompiler?: boolean | ReactCompilerOptions;
+    /**
      * Detect modules with circular dependencies
      */
     detectCircularDependencies?: true | CircularDependenciesOptions;
@@ -433,7 +452,9 @@ export type NormalizedClientConfig = Omit<
     | 'disableForkTsChecker'
     | 'disableReactRefresh'
     | 'transformCssWithLightningCss'
+    | 'reactCompiler'
 > & {
+    reactCompiler: boolean | ReactCompilerOptions;
     bundler: Bundler;
     javaScriptLoader: JavaScriptLoader;
     // TODO(DakEnviy): Use cdn to calculate publicPath and merge with browserPublicPath
