@@ -1,4 +1,4 @@
 dist
 CHANGELOG.md
 CONTRIBUTING.md
-package-lock.json
+pnpm-lock.yaml

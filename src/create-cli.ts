@@ -27,6 +27,7 @@ export function createCli(argv: string[]) {
             'Show the version of the app-builder CLI package in the current project',
             getVersionInfo(),
         );
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         // ignore
     }

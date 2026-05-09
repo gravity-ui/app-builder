@@ -10,6 +10,7 @@ function randomChars(howMany: number) {
     // make sure that we do not fail because we ran out of entropy
     try {
         rnd = crypto.randomBytes(howMany);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         // eslint-disable-next-line security/detect-pseudoRandomBytes
         rnd = crypto.pseudoRandomBytes(howMany);
@@ -33,6 +34,7 @@ export function tmpNameSync(tmpDir: string, retries = 3) {
         const name = generateTmpName(tmpDir);
         try {
             fs.statSync(name);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             return name;
         }

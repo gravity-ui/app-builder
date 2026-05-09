@@ -1,8 +1,9 @@
 /* eslint-disable no-param-reassign */
 import {declare} from '@babel/helper-plugin-utils';
+import type {PluginObj} from '@babel/core';
 
 const svgPathRe = /^\.\.\/(.*)\/assets\/(.*)\.svg$/;
-export default declare(function (api) {
+export default declare(function (api): PluginObj {
     return {
         visitor: {
             ImportDeclaration(path) {

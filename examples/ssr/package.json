@@ -1,8 +1,9 @@
 {
-  "name": "ssr",
+  "name": "@examples/ssr",
   "version": "1.0.0",
   "description": "",
   "type": "module",
+  "private": true,
   "scripts": {
     "dev": "app-builder dev",
     "build": "app-builder build",
@@ -14,7 +15,7 @@
   "keywords": [],
   "license": "MIT",
   "devDependencies": {
-    "@gravity-ui/app-builder": "*",
+    "@gravity-ui/app-builder": "workspace:*",
     "@gravity-ui/eslint-config": "^3.2.0",
     "@gravity-ui/prettier-config": "^1.1.0",
     "@gravity-ui/stylelint-config": "^4.0.1",

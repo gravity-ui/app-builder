@@ -1,0 +1,9 @@
+packages:
+  - examples/*
+ignoredBuiltDependencies:
+  - '@parcel/watcher'
+  - '@sentry/cli'
+  - '@swc/core'
+  - core-js
+  - core-js-pure
+  - unrs-resolver

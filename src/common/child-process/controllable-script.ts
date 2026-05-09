@@ -73,6 +73,7 @@ export class ControllableScript {
                     },
                 );
             }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
             // Ignore error if process has crashed or already quit.
         }

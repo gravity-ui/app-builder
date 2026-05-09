@@ -1,5 +1,45 @@
 # Changelog
 
+## [0.45.0](https://github.com/gravity-ui/app-builder/compare/v0.44.0...v0.45.0) (2026-04-27)
+
+
+### Features
+
+* support react-compiler ([#315](https://github.com/gravity-ui/app-builder/issues/315)) ([0042455](https://github.com/gravity-ui/app-builder/commit/004245594b556782a05e643184cbd881cc933ef1))
+
+## [0.44.0](https://github.com/gravity-ui/app-builder/compare/v0.43.0...v0.44.0) (2026-04-21)
+
+
+### Features
+
+* bump rspack to 1.7.11 ([#313](https://github.com/gravity-ui/app-builder/issues/313)) ([65ec38d](https://github.com/gravity-ui/app-builder/commit/65ec38de96fe591d637484cf93a39ffd8ebb107e))
+
+## [0.43.0](https://github.com/gravity-ui/app-builder/compare/v0.42.1...v0.43.0) (2026-04-06)
+
+
+### Features
+
+* migrate to pnpm ([#311](https://github.com/gravity-ui/app-builder/issues/311)) ([0eb05c6](https://github.com/gravity-ui/app-builder/commit/0eb05c65d065b6c64fb9dcf1f485554121d50ec7))
+
+## [0.42.1](https://github.com/gravity-ui/app-builder/compare/v0.42.0...v0.42.1) (2026-04-03)
+
+
+### Bug Fixes
+
+* **dev:** clean up stale IPC socket and abort on client dev server fa… ([#309](https://github.com/gravity-ui/app-builder/issues/309)) ([e7c9d75](https://github.com/gravity-ui/app-builder/commit/e7c9d755f687ff4ecec190ca6e0e953db863011a))
+
+## [0.42.0](https://github.com/gravity-ui/app-builder/compare/v0.41.0...v0.42.0) (2026-03-16)
+
+
+### Features
+
+* **dev:** add support for projects w/ `"references"` ([#306](https://github.com/gravity-ui/app-builder/issues/306)) ([6bdcf1f](https://github.com/gravity-ui/app-builder/commit/6bdcf1f3c290d835a7a153b9d9dd29925ae548e6))
+
+
+### Bug Fixes
+
+* **build:** manually report errors ([#307](https://github.com/gravity-ui/app-builder/issues/307)) ([ede2e47](https://github.com/gravity-ui/app-builder/commit/ede2e47f12eeeaecd9270b57aacf4c9e00350dce))
+
 ## [0.41.0](https://github.com/gravity-ui/app-builder/compare/v0.40.0...v0.41.0) (2026-02-27)
 
 

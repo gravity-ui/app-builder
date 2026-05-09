@@ -8,5 +8,5 @@ node_modules
 # Artifacts
 dist
 
-examples/**/package-lock.json
+examples/**/pnpm-lock.yaml
 .DS_Store

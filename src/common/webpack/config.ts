@@ -559,7 +559,7 @@ async function createJavaScriptLoader({
     configType,
     config,
     isSsr,
-}: HelperOptions): Promise<webpack.RuleSetUseItem> {
+}: HelperOptions): Promise<webpack.RuleSetUseItem[]> {
     if (config.javaScriptLoader === 'swc') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const plugins: Array<[string, Record<string, any>]> = [];
@@ -633,19 +633,31 @@ async function createJavaScriptLoader({
                 };
             }
 
-            return {
+            const swcLoader: webpack.RuleSetUseItem = {
                 loader: 'builtin:swc-loader',
                 options: rspackSwcConfig,
             };
+
+            return config.reactCompiler
+                ? [swcLoader, createReactCompilerBabelLoader(config)]
+                : [swcLoader];
         }
 
-        return {
+        const swcLoader: webpack.RuleSetUseItem = {
             loader: require.resolve('swc-loader'),
             options: swcConfig,
         };
+
+        return config.reactCompiler
+            ? [swcLoader, createReactCompilerBabelLoader(config)]
+            : [swcLoader];
     }
 
     const plugins: Babel.PluginItem[] = [];
+
+    if (config.reactCompiler) {
+        plugins.push(getReactCompilerPlugin(config.reactCompiler));
+    }
 
     if (!isSsr) {
         if (isEnvDevelopment && config.reactRefresh !== false) {
@@ -677,24 +689,56 @@ async function createJavaScriptLoader({
         {configType, isSsr},
     );
 
+    return [
+        {
+            loader: require.resolve('babel-loader'),
+            options: {
+                sourceType: 'unambiguous',
+                ...babelTransformOptions,
+                babelrc: false,
+                configFile: false,
+                compact: isEnvProduction,
+                sourceMaps: !config.disableSourceMapGeneration,
+                cacheCompression: isEnvProduction,
+                cacheDirectory: config.babelCacheDirectory ? config.babelCacheDirectory : true,
+            },
+        },
+    ];
+}
+
+function getReactCompilerPlugin(
+    reactCompiler: NormalizedClientConfig['reactCompiler'],
+): Babel.PluginItem {
+    return [
+        require.resolve('babel-plugin-react-compiler'),
+        typeof reactCompiler === 'object' ? reactCompiler : {},
+    ];
+}
+
+function createReactCompilerBabelLoader(config: NormalizedClientConfig): webpack.RuleSetUseItem {
     return {
         loader: require.resolve('babel-loader'),
         options: {
-            sourceType: 'unambiguous',
-            ...babelTransformOptions,
+            plugins: [
+                getReactCompilerPlugin(config.reactCompiler),
+                require.resolve('@babel/plugin-syntax-jsx'),
+                [
+                    require.resolve('@babel/plugin-syntax-typescript'),
+                    {isTSX: true, allExtensions: true},
+                ],
+            ],
             babelrc: false,
             configFile: false,
-            compact: isEnvProduction,
-            sourceMaps: !config.disableSourceMapGeneration,
-            cacheCompression: isEnvProduction,
-            cacheDirectory: config.babelCacheDirectory ? config.babelCacheDirectory : true,
+            sourceType: 'unambiguous',
+            cacheDirectory: true,
+            cacheCompression: false,
         },
     };
 }
 
 function createJavaScriptRule(
     {config, isEnvProduction}: HelperOptions,
-    jsLoader: webpack.RuleSetUseItem,
+    jsLoader: webpack.RuleSetUseItem[],
 ): webpack.RuleSetRule {
     const include = [
         paths.appClient,
@@ -752,7 +796,7 @@ async function createWorkerRule(options: HelperOptions): Promise<webpack.RuleSet
     return {
         test: /\.worker\.[jt]sx?$/,
         exclude: /node_modules/,
-        use: [...ruleset, await createJavaScriptLoader(options)],
+        use: [...ruleset, ...(await createJavaScriptLoader(options))],
     };
 }
 
@@ -876,7 +920,7 @@ function getCssLoaders(
 
 function createIconsRule(
     {isEnvProduction, config, isSsr}: HelperOptions,
-    jsLoader?: webpack.RuleSetUseItem,
+    jsLoader?: webpack.RuleSetUseItem[],
 ): webpack.RuleSetRule {
     const iconIncludes = config.icons || [];
     return {
@@ -892,7 +936,7 @@ function createIconsRule(
         ...(jsLoader
             ? {
                   use: [
-                      jsLoader,
+                      ...jsLoader,
                       {
                           loader: require.resolve('@svgr/webpack'),
                           options: {

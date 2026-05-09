@@ -288,6 +288,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
             esModule: client.cssLoader?.esModule,
             exportType: client.cssLoader?.exportType,
         },
+        reactCompiler: client.reactCompiler ?? false,
     };
 
     if (mode === 'dev') {
