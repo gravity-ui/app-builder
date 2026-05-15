@@ -277,6 +277,56 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 - `lightningCssMinimizerOptions` (`(options: LightningCssMinimizerRspackPluginOptions) => LightningCssMinimizerRspackPluginOptions`) - modify or return a custom [LightningCssMinimizerRspackPlugin](https://rspack.dev/plugins/rspack/lightning-css-minimizer-rspack-plugin)
 - `terser` (`(options: TerserOptions) => TerserOptions`) - modify or return a custom [Terser options](https://github.com/terser/terser#minify-options).
 
+##### CSS Loader configuration
+
+- `cssLoader` (`Partial<CssLoaderOptions>`) — allows to override default css-loader settings. All options are optional and will be merged with default values.
+
+**CssLoaderOptions interface:**
+
+- `url` (`boolean | {filter: (url: string, resourcePath: string) => boolean}`) — enables/disables `url()`/`image-set()` functions handling. Default: `{filter: (url: string) => !url.startsWith('data:')}` (ignores data URIs)
+- `import` (`boolean | {filter: (url: string, media: string, resourcePath: string) => boolean}`) — enables/disables `@import` at-rules handling
+- `modules` (`boolean | 'local' | 'global' | 'pure' | 'icss' | CssLoaderModulesOptions`) — enables/disables CSS Modules or ICSS and setup configuration. Default: `{auto: true, localIdentName: '[name]__[local]--[hash:base64:5]', exportLocalsConvention: 'camelCase'}`
+- `sourceMap` (`boolean`) — enables/disables source maps. Default: `!disableSourceMapGeneration`
+- `esModule` (`boolean`) — use the ES modules syntax
+- `exportType` (`'array' | 'string' | 'css-style-sheet'`) — allows exporting styles as array with modules, string or constructable stylesheet
+
+**CssLoaderModulesOptions interface:**
+
+- `auto` (`RegExp | ((resourcePath: string) => boolean) | boolean`) — allows auto enable CSS modules based on filename
+- `mode` (`'local' | 'global' | 'pure' | 'icss' | ((resourcePath: string) => 'local' | 'global' | 'pure' | 'icss')`) — setup mode option
+- `localIdentName` (`string`) — allows to configure the generated local ident name
+- `localIdentContext` (`string`) — allows to redefine basic loader context for local ident name
+- `localIdentHashSalt` (`string`) — allows to add custom hash to generate more unique classes
+- `localIdentHashFunction` (`string`) — allows to specify hash function to generate classes
+- `localIdentHashDigest` (`string`) — allows to specify hash digest to generate classes
+- `localIdentHashDigestLength` (`number`) — allows to specify hash digest length to generate classes
+- `hashStrategy` (`'resource-path-and-local-name' | 'minimal-subset'`) — allows to specify should localName be used when computing the hash
+- `localIdentRegExp` (`string | RegExp`) — allows to specify custom RegExp for local ident name
+- `getLocalIdent` (`(context: {resourcePath: string, resourceQuery: string}, localIdentName: string, localName: string, options: CssLoaderModulesOptions) => string`) — allows to specify a function to generate the classname
+- `namedExport` (`boolean`) — enables/disables ES modules named export for locals
+- `exportGlobals` (`boolean`) — allows to export names from global class or id, so you can use that as local name
+- `exportLocalsConvention` (`'asIs' | 'as-is' | 'camelCase' | 'camel-case' | 'camelCaseOnly' | 'camel-case-only' | 'dashes' | 'dashesOnly' | 'dashes-only' | ((className: string) => string)`) — style of exported classnames
+- `exportOnlyLocals` (`boolean`) — export only locals
+- `getJSON` (`(cssModules: Record<string, string>) => void`) — allows outputting of CSS modules mapping through a callback
+
+For more details, see [css-loader documentation](https://github.com/webpack/css-loader#options).
+
+**Default configuration:**
+
+```ts
+{
+  url: {
+    filter: (url: string) => !url.startsWith('data:'),
+  },
+  sourceMap: !disableSourceMapGeneration,
+  modules: {
+    auto: true,
+    localIdentName: '[name]__[local]--[hash:base64:5]',
+    exportLocalsConvention: 'camelCase',
+  },
+}
+```
+
 ##### Monaco editor support
 
 - `monaco` (`object`) — use [monaco-editor-webpack-plugin](https://github.com/microsoft/monaco-editor/tree/main/webpack-plugin#monaco-editor-webpack-loader-plugin)
