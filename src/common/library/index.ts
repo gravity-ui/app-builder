@@ -257,6 +257,7 @@ export function buildLibrary(config: LibraryConfig) {
                         },
                     ],
                     require.resolve('./babel-plugin-replace-paths'),
+                    ...(config.lib.babelPlugins || []),
                 ],
                 sourceMaps: true,
             },
