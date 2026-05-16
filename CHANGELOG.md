@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.46.0](https://github.com/gravity-ui/app-builder/compare/v0.45.0...v0.46.0) (2026-05-16)
+
+
+### Features
+
+* support for babel plugins in lib config ([#318](https://github.com/gravity-ui/app-builder/issues/318)) ([97e8eb0](https://github.com/gravity-ui/app-builder/commit/97e8eb028ef59ee0e705f866ed60180e9fed95f9))
+
 ## [0.45.0](https://github.com/gravity-ui/app-builder/compare/v0.44.0...v0.45.0) (2026-04-27)
 
 
