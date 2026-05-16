@@ -24,9 +24,14 @@ export async function configureServiceWebpackConfig(
     });
     let options: ClientConfig = {};
     if (isLibraryConfig(serviceConfig)) {
+        const libBabelPlugins = serviceConfig.lib?.babelPlugins || [];
         options = {
             includes: ['src'],
             newJsxTransform: serviceConfig.lib?.newJsxTransform,
+            babel: (babelConfig) => ({
+                ...babelConfig,
+                plugins: [...(babelConfig.plugins || []), ...libBabelPlugins],
+            }),
         };
     } else {
         options = serviceConfig.client;

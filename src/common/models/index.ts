@@ -62,6 +62,11 @@ export interface LibraryConfig {
          * Use new JSX Transform
          */
         newJsxTransform?: boolean;
+        /**
+         * Additional Babel plugins appended to the library compile pipeline
+         * (also injected into the Storybook babel-loader via configureServiceWebpackConfig).
+         */
+        babelPlugins?: Babel.PluginItem[];
     };
     verbose?: boolean;
 }
