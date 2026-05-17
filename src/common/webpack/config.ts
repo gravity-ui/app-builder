@@ -17,7 +17,7 @@ import {rspack} from '@rspack/core';
 import type * as Rspack from '@rspack/core';
 import {generateAssetsManifest} from './rspack';
 import {TsCheckerRspackPlugin} from 'ts-checker-rspack-plugin';
-import ReactRefreshRspackPlugin from '@rspack/plugin-react-refresh';
+import {ReactRefreshRspackPlugin} from '@rspack/plugin-react-refresh';
 
 import type TerserWebpackPlugin from 'terser-webpack-plugin';
 import type * as Lightningcss from 'lightningcss';
@@ -193,8 +193,11 @@ export async function rspackConfigFactory(
     const helperOptions = getHelperOptions(options);
     const {isSsr, isEnvProduction, isEnvDevelopment} = helperOptions;
 
+    const rspackCache = configureRspackCache(helperOptions);
+    const lazyCompilation = configureRspackLazyCompilation(helperOptions);
     // Cache is required for lazy compilation
-    const cache = Boolean(config.cache) || (isEnvDevelopment && Boolean(config.lazyCompilation));
+    const cache =
+        rspackCache ?? (Boolean(config.cache) || (isEnvDevelopment && Boolean(lazyCompilation)));
 
     let rspackConfig: Rspack.Configuration = {
         mode: isEnvProduction ? 'production' : 'development',
@@ -221,8 +224,8 @@ export async function rspackConfigFactory(
               }
             : undefined,
 
-        experiments: configureRspackExperiments(helperOptions),
         cache,
+        lazyCompilation,
     };
 
     rspackConfig = await config.rspack(rspackConfig, {
@@ -363,28 +366,27 @@ function configureExperiments({
     };
 }
 
-function configureRspackExperiments(options: HelperOptions): Rspack.Configuration['experiments'] {
+function configureRspackLazyCompilation(
+    options: HelperOptions,
+): Rspack.LazyCompilationOptions | undefined {
     const {config, isSsr, isEnvProduction} = options;
-
-    if (isSsr) {
-        return config.ssr?.moduleType === 'esm' ? {outputModule: true} : undefined;
-    }
-
-    if (isEnvProduction) {
+    if (isSsr || isEnvProduction || !config.lazyCompilation) {
         return undefined;
     }
+    return {
+        // Lazy compilation works without problems only with lazy imports
+        // See https://github.com/web-infra-dev/rspack/issues/8503
+        entries: false,
+        imports: true,
+        prefix: '/build/lazy-',
+        test: config.lazyCompilation?.test ?? undefined,
+    };
+}
 
-    let lazyCompilation: Rspack.LazyCompilationOptions | undefined;
-
-    if (config.lazyCompilation) {
-        lazyCompilation = {
-            // Lazy compilation works without problems only with lazy imports
-            // See https://github.com/web-infra-dev/rspack/issues/8503
-            entries: false,
-            imports: true,
-            prefix: '/build/lazy-',
-            test: config.lazyCompilation?.test ?? undefined,
-        };
+function configureRspackCache(options: HelperOptions): Rspack.Configuration['cache'] {
+    const {config, isSsr, isEnvProduction} = options;
+    if (isSsr || isEnvProduction) {
+        return undefined;
     }
 
     const filesystemCacheOptions =
@@ -399,19 +401,16 @@ function configureRspackExperiments(options: HelperOptions): Rspack.Configuratio
         .join('-');
 
     return {
-        cache: {
-            version: cacheVersion || undefined,
-            type: 'persistent',
-            snapshot: {
-                managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
-            },
-            storage: {
-                type: 'filesystem',
-                directory: filesystemCacheOptions?.cacheDirectory,
-            },
-            buildDependencies: Object.values(getCacheBuildDependencies(options)).flat(),
+        version: cacheVersion || undefined,
+        type: 'persistent',
+        snapshot: {
+            managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
         },
-        lazyCompilation,
+        storage: {
+            type: 'filesystem',
+            directory: filesystemCacheOptions?.cacheDirectory,
+        },
+        buildDependencies: Object.values(getCacheBuildDependencies(options)).flat(),
     };
 }
 
@@ -533,9 +532,11 @@ function getFileNames({isEnvProduction, isSsr, config}: HelperOptions) {
 function configureOutput(options: HelperOptions) {
     let ssrOptions, moduleFederationOptions;
     if (options.isSsr) {
+        const isEsm = options.config.ssr?.moduleType === 'esm';
         ssrOptions = {
-            library: {type: options.config.ssr?.moduleType === 'esm' ? 'module' : 'commonjs2'},
+            library: {type: isEsm ? 'module' : 'commonjs2'},
             chunkFormat: false,
+            ...(isEsm ? {module: true} : {}),
         } satisfies NonNullable<webpack.Configuration['output']>;
     }
     if (options.config.moduleFederation) {
@@ -623,14 +624,12 @@ async function createJavaScriptLoader({
             };
 
             if (!isSsr && isEnvProduction) {
-                rspackSwcConfig.rspackExperiments = {
-                    import: [
-                        {
-                            libraryName: 'lodash',
-                            customName: 'lodash/{{member}}',
-                        },
-                    ],
-                };
+                rspackSwcConfig.transformImport = [
+                    {
+                        libraryName: 'lodash',
+                        customName: 'lodash/{{member}}',
+                    },
+                ];
             }
 
             const swcLoader: webpack.RuleSetUseItem = {
@@ -1482,30 +1481,12 @@ function configureRspackPlugins(options: HelperOptions): Rspack.Configuration['p
         const {webSocketPath = path.normalize(`/${config.publicPath}/sockjs-node`)} =
             config.devServer || {};
 
-        const {overlay, ...reactRefreshConfig} = config.reactRefresh({
+        const {overlay: _overlay, ...reactRefreshConfig} = config.reactRefresh({
             overlay: {sockPath: webSocketPath},
             exclude: [/node_modules/, /\.worker\.[jt]sx?$/],
         });
 
-        rspackPlugins.push(
-            new ReactRefreshRspackPlugin({
-                ...reactRefreshConfig,
-                overlay:
-                    typeof overlay === 'object'
-                        ? {
-                              entry: typeof overlay.entry === 'string' ? overlay.entry : undefined,
-                              module:
-                                  typeof overlay.module === 'string' ? overlay.module : undefined,
-                              sockPath: overlay.sockPath,
-                              sockHost: overlay.sockHost,
-                              sockPort: overlay.sockPort?.toString(),
-                              sockProtocol: overlay.sockProtocol,
-                              sockIntegration:
-                                  overlay.sockIntegration === 'wds' ? 'wds' : undefined,
-                          }
-                        : undefined,
-            }),
-        );
+        rspackPlugins.push(new ReactRefreshRspackPlugin(reactRefreshConfig));
     }
 
     return rspackPlugins;

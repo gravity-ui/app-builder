@@ -10,3 +10,6 @@ dist
 
 examples/**/pnpm-lock.yaml
 .DS_Store
+
+.claude/*
+!.claude/.gitkeep

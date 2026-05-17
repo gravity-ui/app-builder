@@ -11,6 +11,7 @@ import {
     Compiler as RspackCompiler,
     Configuration as RspackConfiguration,
     MultiCompiler as RspackMultiCompiler,
+    lazyCompilationMiddleware,
     rspack,
 } from '@rspack/core';
 import {RspackDevServer} from '@rspack/dev-server';
@@ -110,11 +111,9 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         static: staticFolder,
         setupMiddlewares(middlewares) {
             if (config.client.lazyCompilation && bundler === 'rspack') {
-                const lazyCompilationMiddleware = rspack.experiments.lazyCompilationMiddleware(
-                    compiler as RspackCompiler,
-                );
+                const middleware = lazyCompilationMiddleware(compiler as RspackCompiler);
 
-                return [lazyCompilationMiddleware, ...middlewares];
+                return [middleware, ...middlewares];
             }
 
             return middlewares;
