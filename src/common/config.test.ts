@@ -256,3 +256,46 @@ describe('cssLoader configuration', () => {
         });
     });
 });
+
+describe('postCssLoader configuration', () => {
+    it('should not set postCssLoader when not specified', async () => {
+        const clientConfig: ClientConfig = {};
+        const normalized = await normalizeConfig({client: clientConfig});
+
+        expect(normalized.client.postCssLoader).toBeUndefined();
+    });
+
+    it('should pass through postCssLoader config when specified', async () => {
+        const clientConfig: ClientConfig = {
+            postCssLoader: {
+                config: true,
+                plugins: [
+                    ['autoprefixer', {grid: true}],
+                    ['postcss-nested', {}],
+                ],
+            },
+        };
+        const normalized = await normalizeConfig({client: clientConfig});
+
+        expect(normalized.client.postCssLoader).toEqual({
+            config: true,
+            plugins: [
+                ['autoprefixer', {grid: true}],
+                ['postcss-nested', {}],
+            ],
+        });
+    });
+
+    it('should allow partial postCssLoader config', async () => {
+        const clientConfig: ClientConfig = {
+            postCssLoader: {
+                plugins: [['autoprefixer', {grid: true}]],
+            },
+        };
+        const normalized = await normalizeConfig({client: clientConfig});
+
+        expect(normalized.client.postCssLoader).toEqual({
+            plugins: [['autoprefixer', {grid: true}]],
+        });
+    });
+});

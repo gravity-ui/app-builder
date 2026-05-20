@@ -408,6 +408,10 @@ export interface ExtendedPostCSSConfig extends Omit<PostCSSConfig, 'plugins'> {
      * @see https://github.com/webpack/postcss-loader#boolean
      */
     config?: boolean;
+    /**
+     * Additional plugins to be added to the postcss plugins list.
+     * Each plugin is represented as a tuple of [pluginName, pluginOptions].
+     */
     plugins?: Array<[string, object]>;
 }
 
