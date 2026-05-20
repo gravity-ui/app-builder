@@ -26,7 +26,7 @@ import type * as Babel from '@babel/core';
 
 import paths from '../paths';
 import {babelPreset} from '../babel';
-import type {NormalizedClientConfig, WebWorkerHandle} from '../models';
+import type {ExtendedPostCSSConfig, NormalizedClientConfig, WebWorkerHandle} from '../models';
 import type {Logger} from '../logger';
 import {createProgressPlugin} from './progress-plugin';
 import {getNormalizedWorkerOption, resolveTsConfigPathsToAlias} from './utils';
@@ -843,7 +843,6 @@ function getCssLoaders(
     const loaders: webpack.RuleSetUseItem[] = [];
 
     if (!config.transformCssWithLightningCss) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const postcssPlugins: Array<[string, Record<string, any>]> = [
             [require.resolve('postcss-preset-env'), {enableClientSidePolyfills: false}],
         ];
@@ -865,9 +864,10 @@ function getCssLoaders(
             options: {
                 sourceMap: !config.disableSourceMapGeneration,
                 postcssOptions: {
-                    config: false,
-                    plugins: postcssPlugins,
-                },
+                    ...config.postCssLoader,
+                    config: config.postCssLoader?.config ?? false,
+                    plugins: [...postcssPlugins, ...(config.postCssLoader?.plugins ?? [])],
+                } satisfies ExtendedPostCSSConfig,
             },
         });
     }
