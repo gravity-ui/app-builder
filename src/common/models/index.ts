@@ -386,7 +386,13 @@ export interface ClientConfig {
      */
     cssLoader?: Partial<CssLoaderOptions>;
 
-    postCssLoader?: Partial<ExtendedPostCSSConfig>;
+    /**
+     * Modify or return a custom [PostCSS loader options]
+     * @see https://github.com/webpack/postcss-loader#options.
+     */
+    postCssLoaderOptions?: (
+        options: Partial<ExtendedPostCSSConfig>,
+    ) => Partial<ExtendedPostCSSConfig>;
 
     ssr?: {
         noExternal?: string | RegExp | (string | RegExp)[] | true;

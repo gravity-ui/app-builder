@@ -289,7 +289,10 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
             exportType: client.cssLoader?.exportType,
         },
         reactCompiler: client.reactCompiler ?? false,
-        postCssLoader: client.postCssLoader,
+        postCssLoaderOptions:
+            typeof client.postCssLoaderOptions === 'function'
+                ? client.postCssLoaderOptions
+                : (config) => config,
     };
 
     if (mode === 'dev') {

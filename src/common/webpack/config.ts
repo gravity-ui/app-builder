@@ -859,15 +859,20 @@ function getCssLoaders(
             ]);
         }
 
+        let postCssLoaderOptions: ExtendedPostCSSConfig = {
+            config: false,
+            plugins: [...postcssPlugins],
+        };
+
+        if (typeof config.postCssLoaderOptions === 'function') {
+            postCssLoaderOptions = config.postCssLoaderOptions(postCssLoaderOptions);
+        }
+
         loaders.push({
             loader: require.resolve('postcss-loader'),
             options: {
                 sourceMap: !config.disableSourceMapGeneration,
-                postcssOptions: {
-                    ...config.postCssLoader,
-                    config: config.postCssLoader?.config ?? false,
-                    plugins: [...postcssPlugins, ...(config.postCssLoader?.plugins ?? [])],
-                } satisfies ExtendedPostCSSConfig,
+                postcssOptions: postCssLoaderOptions,
             },
         });
     }
