@@ -23,6 +23,7 @@ import type {TerserOptions} from 'terser-webpack-plugin';
 import type {ReactRefreshPluginOptions} from '@pmmmwh/react-refresh-webpack-plugin/types/lib/types';
 import type {moduleFederationPlugin} from '@module-federation/enhanced';
 import type {PluginOptions as ReactCompilerOptions} from 'babel-plugin-react-compiler';
+import type {Config as PostCSSConfig} from 'postcss-load-config';
 
 type Bundler = 'webpack' | 'rspack';
 type JavaScriptLoader = 'babel' | 'swc';
@@ -385,6 +386,14 @@ export interface ClientConfig {
      */
     cssLoader?: Partial<CssLoaderOptions>;
 
+    /**
+     * Modify or return a custom [PostCSS loader options]
+     * @see https://github.com/webpack/postcss-loader#options.
+     */
+    postCssLoaderOptions?: (
+        options: Partial<ExtendedPostCSSConfig>,
+    ) => Partial<ExtendedPostCSSConfig>;
+
     ssr?: {
         noExternal?: string | RegExp | (string | RegExp)[] | true;
         moduleType?: 'commonjs' | 'esm';
@@ -397,6 +406,19 @@ export interface ClientConfig {
      * @see https://module-federation.io/
      */
     moduleFederation?: ModuleFederationConfig;
+}
+
+export interface ExtendedPostCSSConfig extends Omit<PostCSSConfig, 'plugins'> {
+    /**
+     * Enables/Disables autoloading config.
+     * @see https://github.com/webpack/postcss-loader#boolean
+     */
+    config?: boolean;
+    /**
+     * Additional plugins to be added to the postcss plugins list.
+     * Each plugin is represented as a tuple of [pluginName, pluginOptions].
+     */
+    plugins?: Array<[string, object]>;
 }
 
 export interface CdnUploadConfig {
