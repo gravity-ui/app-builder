@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.47.0](https://github.com/gravity-ui/app-builder/compare/v0.46.0...v0.47.0) (2026-05-29)
+
+
+### Features
+
+* upgrade rsdoctor and expose rsdoctorConfig ([#322](https://github.com/gravity-ui/app-builder/issues/322)) ([a28d70d](https://github.com/gravity-ui/app-builder/commit/a28d70dd529031646d7db5f28d34a67d5f2218fd))
+
 ## [0.46.0](https://github.com/gravity-ui/app-builder/compare/v0.45.0...v0.46.0) (2026-05-16)
 
 
