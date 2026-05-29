@@ -1388,6 +1388,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
             plugins.push(
                 new bundlerPlugins.RSDoctorPlugin({
                     mode: 'brief',
+                    ...config.rsdoctorConfig,
                 }),
             );
         }
