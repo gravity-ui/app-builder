@@ -1,0 +1,113 @@
+:root {
+    color-scheme: light dark;
+    font-family:
+        system-ui,
+        -apple-system,
+        Segoe UI,
+        Roboto,
+        sans-serif;
+}
+
+body {
+    margin: 0;
+    background: #0e1116;
+    color: #e6edf3;
+}
+
+.app-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 24px;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+}
+
+.app-header__brand {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.app-header__nav {
+    display: flex;
+    gap: 8px;
+}
+
+.app-header__link {
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: #c9d1d9;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+
+.app-header__link:hover {
+    background: #21262d;
+}
+
+.app-header__link--active {
+    background: #1f6feb;
+    color: white;
+}
+
+.app-shell__main {
+    flex: 1;
+    padding: 32px;
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.app-shell__loader {
+    color: #8b949e;
+}
+
+.home h1 {
+    margin-top: 0;
+}
+
+.home code,
+.mf-card code {
+    background: #161b22;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.mf-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 24px;
+}
+
+.mf-card h2 {
+    margin-top: 0;
+}
+
+.mf-card__counter {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mf-card__button {
+    background: #238636;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.mf-card__button:hover {
+    background: #2ea043;
+}
