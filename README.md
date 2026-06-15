@@ -172,6 +172,28 @@ All server settings are used only in dev mode:
 `app-builder` bundles client with [webpack](https://webpack.js.org). Client code must be in `src/ui` folder.
 `src/ui/entries` - each file in this folder is used as entrypoint. `dist/public/build` is output directory for bundles.
 
+#### Runtime public path (`window.__PUBLIC_PATH__`)
+
+`window.__PUBLIC_PATH__` is a global variable you set in your HTML page — it is **not** a config option. The build-time `publicPath` and `publicPathPrefix` options only affect the dev server and the value of `process.env.PUBLIC_PATH`; they do **not** control where the browser fetches async chunks at runtime. That base URL comes from `window.__PUBLIC_PATH__`.
+
+`app-builder` prepends a tiny bootstrap module to every client entry that overrides webpack's [`__webpack_public_path__`](https://webpack.js.org/guides/public-path/#on-the-fly) from this global:
+
+```js
+__webpack_public_path__ = window.__PUBLIC_PATH__;
+```
+
+Define it in the page **before** any bundle is loaded — e.g. in the `<head>` of `index.html`:
+
+```html
+<script>
+  window.__PUBLIC_PATH__ = '/'; // path under which the build output is served
+</script>
+```
+
+Set it to wherever the `dist/public/build` output is actually served: `'/'` if assets are served from the site root, `'/build/'` for the default layout, or a full origin such as `'https://cdn.example.com/build/'` for a CDN.
+
+If dynamic imports 404 at `/build/js/...` while other assets load from `/js/...`, or HMR breaks in dev, set this global — changing `publicPath` in config will not help.
+
 #### Options
 
 All paths must be specified relative `rootDir` of the project.
