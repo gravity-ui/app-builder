@@ -26,7 +26,7 @@ import type * as Babel from '@babel/core';
 
 import paths from '../paths';
 import {babelPreset} from '../babel';
-import type {NormalizedClientConfig, WebWorkerHandle} from '../models';
+import type {ExtendedPostCSSConfig, NormalizedClientConfig, WebWorkerHandle} from '../models';
 import type {Logger} from '../logger';
 import {createProgressPlugin} from './progress-plugin';
 import {getNormalizedWorkerOption, resolveTsConfigPathsToAlias} from './utils';
@@ -843,7 +843,6 @@ function getCssLoaders(
     const loaders: webpack.RuleSetUseItem[] = [];
 
     if (!config.transformCssWithLightningCss) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const postcssPlugins: Array<[string, Record<string, any>]> = [
             [require.resolve('postcss-preset-env'), {enableClientSidePolyfills: false}],
         ];
@@ -860,14 +859,20 @@ function getCssLoaders(
             ]);
         }
 
+        let postCssLoaderOptions: ExtendedPostCSSConfig = {
+            config: false,
+            plugins: [...postcssPlugins],
+        };
+
+        if (typeof config.postCssLoaderOptions === 'function') {
+            postCssLoaderOptions = config.postCssLoaderOptions(postCssLoaderOptions);
+        }
+
         loaders.push({
             loader: require.resolve('postcss-loader'),
             options: {
                 sourceMap: !config.disableSourceMapGeneration,
-                postcssOptions: {
-                    config: false,
-                    plugins: postcssPlugins,
-                },
+                postcssOptions: postCssLoaderOptions,
             },
         });
     }
@@ -1383,6 +1388,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
             plugins.push(
                 new bundlerPlugins.RSDoctorPlugin({
                     mode: 'brief',
+                    ...config.rsdoctorConfig,
                 }),
             );
         }

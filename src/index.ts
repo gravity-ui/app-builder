@@ -8,6 +8,7 @@ export {defineConfig} from './common/models';
 export {babelPreset} from './common/babel';
 
 export type {
+    DevServerConfig,
     ProjectConfig,
     ServiceConfig,
     LibraryConfig,

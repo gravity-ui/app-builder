@@ -172,6 +172,28 @@ All server settings are used only in dev mode:
 `app-builder` bundles client with [webpack](https://webpack.js.org). Client code must be in `src/ui` folder.
 `src/ui/entries` - each file in this folder is used as entrypoint. `dist/public/build` is output directory for bundles.
 
+#### Runtime public path (`window.__PUBLIC_PATH__`)
+
+`window.__PUBLIC_PATH__` is a global variable you set in your HTML page — it is **not** a config option. The build-time `publicPath` and `publicPathPrefix` options only affect the dev server and the value of `process.env.PUBLIC_PATH`; they do **not** control where the browser fetches async chunks at runtime. That base URL comes from `window.__PUBLIC_PATH__`.
+
+`app-builder` prepends a tiny bootstrap module to every client entry that overrides webpack's [`__webpack_public_path__`](https://webpack.js.org/guides/public-path/#on-the-fly) from this global:
+
+```js
+__webpack_public_path__ = window.__PUBLIC_PATH__;
+```
+
+Define it in the page **before** any bundle is loaded — e.g. in the `<head>` of `index.html`:
+
+```html
+<script>
+  window.__PUBLIC_PATH__ = '/'; // path under which the build output is served
+</script>
+```
+
+Set it to wherever the `dist/public/build` output is actually served: `'/'` if assets are served from the site root, `'/build/'` for the default layout, or a full origin such as `'https://cdn.example.com/build/'` for a CDN.
+
+If dynamic imports 404 at `/build/js/...` while other assets load from `/js/...`, or HMR breaks in dev, set this global — changing `publicPath` in config will not help.
+
 #### Options
 
 All paths must be specified relative `rootDir` of the project.
@@ -231,13 +253,46 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 
 ##### Dev build
 
-- `devServer` (`Object`) — webpack dev server options.
+- `devServer` (`DevServerConfig`) — [webpack-dev-server](https://webpack.js.org/configuration/dev-server/) options with app-builder-specific settings. All options are passed to the underlying dev server and can override defaults.
+
+  App-builder-specific options:
+
   - `ipc` (`string`) — the Unix socket to listen to. If `ipc` and `port` are not defined, then the socket `{rootDir}/dist/run/client.sock` is used.
   - `port` (`number | true`) — specify a port number to listen for requests on. If `true`, the free port will be selected automatically.
   - `webSocketPath` (`string`) — tells clients connected to devServer to use the provided path to connect. Default is `${publicPathPrefix}/build/sockjs-node`.
   - `webSocketClientPort` (`number`) - tells clients to connect to devServer using this port from a browser. Default is `${devServer.port}`
   - `type` (`'https'`) — allow to serve over HTTPS.
   - `options` (`import('https').ServerOptions`) — allow to provide your own certificate.
+  - `writeToDisk` (`boolean | (targetPath: string) => boolean`) — write dev middleware output to disk.
+
+  Commonly used [webpack-dev-server](https://webpack.js.org/configuration/dev-server/) options:
+
+  - `host` (`string`) — hostname to bind the server to. Default is `'0.0.0.0'`.
+  - `proxy` (`ProxyConfigArray`) — proxy configuration for API requests. [more](https://webpack.js.org/configuration/dev-server/#devserverproxy)
+  - `historyApiFallback` (`boolean | ConnectHistoryApiFallbackOptions`) — enable SPA fallback for client-side routing. [more](https://webpack.js.org/configuration/dev-server/#devserverhistoryapifallback)
+  - `client` (`boolean | ClientConfiguration`) — browser client settings. [more](https://webpack.js.org/configuration/dev-server/#devserverclient)
+    - `overlay` (`boolean | {errors?: boolean, warnings?: boolean, runtimeErrors?: boolean}`) — show compile errors and warnings in the browser overlay.
+
+  Example:
+
+  ```typescript
+  import {defineConfig} from '@gravity-ui/app-builder';
+
+  export default defineConfig({
+    client: {
+      devServer: {
+        port: true,
+        host: 'localhost',
+        historyApiFallback: true,
+        proxy: [{context: ['/api'], target: 'http://localhost:3000'}],
+        client: {
+          overlay: false,
+        },
+      },
+    },
+  });
+  ```
+
 - `watchOptions` — a set of options used to customize watch mode, [more](https://webpack.js.org/configuration/watch/#watchoptions)
   - `watchPackages` (`boolean`) - watch all changes in `node_modules`.
 - `reactRefresh` (`false | (options: ReactRefreshPluginOptions) => ReactRefreshPluginOptions`) — disable or configure `react-refresh` in dev mode, [more](https://github.com/pmmmwh/react-refresh-webpack-plugin/blob/main/docs/API.md#options)
@@ -250,11 +305,13 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 
 ##### Production build
 
-- `analyzeBundle` (`true | statoscope`) — tools to analyze bundle.
+- `analyzeBundle` (`true | statoscope | rsdoctor`) — tools to analyze bundle.
   - `true` — enable [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) plugin. Report generated to `dist/public/build/stats.html`
   - `statoscope` — enable [statoscope](https://github.com/statoscope/statoscope) plugin. Reports generated to `dist/public/build/stats.json` and `dist/public/build/report.json`
+  - `rsdoctor` — enable [Rsdoctor](https://rsdoctor.dev/) plugin (`@rsdoctor/webpack-plugin` or `@rsdoctor/rspack-plugin` depending on the chosen bundler). Defaults to `brief` mode.
 - `reactProfiling` (`boolean`) — use react profiler API in production, this option also disable minimization. The API is required by React developers tools for profile.
 - `statoscopeConfig` (`Options`) — `@statoscope/webpack-plugin` [configuration options](https://github.com/statoscope/statoscope/tree/master/packages/webpack-plugin#usage). Might be used to override the defaults. Requires `analyzeBundle: statoscope`.
+- `rsdoctorConfig` (`RsdoctorRspackPluginOptions`) — Rsdoctor plugin [configuration options](https://rsdoctor.dev/config/options/options). Merged on top of the defaults (`{ mode: 'brief' }`). Requires `analyzeBundle: rsdoctor`.
 - `cdn` (`CdnUploadConfig | CdnUploadConfig[]`) - upload bundled client files to CDN.
   - `bucket` (`string`) — bucket name
   - `prefix` (`string`) — path to files inside the bucket

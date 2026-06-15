@@ -11,11 +11,15 @@ import type {
 } from '@rspack/core';
 import type * as Babel from '@babel/core';
 import type * as Swc from '@swc/core';
-import type {ServerConfiguration} from 'webpack-dev-server';
+import type {
+    ServerConfiguration,
+    Configuration as WebpackDevServerConfiguration,
+} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
 import type {Config as SvgrConfig} from '@svgr/core';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
 import type {Options as StatoscopeOptions} from '@statoscope/webpack-plugin';
+import type {RsdoctorRspackPlugin} from '@rsdoctor/rspack-plugin';
 import type {SentryWebpackPluginOptions} from '@sentry/webpack-plugin';
 import type {WebpackMode} from '../webpack/config';
 import type {UploadOptions} from '../s3-upload/upload';
@@ -23,6 +27,7 @@ import type {TerserOptions} from 'terser-webpack-plugin';
 import type {ReactRefreshPluginOptions} from '@pmmmwh/react-refresh-webpack-plugin/types/lib/types';
 import type {moduleFederationPlugin} from '@module-federation/enhanced';
 import type {PluginOptions as ReactCompilerOptions} from 'babel-plugin-react-compiler';
+import type {Config as PostCSSConfig} from 'postcss-load-config';
 
 type Bundler = 'webpack' | 'rspack';
 type JavaScriptLoader = 'babel' | 'swc';
@@ -35,15 +40,45 @@ export interface Entities<T> {
     keys: string[];
 }
 
-interface DevServerConfig {
+/**
+ * Dev server configuration.
+ * Extends [webpack-dev-server options](https://webpack.js.org/configuration/dev-server/)
+ * with app-builder-specific settings.
+ */
+export type DevServerConfig = Omit<
+    WebpackDevServerConfiguration,
+    'port' | 'server' | 'devMiddleware' | 'ipc'
+> & {
+    /**
+     * Unix socket to listen on.
+     * If `ipc` and `port` are not defined, the socket `{rootDir}/dist/run/client.sock` is used.
+     */
     ipc?: string;
+    /**
+     * Port number to listen on. If `true`, a free port is selected automatically.
+     */
     port?: number | true;
+    /**
+     * WebSocket path for HMR clients. Default is `/${publicPath}/sockjs-node`.
+     */
     webSocketPath?: string;
+    /**
+     * Port for browser WebSocket connection. Default is `devServer.port`.
+     */
     webSocketClientPort?: number;
+    /**
+     * Serve over HTTPS.
+     */
     type?: 'https';
+    /**
+     * HTTPS server options (e.g. custom certificate).
+     */
     options?: import('https').ServerOptions;
+    /**
+     * Write dev middleware output to disk.
+     */
     writeToDisk?: boolean | ((targetPath: string) => boolean);
-}
+};
 
 interface ContextReplacement {
     'highlight.js'?: string[];
@@ -252,6 +287,7 @@ export interface ClientConfig {
     excludeFromClean?: string[];
     analyzeBundle?: 'true' | 'statoscope' | 'rsdoctor';
     statoscopeConfig?: Partial<StatoscopeOptions>;
+    rsdoctorConfig?: Partial<NonNullable<ConstructorParameters<typeof RsdoctorRspackPlugin>[0]>>;
     reactProfiling?: boolean;
     /**
      * Disable react-refresh in dev mode
@@ -385,6 +421,14 @@ export interface ClientConfig {
      */
     cssLoader?: Partial<CssLoaderOptions>;
 
+    /**
+     * Modify or return a custom [PostCSS loader options]
+     * @see https://github.com/webpack/postcss-loader#options.
+     */
+    postCssLoaderOptions?: (
+        options: Partial<ExtendedPostCSSConfig>,
+    ) => Partial<ExtendedPostCSSConfig>;
+
     ssr?: {
         noExternal?: string | RegExp | (string | RegExp)[] | true;
         moduleType?: 'commonjs' | 'esm';
@@ -397,6 +441,19 @@ export interface ClientConfig {
      * @see https://module-federation.io/
      */
     moduleFederation?: ModuleFederationConfig;
+}
+
+export interface ExtendedPostCSSConfig extends Omit<PostCSSConfig, 'plugins'> {
+    /**
+     * Enables/Disables autoloading config.
+     * @see https://github.com/webpack/postcss-loader#boolean
+     */
+    config?: boolean;
+    /**
+     * Additional plugins to be added to the postcss plugins list.
+     * Each plugin is represented as a tuple of [pluginName, pluginOptions].
+     */
+    plugins?: Array<[string, object]>;
 }
 
 export interface CdnUploadConfig {
