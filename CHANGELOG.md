@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.48.0](https://github.com/gravity-ui/app-builder/compare/v0.47.0...v0.48.0) (2026-06-15)
+
+
+### Features
+
+* added readme for window.__PUBLIC_PATH__ ([#327](https://github.com/gravity-ui/app-builder/issues/327)) ([8ab9f28](https://github.com/gravity-ui/app-builder/commit/8ab9f2861a09f52b8e44b18fa90b827365b75c16))
+* added types for dev-server ([#326](https://github.com/gravity-ui/app-builder/issues/326)) ([5145ccf](https://github.com/gravity-ui/app-builder/commit/5145ccf3758fc88b91471f3f961472f0ddabf32c))
+
+
+### Bug Fixes
+
+* avoid FOUC and deduplication optimization in style-loader insert (dev) ([#321](https://github.com/gravity-ui/app-builder/issues/321)) ([423ed29](https://github.com/gravity-ui/app-builder/commit/423ed29266b72fdc918444851c578ffc6e7a0b50))
+
 ## [0.47.0](https://github.com/gravity-ui/app-builder/compare/v0.46.0...v0.47.0) (2026-05-29)
 
 
