@@ -11,7 +11,10 @@ import type {
 } from '@rspack/core';
 import type * as Babel from '@babel/core';
 import type * as Swc from '@swc/core';
-import type {ServerConfiguration} from 'webpack-dev-server';
+import type {
+    ServerConfiguration,
+    Configuration as WebpackDevServerConfiguration,
+} from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
 import type {Config as SvgrConfig} from '@svgr/core';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
@@ -37,15 +40,45 @@ export interface Entities<T> {
     keys: string[];
 }
 
-interface DevServerConfig {
+/**
+ * Dev server configuration.
+ * Extends [webpack-dev-server options](https://webpack.js.org/configuration/dev-server/)
+ * with app-builder-specific settings.
+ */
+export type DevServerConfig = Omit<
+    WebpackDevServerConfiguration,
+    'port' | 'server' | 'devMiddleware' | 'ipc'
+> & {
+    /**
+     * Unix socket to listen on.
+     * If `ipc` and `port` are not defined, the socket `{rootDir}/dist/run/client.sock` is used.
+     */
     ipc?: string;
+    /**
+     * Port number to listen on. If `true`, a free port is selected automatically.
+     */
     port?: number | true;
+    /**
+     * WebSocket path for HMR clients. Default is `/${publicPath}/sockjs-node`.
+     */
     webSocketPath?: string;
+    /**
+     * Port for browser WebSocket connection. Default is `devServer.port`.
+     */
     webSocketClientPort?: number;
+    /**
+     * Serve over HTTPS.
+     */
     type?: 'https';
+    /**
+     * HTTPS server options (e.g. custom certificate).
+     */
     options?: import('https').ServerOptions;
+    /**
+     * Write dev middleware output to disk.
+     */
     writeToDisk?: boolean | ((targetPath: string) => boolean);
-}
+};
 
 interface ContextReplacement {
     'highlight.js'?: string[];

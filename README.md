@@ -253,13 +253,46 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 
 ##### Dev build
 
-- `devServer` (`Object`) — webpack dev server options.
+- `devServer` (`DevServerConfig`) — [webpack-dev-server](https://webpack.js.org/configuration/dev-server/) options with app-builder-specific settings. All options are passed to the underlying dev server and can override defaults.
+
+  App-builder-specific options:
+
   - `ipc` (`string`) — the Unix socket to listen to. If `ipc` and `port` are not defined, then the socket `{rootDir}/dist/run/client.sock` is used.
   - `port` (`number | true`) — specify a port number to listen for requests on. If `true`, the free port will be selected automatically.
   - `webSocketPath` (`string`) — tells clients connected to devServer to use the provided path to connect. Default is `${publicPathPrefix}/build/sockjs-node`.
   - `webSocketClientPort` (`number`) - tells clients to connect to devServer using this port from a browser. Default is `${devServer.port}`
   - `type` (`'https'`) — allow to serve over HTTPS.
   - `options` (`import('https').ServerOptions`) — allow to provide your own certificate.
+  - `writeToDisk` (`boolean | (targetPath: string) => boolean`) — write dev middleware output to disk.
+
+  Commonly used [webpack-dev-server](https://webpack.js.org/configuration/dev-server/) options:
+
+  - `host` (`string`) — hostname to bind the server to. Default is `'0.0.0.0'`.
+  - `proxy` (`ProxyConfigArray`) — proxy configuration for API requests. [more](https://webpack.js.org/configuration/dev-server/#devserverproxy)
+  - `historyApiFallback` (`boolean | ConnectHistoryApiFallbackOptions`) — enable SPA fallback for client-side routing. [more](https://webpack.js.org/configuration/dev-server/#devserverhistoryapifallback)
+  - `client` (`boolean | ClientConfiguration`) — browser client settings. [more](https://webpack.js.org/configuration/dev-server/#devserverclient)
+    - `overlay` (`boolean | {errors?: boolean, warnings?: boolean, runtimeErrors?: boolean}`) — show compile errors and warnings in the browser overlay.
+
+  Example:
+
+  ```typescript
+  import {defineConfig} from '@gravity-ui/app-builder';
+
+  export default defineConfig({
+    client: {
+      devServer: {
+        port: true,
+        host: 'localhost',
+        historyApiFallback: true,
+        proxy: [{context: ['/api'], target: 'http://localhost:3000'}],
+        client: {
+          overlay: false,
+        },
+      },
+    },
+  });
+  ```
+
 - `watchOptions` — a set of options used to customize watch mode, [more](https://webpack.js.org/configuration/watch/#watchoptions)
   - `watchPackages` (`boolean`) - watch all changes in `node_modules`.
 - `reactRefresh` (`false | (options: ReactRefreshPluginOptions) => ReactRefreshPluginOptions`) — disable or configure `react-refresh` in dev mode, [more](https://github.com/pmmmwh/react-refresh-webpack-plugin/blob/main/docs/API.md#options)
