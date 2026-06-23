@@ -14,6 +14,8 @@ import type {
     ClientConfig,
     LibraryConfig,
     NormalizedClientConfig,
+    NormalizedClientRspackConfig,
+    NormalizedClientWebpackConfig,
     NormalizedServerConfig,
     NormalizedServiceConfig,
     ProjectConfig,
@@ -212,6 +214,26 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
     return config;
 }
 
+function getBundlerOptions(client: ClientConfig) {
+    if (!client.bundler || client.bundler === 'webpack') {
+        const webpackConfig: NormalizedClientWebpackConfig = {
+            bundler: 'webpack',
+            rspack: undefined,
+            webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
+        };
+
+        return webpackConfig;
+    }
+
+    const rspackConfig: NormalizedClientRspackConfig = {
+        bundler: 'rspack',
+        webpack: undefined,
+        rspack: typeof client.rspack === 'function' ? client.rspack : (config) => config,
+    };
+
+    return rspackConfig;
+}
+
 // TODO(DakEnviy): Make mode type strict
 async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build' | string) {
     const cdnConfig = Array.isArray(client.cdn) ? client.cdn[0] : client.cdn;
@@ -258,13 +280,11 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
         svgr: client.svgr ?? {},
         entryFilter: client.entryFilter && splitPaths(client.entryFilter),
         transformCssWithLightningCss,
-        webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
-        rspack: typeof client.rspack === 'function' ? client.rspack : (config) => config,
+        ...getBundlerOptions(client),
         babel: typeof client.babel === 'function' ? client.babel : (config) => config,
         swc: typeof client.swc === 'function' ? client.swc : (config) => config,
         devServer: undefined,
         lazyCompilation: undefined,
-        bundler: client.bundler || 'webpack',
         javaScriptLoader: client.javaScriptLoader || 'babel',
         cssLoaderConfig: {
             url: client.cssLoader?.url ?? {
