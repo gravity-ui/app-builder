@@ -26,7 +26,15 @@ import type * as Babel from '@babel/core';
 
 import paths from '../paths';
 import {babelPreset} from '../babel';
-import type {ExtendedPostCSSConfig, NormalizedClientConfig, WebWorkerHandle} from '../models';
+import type {
+    Bundler,
+    ExtendedPostCSSConfig,
+    NormalizedClientBaseConfig,
+    NormalizedClientConfig,
+    NormalizedClientRspackConfig,
+    NormalizedClientWebpackConfig,
+    WebWorkerHandle,
+} from '../models';
 import type {Logger} from '../logger';
 import {createProgressPlugin} from './progress-plugin';
 import {getNormalizedWorkerOption, resolveTsConfigPathsToAlias} from './utils';
@@ -59,21 +67,22 @@ export const enum WebpackMode {
     Dev = 'development',
 }
 
-type ClientFactoryOptions = {
+type ClientFactoryOptions<B extends Bundler> = {
     webpackMode: WebpackMode;
-    config: NormalizedClientConfig;
+    config: NormalizedClientBaseConfig &
+        (B extends 'webpack' ? NormalizedClientWebpackConfig : NormalizedClientRspackConfig);
     logger?: Logger;
     isSsr?: boolean;
     configPath?: string;
 };
 
-function getHelperOptions({
+function getHelperOptions<T extends Bundler>({
     webpackMode,
     config,
     logger,
     isSsr = false,
     configPath,
-}: ClientFactoryOptions): HelperOptions {
+}: ClientFactoryOptions<T>): HelperOptions {
     const isEnvDevelopment = webpackMode === WebpackMode.Dev;
     const isEnvProduction = webpackMode === WebpackMode.Prod;
 
@@ -136,7 +145,7 @@ function configureWebpackCache(options: HelperOptions): webpack.Configuration['c
 }
 
 export async function webpackConfigFactory(
-    options: ClientFactoryOptions,
+    options: ClientFactoryOptions<'webpack'>,
 ): Promise<webpack.Configuration> {
     const {config} = options;
     const helperOptions = getHelperOptions(options);
@@ -187,7 +196,7 @@ export async function webpackConfigFactory(
 }
 
 export async function rspackConfigFactory(
-    options: ClientFactoryOptions,
+    options: ClientFactoryOptions<'rspack'>,
 ): Promise<Rspack.Configuration> {
     const {config} = options;
     const helperOptions = getHelperOptions(options);

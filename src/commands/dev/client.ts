@@ -20,7 +20,11 @@ import {Logger} from '../../common/logger';
 import {WebpackMode, rspackConfigFactory, webpackConfigFactory} from '../../common/webpack/config';
 
 import type {Configuration, HttpProxyMiddlewareOptionsFilter} from 'webpack-dev-server';
-import type {NormalizedServiceConfig} from '../../common/models';
+import type {
+    DevServerConfig,
+    NormalizedClientConfig,
+    NormalizedServiceConfig,
+} from '../../common/models';
 
 export async function watchClientCompilation(
     config: NormalizedServiceConfig,
@@ -32,6 +36,10 @@ export async function watchClientCompilation(
     subscribeToManifestReadyEvent(compiler, onManifestReady);
 
     return clientCompilation;
+}
+
+function withDevServer<T extends NormalizedClientConfig>(client: T, devServer: DevServerConfig): T {
+    return {...client, devServer};
 }
 
 async function buildDevServer(config: NormalizedServiceConfig) {
@@ -46,13 +54,14 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         ...devServer
     } = config.client.devServer || {};
 
-    const normalizedConfig = {...config.client, devServer: {...devServer, webSocketPath}};
-    const isSsr = Boolean(normalizedConfig.ssr);
+    const isSsr = Boolean(config.client.ssr);
 
     let webpackConfigs: webpack.Configuration[] = [];
     let rspackConfigs: RspackConfiguration[] = [];
 
-    if (bundler === 'webpack') {
+    if (config.client.bundler === 'webpack') {
+        const normalizedConfig = withDevServer(config.client, {...devServer, webSocketPath});
+
         webpackConfigs = [
             await webpackConfigFactory({
                 webpackMode: WebpackMode.Dev,
@@ -75,6 +84,8 @@ async function buildDevServer(config: NormalizedServiceConfig) {
             );
         }
     } else {
+        const normalizedConfig = withDevServer(config.client, {...devServer, webSocketPath});
+
         rspackConfigs = [
             await rspackConfigFactory({
                 webpackMode: WebpackMode.Dev,

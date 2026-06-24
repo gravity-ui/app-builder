@@ -29,7 +29,7 @@ import type {moduleFederationPlugin} from '@module-federation/enhanced';
 import type {PluginOptions as ReactCompilerOptions} from 'babel-plugin-react-compiler';
 import type {Config as PostCSSConfig} from 'postcss-load-config';
 
-type Bundler = 'webpack' | 'rspack';
+export type Bundler = 'webpack' | 'rspack';
 type JavaScriptLoader = 'babel' | 'swc';
 type ServerCompiler = 'typescript' | 'swc';
 
@@ -509,7 +509,25 @@ export interface ServiceConfig {
     configPath?: string;
 }
 
-export type NormalizedClientConfig = Omit<
+export type NormalizedClientWebpackConfig = {
+    bundler: Extract<Bundler, 'webpack'>;
+    webpack: (
+        config: Configuration,
+        options: {configType: `${WebpackMode}`; isSsr?: boolean},
+    ) => Configuration | Promise<Configuration>;
+    rspack: undefined;
+};
+
+export type NormalizedClientRspackConfig = {
+    bundler: Extract<Bundler, 'rspack'>;
+    rspack: (
+        config: RspackConfiguration,
+        options: {configType: `${WebpackMode}`; isSsr?: boolean},
+    ) => RspackConfiguration | Promise<RspackConfiguration>;
+    webpack: undefined;
+};
+
+export type NormalizedClientBaseConfig = Omit<
     ClientConfig,
     | 'publicPathPrefix'
     | 'publicPath'
@@ -522,9 +540,10 @@ export type NormalizedClientConfig = Omit<
     | 'disableReactRefresh'
     | 'transformCssWithLightningCss'
     | 'reactCompiler'
+    | 'webpack'
+    | 'rspack'
 > & {
     reactCompiler: boolean | ReactCompilerOptions;
-    bundler: Bundler;
     javaScriptLoader: JavaScriptLoader;
     // TODO(DakEnviy): Use cdn to calculate publicPath and merge with browserPublicPath
     /**
@@ -557,14 +576,6 @@ export type NormalizedClientConfig = Omit<
      * CSS Loader configuration with default values merged with user overrides
      */
     cssLoaderConfig: CssLoaderOptions;
-    webpack: (
-        config: Configuration,
-        options: {configType: `${WebpackMode}`; isSsr: boolean},
-    ) => Configuration | Promise<Configuration>;
-    rspack: (
-        config: RspackConfiguration,
-        options: {configType: `${WebpackMode}`; isSsr: boolean},
-    ) => RspackConfiguration | Promise<RspackConfiguration>;
     debugWebpack?: boolean;
     babel: (
         config: Babel.TransformOptions,
@@ -576,6 +587,9 @@ export type NormalizedClientConfig = Omit<
     ) => SwcConfig | Promise<SwcConfig>;
     reactRefresh: NonNullable<ClientConfig['reactRefresh']>;
 };
+
+export type NormalizedClientConfig = NormalizedClientBaseConfig &
+    (NormalizedClientWebpackConfig | NormalizedClientRspackConfig);
 
 export type NormalizedServerConfig = Omit<
     ServerConfig,
