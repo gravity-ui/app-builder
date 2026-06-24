@@ -203,6 +203,10 @@ export interface ClientWebpackConfig {
         config: Configuration,
         options: {configType: `${WebpackMode}`; isSsr?: boolean},
     ) => Configuration | Promise<Configuration>;
+    /**
+     * Detect modules with circular dependencies
+     */
+    detectCircularDependencies?: true | CircularDependenciesOptions;
 }
 
 export interface ClientRspackConfig {
@@ -215,6 +219,10 @@ export interface ClientRspackConfig {
         config: RspackConfiguration,
         options: {configType: `${WebpackMode}`; isSsr?: boolean},
     ) => RspackConfiguration | Promise<RspackConfiguration>;
+    /**
+     * Detect modules with circular dependencies
+     */
+    detectCircularDependencies?: true | CircularDependencyRspackPluginOptions;
 }
 
 export interface ClientCommonConfig {
@@ -340,13 +348,6 @@ export interface ClientCommonConfig {
      * ```
      */
     reactCompiler?: boolean | ReactCompilerOptions;
-    /**
-     * Detect modules with circular dependencies
-     */
-    detectCircularDependencies?:
-        | true
-        | CircularDependenciesOptions
-        | CircularDependencyRspackPluginOptions;
     /**
      * use new JSX Transform
      */

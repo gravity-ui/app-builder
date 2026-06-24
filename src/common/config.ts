@@ -3,8 +3,6 @@ import * as path from 'node:path';
 import {cosmiconfigSync} from 'cosmiconfig';
 import {TypeScriptLoader as getTsLoader} from 'cosmiconfig-typescript-loader';
 import {stripIndent} from 'common-tags';
-import CircularDependencyPlugin from 'circular-dependency-plugin';
-import type {CircularDependencyRspackPluginOptions} from '@rspack/core';
 
 import {isLibraryConfig, isServiceConfig} from './models';
 import paths from './paths';
@@ -217,31 +215,25 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
 }
 
 function getBundlerOptions(client: ClientConfig) {
-    if (!client.bundler || client.bundler === 'webpack') {
-        const webpackConfig: NormalizedClientWebpackConfig = {
-            bundler: 'webpack',
-            rspack: undefined,
-            webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
-            detectCircularDependencies: client.detectCircularDependencies as
-                | CircularDependencyPlugin.Options
-                | true
-                | undefined,
+    if (client.bundler === 'rspack') {
+        const rspackConfig: NormalizedClientRspackConfig = {
+            bundler: 'rspack',
+            webpack: undefined,
+            rspack: typeof client.rspack === 'function' ? client.rspack : (config) => config,
+            detectCircularDependencies: client.detectCircularDependencies,
         };
 
-        return webpackConfig;
+        return rspackConfig;
     }
 
-    const rspackConfig: NormalizedClientRspackConfig = {
-        bundler: 'rspack',
-        webpack: undefined,
-        rspack: typeof client.rspack === 'function' ? client.rspack : (config) => config,
-        detectCircularDependencies: client.detectCircularDependencies as
-            | CircularDependencyRspackPluginOptions
-            | true
-            | undefined,
+    const webpackConfig: NormalizedClientWebpackConfig = {
+        bundler: 'webpack',
+        rspack: undefined,
+        webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
+        detectCircularDependencies: client.detectCircularDependencies,
     };
 
-    return rspackConfig;
+    return webpackConfig;
 }
 
 // TODO(DakEnviy): Make mode type strict
