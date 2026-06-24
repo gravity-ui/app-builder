@@ -9,7 +9,7 @@ import {isLibraryConfig} from '../models';
 import paths from '../paths';
 
 import type {HelperOptions} from './config';
-import type {ClientConfig} from '../models';
+import type {ClientCommonConfig, ClientWebpackConfig} from '../models';
 import type * as Webpack from 'webpack';
 import {getNormalizedWorkerOption} from './utils';
 
@@ -22,7 +22,7 @@ export async function configureServiceWebpackConfig(
     const serviceConfig = await getProjectConfig(mode === WebpackMode.Prod ? 'build' : 'dev', {
         storybook: true,
     });
-    let options: ClientConfig = {};
+    let options: ClientCommonConfig & ClientWebpackConfig = {};
     if (isLibraryConfig(serviceConfig)) {
         const libBabelPlugins = serviceConfig.lib?.babelPlugins || [];
         options = {
@@ -33,8 +33,12 @@ export async function configureServiceWebpackConfig(
                 plugins: [...(babelConfig.plugins || []), ...libBabelPlugins],
             }),
         };
-    } else {
+    } else if (!serviceConfig.client.bundler || serviceConfig.client.bundler === 'webpack') {
         options = serviceConfig.client;
+    } else {
+        const {rspack: _, bundler: __, ...rest} = serviceConfig.client;
+
+        options = rest;
     }
 
     options = {
@@ -94,7 +98,7 @@ export async function configureServiceWebpackConfig(
 type ModuleRule = NonNullable<NonNullable<Webpack.Configuration['module']>['rules']>[number];
 export async function configureWebpackConfigForStorybook(
     mode: Mode,
-    userConfig: ClientConfig = {},
+    userConfig: ClientCommonConfig & ClientWebpackConfig = {},
     storybookModuleRules: ModuleRule[] = [],
 ) {
     const isEnvDevelopment = mode === WebpackMode.Dev;

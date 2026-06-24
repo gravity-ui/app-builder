@@ -192,7 +192,31 @@ export type ModuleFederationConfig = Omit<
 
 export type WebWorkerHandle = 'loader' | 'cdn-compat' | 'none';
 
-export interface ClientConfig {
+export interface ClientWebpackConfig {
+    bundler?: Extract<Bundler, 'webpack'>;
+    rspack?: never;
+    /**
+     * Modify or return a custom Webpack config.
+     */
+    webpack?: (
+        config: Configuration,
+        options: {configType: `${WebpackMode}`; isSsr?: boolean},
+    ) => Configuration | Promise<Configuration>;
+}
+
+export interface ClientRspackConfig {
+    bundler: Extract<Bundler, 'rspack'>;
+    webpack?: never;
+    /**
+     * Modify or return a custom Rspack config.
+     */
+    rspack?: (
+        config: RspackConfiguration,
+        options: {configType: `${WebpackMode}`; isSsr?: boolean},
+    ) => RspackConfiguration | Promise<RspackConfiguration>;
+}
+
+export interface ClientCommonConfig {
     modules?: string[];
     /**
      * Resolve [alias](https://webpack.js.org/configuration/resolve/#resolvealias)
@@ -369,20 +393,6 @@ export interface ClientConfig {
     transformCssWithLightningCss?: boolean;
     sentryConfig?: SentryWebpackPluginOptions;
     /**
-     * Modify or return a custom Webpack config.
-     */
-    webpack?: (
-        config: Configuration,
-        options: {configType: `${WebpackMode}`; isSsr?: boolean},
-    ) => Configuration | Promise<Configuration>;
-    /**
-     * Modify or return a custom Rspack config.
-     */
-    rspack?: (
-        config: RspackConfiguration,
-        options: {configType: `${WebpackMode}`; isSsr?: boolean},
-    ) => RspackConfiguration | Promise<RspackConfiguration>;
-    /**
      * Modify or return a custom Babel config.
      */
     babel?: (
@@ -442,6 +452,8 @@ export interface ClientConfig {
      */
     moduleFederation?: ModuleFederationConfig;
 }
+
+export type ClientConfig = ClientCommonConfig & (ClientWebpackConfig | ClientRspackConfig);
 
 export interface ExtendedPostCSSConfig extends Omit<PostCSSConfig, 'plugins'> {
     /**
