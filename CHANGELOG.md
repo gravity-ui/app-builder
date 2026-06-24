@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.48.1](https://github.com/gravity-ui/app-builder/compare/v0.48.0...v0.48.1) (2026-06-24)
+
+
+### Bug Fixes
+
+* **client:** use correct circular dependency plugin ([#330](https://github.com/gravity-ui/app-builder/issues/330)) ([bac9c58](https://github.com/gravity-ui/app-builder/commit/bac9c5815871872c63b7ae4dcb7daab6c785392c))
+
 ## [0.48.0](https://github.com/gravity-ui/app-builder/compare/v0.47.0...v0.48.0) (2026-06-15)
 
 
