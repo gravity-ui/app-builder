@@ -4,6 +4,7 @@ import type {IFeatureDefinition} from 'monaco-editor-webpack-plugin/out/types';
 import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plugin';
 import type {Configuration, DefinePlugin, FileCacheOptions, MemoryCacheOptions} from 'webpack';
 import type {
+    CircularDependencyRspackPluginOptions,
     LazyCompilationOptions,
     LightningCssMinimizerRspackPluginOptions,
     Configuration as RspackConfiguration,
@@ -202,6 +203,10 @@ export interface ClientWebpackConfig {
         config: Configuration,
         options: {configType: `${WebpackMode}`; isSsr?: boolean},
     ) => Configuration | Promise<Configuration>;
+    /**
+     * Detect modules with circular dependencies
+     */
+    detectCircularDependencies?: true | CircularDependenciesOptions;
 }
 
 export interface ClientRspackConfig {
@@ -214,6 +219,10 @@ export interface ClientRspackConfig {
         config: RspackConfiguration,
         options: {configType: `${WebpackMode}`; isSsr?: boolean},
     ) => RspackConfiguration | Promise<RspackConfiguration>;
+    /**
+     * Detect modules with circular dependencies
+     */
+    detectCircularDependencies?: true | CircularDependencyRspackPluginOptions;
 }
 
 export interface ClientCommonConfig {
@@ -339,10 +348,6 @@ export interface ClientCommonConfig {
      * ```
      */
     reactCompiler?: boolean | ReactCompilerOptions;
-    /**
-     * Detect modules with circular dependencies
-     */
-    detectCircularDependencies?: true | CircularDependenciesOptions;
     /**
      * use new JSX Transform
      */
@@ -527,6 +532,7 @@ export type NormalizedClientWebpackConfig = {
         config: Configuration,
         options: {configType: `${WebpackMode}`; isSsr?: boolean},
     ) => Configuration | Promise<Configuration>;
+    detectCircularDependencies: CircularDependenciesOptions | true | undefined;
     rspack: undefined;
 };
 
@@ -536,6 +542,7 @@ export type NormalizedClientRspackConfig = {
         config: RspackConfiguration,
         options: {configType: `${WebpackMode}`; isSsr?: boolean},
     ) => RspackConfiguration | Promise<RspackConfiguration>;
+    detectCircularDependencies: CircularDependencyRspackPluginOptions | true | undefined;
     webpack: undefined;
 };
 
@@ -554,6 +561,7 @@ export type NormalizedClientBaseConfig = Omit<
     | 'reactCompiler'
     | 'webpack'
     | 'rspack'
+    | 'detectCircularDependencies'
 > & {
     reactCompiler: boolean | ReactCompilerOptions;
     javaScriptLoader: JavaScriptLoader;

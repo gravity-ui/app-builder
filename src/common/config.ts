@@ -215,23 +215,25 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
 }
 
 function getBundlerOptions(client: ClientConfig) {
-    if (!client.bundler || client.bundler === 'webpack') {
-        const webpackConfig: NormalizedClientWebpackConfig = {
-            bundler: 'webpack',
-            rspack: undefined,
-            webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
+    if (client.bundler === 'rspack') {
+        const rspackConfig: NormalizedClientRspackConfig = {
+            bundler: 'rspack',
+            webpack: undefined,
+            rspack: typeof client.rspack === 'function' ? client.rspack : (config) => config,
+            detectCircularDependencies: client.detectCircularDependencies,
         };
 
-        return webpackConfig;
+        return rspackConfig;
     }
 
-    const rspackConfig: NormalizedClientRspackConfig = {
-        bundler: 'rspack',
-        webpack: undefined,
-        rspack: typeof client.rspack === 'function' ? client.rspack : (config) => config,
+    const webpackConfig: NormalizedClientWebpackConfig = {
+        bundler: 'webpack',
+        rspack: undefined,
+        webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
+        detectCircularDependencies: client.detectCircularDependencies,
     };
 
-    return rspackConfig;
+    return webpackConfig;
 }
 
 // TODO(DakEnviy): Make mode type strict

@@ -33,12 +33,17 @@ export async function configureServiceWebpackConfig(
                 plugins: [...(babelConfig.plugins || []), ...libBabelPlugins],
             }),
         };
-    } else if (!serviceConfig.client.bundler || serviceConfig.client.bundler === 'webpack') {
-        options = serviceConfig.client;
-    } else {
-        const {rspack: _, bundler: __, ...rest} = serviceConfig.client;
+    } else if (serviceConfig.client.bundler === 'rspack') {
+        const {
+            rspack: _,
+            bundler: __,
+            detectCircularDependencies: ___,
+            ...rest
+        } = serviceConfig.client;
 
         options = rest;
+    } else {
+        options = serviceConfig.client;
     }
 
     options = {
