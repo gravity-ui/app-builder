@@ -13,7 +13,7 @@ import MomentTimezoneDataPlugin from 'moment-timezone-data-webpack-plugin';
 import StatoscopeWebpackPlugin from '@statoscope/webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
 import type {sentryWebpackPlugin} from '@sentry/webpack-plugin';
-import {rspack} from '@rspack/core';
+import {CircularDependencyRspackPlugin, rspack} from '@rspack/core';
 import type * as Rspack from '@rspack/core';
 import {generateAssetsManifest} from './rspack';
 import {TsCheckerRspackPlugin} from 'ts-checker-rspack-plugin';
@@ -1229,14 +1229,24 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
     ];
 
     if (config.detectCircularDependencies) {
-        let circularPluginOptions: CircularDependencyPlugin.Options = {
-            exclude: /node_modules/,
-            allowAsyncCycles: true,
-        };
-        if (typeof config.detectCircularDependencies === 'object') {
-            circularPluginOptions = config.detectCircularDependencies;
+        if (config.bundler === 'webpack') {
+            let circularPluginOptions: CircularDependencyPlugin.Options = {
+                exclude: /node_modules/,
+                allowAsyncCycles: true,
+            };
+            if (typeof config.detectCircularDependencies === 'object') {
+                circularPluginOptions = config.detectCircularDependencies;
+            }
+            plugins.push(new CircularDependencyPlugin(circularPluginOptions));
+        } else {
+            let circularPluginOptions: Rspack.CircularDependencyRspackPluginOptions = {
+                exclude: /node_modules/,
+            };
+            if (typeof config.detectCircularDependencies === 'object') {
+                circularPluginOptions = config.detectCircularDependencies;
+            }
+            plugins.push(new CircularDependencyRspackPlugin(circularPluginOptions));
         }
-        plugins.push(new CircularDependencyPlugin(circularPluginOptions));
     }
 
     if (isEnvProduction || isSsr || config.ssr) {

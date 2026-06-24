@@ -3,6 +3,8 @@ import * as path from 'node:path';
 import {cosmiconfigSync} from 'cosmiconfig';
 import {TypeScriptLoader as getTsLoader} from 'cosmiconfig-typescript-loader';
 import {stripIndent} from 'common-tags';
+import CircularDependencyPlugin from 'circular-dependency-plugin';
+import type {CircularDependencyRspackPluginOptions} from '@rspack/core';
 
 import {isLibraryConfig, isServiceConfig} from './models';
 import paths from './paths';
@@ -220,6 +222,10 @@ function getBundlerOptions(client: ClientConfig) {
             bundler: 'webpack',
             rspack: undefined,
             webpack: typeof client.webpack === 'function' ? client.webpack : (config) => config,
+            detectCircularDependencies: client.detectCircularDependencies as
+                | CircularDependencyPlugin.Options
+                | true
+                | undefined,
         };
 
         return webpackConfig;
@@ -229,6 +235,10 @@ function getBundlerOptions(client: ClientConfig) {
         bundler: 'rspack',
         webpack: undefined,
         rspack: typeof client.rspack === 'function' ? client.rspack : (config) => config,
+        detectCircularDependencies: client.detectCircularDependencies as
+            | CircularDependencyRspackPluginOptions
+            | true
+            | undefined,
     };
 
     return rspackConfig;
