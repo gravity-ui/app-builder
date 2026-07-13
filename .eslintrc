@@ -8,6 +8,12 @@
     },
     "overrides": [
         {
+            "files": ["**/*.d.ts"],
+            "rules": {
+                "@typescript-eslint/triple-slash-reference": "off"
+            }
+        },
+        {
             "files": ["*.test.{ts,js}", ""],
             "env": {
                 "jest": true

@@ -7,6 +7,12 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
+    "./client": {
+      "types": "./types/client.d.ts"
+    },
+    "./ui": {
+      "types": "./types/ui.d.ts"
+    },
     "./worker": {
       "types": "./dist/common/webpack/worker/web-worker.d.mts",
       "default": "./dist/common/webpack/worker/web-worker.mjs"
@@ -18,6 +24,12 @@
   },
   "typesVersions": {
     "*": {
+      "client": [
+        "./types/client.d.ts"
+      ],
+      "ui": [
+        "./types/ui.d.ts"
+      ],
       "index.d.ts": [
         "./dist/index.d.ts"
       ],
@@ -34,7 +46,8 @@
     "node": ">= 18"
   },
   "files": [
-    "dist"
+    "dist",
+    "types"
   ],
   "repository": {
     "type": "git",
@@ -172,6 +185,7 @@
     "@types/mime-types": "^2.1.4",
     "@types/node": "^18",
     "@types/nodemon": "^1.19.6",
+    "@types/react": "^18.3.2",
     "@types/semver": "^7.5.8",
     "@types/webpack-assets-manifest": "^5.1.4",
     "@types/webpack-bundle-analyzer": "^4.7.0",
