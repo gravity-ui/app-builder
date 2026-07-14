@@ -384,6 +384,35 @@ For more details, see [css-loader documentation](https://github.com/webpack/css-
 }
 ```
 
+##### Client TypeScript types
+
+Ambient types are shipped as two subpaths (similar to `vite/client`):
+
+- `@gravity-ui/app-builder/client` — bundler defaults (CSS modules, static assets, workers, globals)
+- `@gravity-ui/app-builder/ui` — React UI overrides (`*.svg` as SVGR component)
+
+React apps should use `ui` (it references `client`):
+
+```ts
+/// <reference types="@gravity-ui/app-builder/ui" />
+```
+
+`client` includes:
+
+- CSS/SCSS side-effect imports and CSS Modules (`*.module.css`, `*.module.scss`)
+- Static assets (`*.png`, `*.jpg`, `*.webp`, fonts, etc.)
+- Web workers with `webWorkerHandle: 'loader'` (`*.worker.ts`)
+- Runtime globals (`window.__PUBLIC_PATH__`, `window.__REMOTE_VERSIONS__`)
+- Injected `process.env` keys (`NODE_ENV`, `PUBLIC_PATH`, `IS_SSR`)
+
+`ui` adds:
+
+- `*.svg` as React component (assumes `icons/` paths or `client.icons` config in TS/TSX)
+
+Ambient type sources live in the package `types/` directory (similar to Vite/Next.js).
+
+Types reflect default `cssLoader` settings (`exportLocalsConvention: 'camelCase'`, default export for modules). Override `cssLoader.modules` options may require local type adjustments.
+
 ##### Monaco editor support
 
 - `monaco` (`object`) — use [monaco-editor-webpack-plugin](https://github.com/microsoft/monaco-editor/tree/main/webpack-plugin#monaco-editor-webpack-loader-plugin)
@@ -427,7 +456,13 @@ import MyWorker from './my.worker.ts';
 const worker = new MyWorker();
 ```
 
-In this variant, you need to add some type declarations for the worker files::
+In this variant, add ambient types via `@gravity-ui/app-builder/ui` (includes `*.worker.ts` declarations) or declare them locally:
+
+```ts
+/// <reference types="@gravity-ui/app-builder/ui" />
+```
+
+Alternatively:
 
 ```ts
 // worker.d.ts
