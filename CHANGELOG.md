@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.49.0](https://github.com/gravity-ui/app-builder/compare/v0.48.1...v0.49.0) (2026-07-14)
+
+
+### Features
+
+* ui and client ambient type defs ([#333](https://github.com/gravity-ui/app-builder/issues/333)) ([c36b50e](https://github.com/gravity-ui/app-builder/commit/c36b50e313ef4f5967ec94cc8554e463b8c860be))
+
 ## [0.48.1](https://github.com/gravity-ui/app-builder/compare/v0.48.0...v0.48.1) (2026-06-24)
 
 
