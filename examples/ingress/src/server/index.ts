@@ -22,6 +22,9 @@ const app = new ExpressKit(nodekit, {
             }),
         );
     },
+    'POST /hello': (req, res) => {
+        res.send(`Hello, ${req.body.name ?? 'World'}!`);
+    },
 });
 
 app.run();
