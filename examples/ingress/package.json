@@ -20,6 +20,7 @@
     "react-dom": "^18.0.0"
   },
   "devDependencies": {
+    "@examples/ingress-nginx": "workspace:*",
     "@gravity-ui/app-builder": "workspace:*",
     "@gravity-ui/eslint-config": "^4.0.0",
     "@gravity-ui/prettier-config": "^1.0.0",
