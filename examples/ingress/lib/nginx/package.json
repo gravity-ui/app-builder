@@ -3,10 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "build/cjs/index.js",
+  "module": "build/esm/index.js",
+  "types": "build/esm/index.d.ts",
   "files": [
-    "dist",
+    "build",
     "templates"
   ],
   "scripts": {
@@ -15,7 +16,7 @@
     "prettier": "prettier --list-different .",
     "start": "node dist/index.js",
     "dev": "tsc --watch",
-    "build": "tsc -p tsconfig.build.json"
+    "build": "NODE_ENV=production app-builder build"
   },
   "dependencies": {},
   "devDependencies": {
