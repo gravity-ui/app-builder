@@ -14,8 +14,6 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint",
     "prettier": "prettier --list-different .",
-    "start": "node dist/index.js",
-    "dev": "tsc --watch",
     "build": "NODE_ENV=production app-builder build"
   },
   "dependencies": {},
