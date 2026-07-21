@@ -5,10 +5,11 @@ import {defineConfig} from 'eslint/config';
 import globals from 'globals';
 
 export default defineConfig(
+    {ignores: ['build/**']},
     baseConfig,
     importOrderConfig,
     {
-        files: ['.prettierrc.cjs'],
+        files: ['.prettierrc.cjs', 'src/**/*.ts'],
         languageOptions: {
             globals: {
                 ...globals.node,
