@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import type {ServiceConfig} from '@gravity-ui/app-builder';
 
 import {
@@ -15,7 +17,7 @@ export default (): ServiceConfig => {
                 port: APP_PORT ? APP_PORT + 1 : undefined,
             },
             newJsxTransform: true,
-            outputPath: APP_OUTPUT_PATH,
+            outputPath: APP_OUTPUT_PATH ? path.resolve(APP_OUTPUT_PATH) : undefined,
             publicPath: APP_PUBLIC_PATH,
         },
         server: {
