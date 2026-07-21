@@ -1,4 +1,5 @@
 import type {ServiceConfig} from '@gravity-ui/app-builder';
+
 const port = process.env.APP_PORT ? Number(process.env.APP_PORT) : 3030;
 
 export default (): ServiceConfig => {

@@ -1,0 +1,31 @@
+# Rendered by @gravity-ui app-builder nginx ingress lib.
+# Do not edit the generated nginx.conf by hand — edit the template instead.
+server {
+    listen 80;
+    listen [::]:80;
+
+    server_name <server_name>;
+
+    client_max_body_size 20m;
+
+    # Prevent header buffer overflow for large auth/cookie headers.
+    proxy_buffer_size 16k;
+    proxy_buffers 8 16k;
+
+    location / {
+        # The upstream is the reverse-tunnel bind on this VM, which `ssh -R` forwards to the
+        # local app-builder dev server (its ipc socket or http port). The dev server serves
+        # dist/public statics and proxies dynamic requests to the node server (client-as-front).
+        proxy_pass http://<upstream_server>;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Support HMR websockets from the dev server.
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_redirect off;
+        proxy_read_timeout 300s;
+    }
+}
