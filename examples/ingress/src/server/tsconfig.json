@@ -1,0 +1,9 @@
+{
+  "extends": "@gravity-ui/tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "../../dist/server",
+    "rootDir": "."
+  },
+  "include": ["**/*"]
+}

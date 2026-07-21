@@ -1,0 +1,10 @@
+{
+  "extends": "@gravity-ui/tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "../../dist/ui",
+    "rootDir": ".",
+    "jsx": "react-jsx"
+  },
+  "include": ["**/*"]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "ingress",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc -b",
+    "lint:styles": "stylelint \"**/*.scss\"",
+    "start": "node dist/server/index.js",
+    "dev": "app-builder dev",
+    "build": "NODE_ENV=production app-builder build",
+    "lint": "eslint",
+    "prettier": "prettier --list-different ."
+  },
+  "dependencies": {
+    "@gravity-ui/app-layout": "^2.0.0",
+    "@gravity-ui/expresskit": "^3.0.0",
+    "@gravity-ui/nodekit": "^2.0.0",
+    "@gravity-ui/uikit": "^7.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@gravity-ui/app-builder": "workspace:*",
+    "@gravity-ui/eslint-config": "^4.0.0",
+    "@gravity-ui/prettier-config": "^1.0.0",
+    "@gravity-ui/stylelint-config": "^5.0.0",
+    "@gravity-ui/tsconfig": "^1.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "eslint": "^9.0.0",
+    "globals": "^17.0.0",
+    "prettier": "^3.0.0",
+    "stylelint": "^16.0.0",
+    "typescript": "^5.3.0"
+  }
+}
