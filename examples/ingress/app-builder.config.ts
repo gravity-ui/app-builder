@@ -1,17 +1,17 @@
 import type {ServiceConfig} from '@gravity-ui/app-builder';
 
-const port = process.env.APP_PORT ? Number(process.env.APP_PORT) : 3030;
+import {APP_PORT} from './src/server/config/app-builder';
 
 export default (): ServiceConfig => {
     return {
         client: {
             newJsxTransform: true,
             devServer: {
-                port: port + 1,
+                port: APP_PORT ? APP_PORT + 1 : undefined,
             },
         },
         server: {
-            port,
+            port: APP_PORT,
         },
     };
 };

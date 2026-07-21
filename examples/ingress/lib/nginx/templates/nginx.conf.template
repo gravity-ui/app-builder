@@ -2,7 +2,11 @@
 # Do not edit the generated nginx.conf by hand — edit the template instead.
 #
 # Substitute ONLY the ingress variables, so nginx's own $-variables ($host, $scheme, ...) survive:
-#   envsubst '${APP_SERVER_NAME} ${APP_UPSTREAM_SERVER}' < nginx.conf.template > nginx.conf
+#   envsubst '${APP_SERVER_NAME} ${APP_CLIENT_UPSTREAM} ${APP_SERVER_UPSTREAM}' \
+#     < nginx.conf.template > nginx.conf
+#
+# Each *_UPSTREAM is either an ipc socket   e.g. unix:/…/dist/run/client.sock
+#                     or an http host:port   e.g. 127.0.0.1:3031
 server {
     listen 80;
     listen [::]:80;
@@ -15,19 +19,25 @@ server {
     proxy_buffer_size 16k;
     proxy_buffers 8 16k;
 
+    # Build assets + HMR websocket → client dev server.
+    location /build/ {
+        proxy_pass http://${APP_CLIENT_UPSTREAM};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_redirect off;
+    }
+
+    # Everything else → node server.
     location / {
-        # The upstream is the reverse-tunnel bind on this VM, which `ssh -R` forwards to the
-        # local app-builder dev server (its ipc socket or http port). The dev server serves
-        # dist/public statics and proxies dynamic requests to the node server (client-as-front).
-        proxy_pass http://${APP_UPSTREAM_SERVER};
+        proxy_pass http://${APP_SERVER_UPSTREAM};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        # Support HMR websockets from the dev server.
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+        proxy_set_header X-Request-ID $request_id;
         proxy_redirect off;
         proxy_read_timeout 300s;
     }

@@ -10,15 +10,12 @@ export default defineConfig(
     baseConfig,
     importOrderConfig,
     {
-        files: [
-            '.prettierrc.js',
-            'app-builder.config.ts',
-        ],
+        files: ['.prettierrc.js', 'app-builder.config.ts'],
         languageOptions: {
             globals: {
                 ...globals.node,
-            }
-        }
+            },
+        },
     },
     typescriptConfig,
     {
