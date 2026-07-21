@@ -1,5 +1,6 @@
 packages:
   - examples/*
+  - examples/*/lib/*
 ignoredBuiltDependencies:
   - '@parcel/watcher'
   - '@sentry/cli'

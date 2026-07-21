@@ -1,0 +1,25 @@
+{
+  "name": "@examples/ingress-nginx",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint",
+    "prettier": "prettier --list-different .",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@gravity-ui/app-builder": "workspace:*",
+    "@gravity-ui/eslint-config": "^4.0.0",
+    "@gravity-ui/prettier-config": "^1.0.0",
+    "@gravity-ui/tsconfig": "^1.0.0",
+    "eslint": "^9.0.0",
+    "globals": "^17.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.3.0"
+  }
+}
