@@ -2,7 +2,7 @@ import {createLayoutPlugin, createRenderFunction} from '@gravity-ui/app-layout';
 import {ExpressKit} from '@gravity-ui/expresskit';
 import {NodeKit} from '@gravity-ui/nodekit';
 
-import {APP_PORT, APP_PUBLIC_PATH, APP_SOCKET} from './config/app-builder';
+import {APP_MANIFEST, APP_PORT, APP_PUBLIC_PATH, APP_SOCKET} from './config/app-builder';
 
 const nodekit = new NodeKit({
     config: {
@@ -13,7 +13,7 @@ const nodekit = new NodeKit({
 
 const renderLayout = createRenderFunction([
     createLayoutPlugin({
-        manifest: 'dist/public/build/assets-manifest.json',
+        manifest: APP_MANIFEST,
         publicPath: APP_PUBLIC_PATH,
     }),
 ]);
