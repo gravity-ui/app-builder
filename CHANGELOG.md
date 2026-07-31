@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.49.1](https://github.com/gravity-ui/app-builder/compare/v0.49.0...v0.49.1) (2026-07-31)
+
+
+### Bug Fixes
+
+* when baseUrl is not set, use config dir for aliases (ts 6 support) ([#336](https://github.com/gravity-ui/app-builder/issues/336)) ([ae89d08](https://github.com/gravity-ui/app-builder/commit/ae89d089228a42ed9bcb86feb9212a0df7518e2d))
+
 ## [0.49.0](https://github.com/gravity-ui/app-builder/compare/v0.48.1...v0.49.0) (2026-07-14)
 
 
