@@ -1,0 +1,39 @@
+# Ingress layout for the ingress example. Rendered by the @examples/ingress-nginx lib.
+# ${APP_SERVER_NAME}, ${APP_CLIENT_UPSTREAM} and ${APP_SERVER_UPSTREAM} are substituted with
+# explicit values; nginx's own $-variables ($host, $scheme, ...) are left untouched.
+server {
+    include common/ssl;
+    include common/gzip;
+
+    server_name ${APP_SERVER_NAME};
+
+    client_max_body_size 20m;
+
+    # Prevent header buffer overflow for large auth/cookie headers.
+    proxy_buffer_size 16k;
+    proxy_buffers 8 16k;
+
+    # Build assets + HMR websocket → client dev server (reached over an ssh -R forward).
+    location /build/ {
+        proxy_pass http://${APP_CLIENT_UPSTREAM};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_redirect off;
+    }
+
+    # Everything else → node server (renders the app-layout UI; reached over a second ssh -R forward).
+    # Host is preserved so the node's known-hosts restriction accepts the request.
+    location / {
+        proxy_pass http://${APP_SERVER_UPSTREAM};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Request-ID $request_id;
+        proxy_redirect off;
+        proxy_read_timeout 300s;
+    }
+}

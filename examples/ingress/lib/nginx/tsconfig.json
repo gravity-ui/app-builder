@@ -1,0 +1,11 @@
+{
+  "extends": "@gravity-ui/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "baseUrl": ".",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"]
+}

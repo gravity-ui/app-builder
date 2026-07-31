@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./src/ui"
+    },
+    {
+      "path": "./src/server"
+    }
+  ]
+}
