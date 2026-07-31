@@ -76,13 +76,16 @@ export function resolveTsConfigPathsToAlias(projectPath: string, filename = 'tsc
         return {};
     }
 
-    const {paths = {}, baseUrl} = parsed.options;
+    const {paths = {}, baseUrl, configFilePath} = parsed.options;
 
-    if (!baseUrl) {
-        return {};
-    }
+    // `baseUrl` is deprecated since TypeScript 5.x in favor of resolving `paths`
+    // relative to the directory containing the tsconfig.json file.
+    // See: https://www.typescriptlang.org/tsconfig/#baseUrl
+    const configDir = configFilePath
+        ? path.dirname(String(configFilePath))
+        : path.dirname(projectPath);
 
-    const basePath = path.resolve(path.dirname(projectPath), baseUrl);
+    const basePath = baseUrl ? path.resolve(configDir, baseUrl) : configDir;
     const aliases: Record<string, string[]> = {};
     const modules: string[] = [basePath];
     for (const [key, value] of Object.entries(paths)) {
