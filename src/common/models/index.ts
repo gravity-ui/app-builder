@@ -9,6 +9,8 @@ import type {
     LightningCssMinimizerRspackPluginOptions,
     Configuration as RspackConfiguration,
     SwcJsMinimizerRspackPluginOptions,
+    // TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
+    // @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/core 2 is ESM.
 } from '@rspack/core';
 import type * as Babel from '@babel/core';
 import type * as Swc from '@swc/core';

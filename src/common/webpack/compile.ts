@@ -1,4 +1,6 @@
 import webpack from 'webpack';
+// TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
+// @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/core 2 is ESM.
 import {Configuration as RspackConfiguration, rspack} from '@rspack/core';
 
 import type {NormalizedClientConfig} from '../models';

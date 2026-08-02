@@ -9,6 +9,8 @@ import logger from '../../common/logger';
 import type WebpackDevServer from 'webpack-dev-server';
 import type {NormalizedServiceConfig} from '../../common/models';
 import type {ControllableScript} from '../../common/child-process/controllable-script';
+// TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
+// @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/dev-server 2 is ESM.
 import {RspackDevServer} from '@rspack/dev-server';
 
 export default async function (config: NormalizedServiceConfig) {
