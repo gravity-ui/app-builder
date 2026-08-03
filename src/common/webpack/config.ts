@@ -258,7 +258,7 @@ export async function configureModuleRules(
     const jsLoader = await createJavaScriptLoader(helperOptions);
 
     return [
-        ...createSourceMapRules(!helperOptions.config.disableSourceMapGeneration),
+        ...createSourceMapRules(helperOptions),
         {
             oneOf: [
                 await createWorkerRule(helperOptions),
@@ -780,8 +780,18 @@ function createJavaScriptRule(
     };
 }
 
-function createSourceMapRules(shouldUseSourceMap: boolean): webpack.RuleSetRule[] {
-    if (shouldUseSourceMap) {
+function createSourceMapRules({config}: HelperOptions): webpack.RuleSetRule[] {
+    if (!config.disableSourceMapGeneration) {
+        if (config.bundler === 'rspack') {
+            return [
+                {
+                    test: [/\.jsx?$/, /\.[cm]js$/],
+                    include: /node_modules/,
+                    extractSourceMap: true,
+                } as webpack.RuleSetRule & {extractSourceMap: true},
+            ];
+        }
+
         return [
             {
                 test: [/\.jsx?$/, /\.[cm]js$/],
