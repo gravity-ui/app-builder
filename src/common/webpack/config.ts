@@ -1422,7 +1422,11 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                     saveStatsTo: path.resolve(options.buildDirectory, 'stats.json'),
                     open: false,
                     statsOptions: {
-                        all: true,
+                        assets: true,
+                        chunks: true,
+                        modules: true,
+                        chunkGroups: true,
+                        entrypoints: true,
                     },
                     ...customStatoscopeConfig,
                 }),
