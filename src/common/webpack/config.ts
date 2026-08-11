@@ -13,11 +13,16 @@ import MomentTimezoneDataPlugin from 'moment-timezone-data-webpack-plugin';
 import StatoscopeWebpackPlugin from '@statoscope/webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
 import type {sentryWebpackPlugin} from '@sentry/webpack-plugin';
+// TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
+// @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/core 2 is ESM.
 import {CircularDependencyRspackPlugin, rspack} from '@rspack/core';
+// @ts-ignore -- see the runtime import directly above.
 import type * as Rspack from '@rspack/core';
 import {generateAssetsManifest} from './rspack';
 import {TsCheckerRspackPlugin} from 'ts-checker-rspack-plugin';
-import ReactRefreshRspackPlugin from '@rspack/plugin-react-refresh';
+// TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
+// @ts-ignore -- ts-jest uses CommonJS resolution while the Rspack plugin is ESM.
+import {ReactRefreshRspackPlugin} from '@rspack/plugin-react-refresh';
 
 import type TerserWebpackPlugin from 'terser-webpack-plugin';
 import type * as Lightningcss from 'lightningcss';
@@ -230,8 +235,8 @@ export async function rspackConfigFactory(
               }
             : undefined,
 
-        experiments: configureRspackExperiments(helperOptions),
-        cache,
+        lazyCompilation: configureRspackLazyCompilation(helperOptions),
+        cache: configureRspackCache(helperOptions, cache),
     };
 
     rspackConfig = await config.rspack(rspackConfig, {
@@ -253,7 +258,7 @@ export async function configureModuleRules(
     const jsLoader = await createJavaScriptLoader(helperOptions);
 
     return [
-        ...createSourceMapRules(!helperOptions.config.disableSourceMapGeneration),
+        ...createSourceMapRules(helperOptions),
         {
             oneOf: [
                 await createWorkerRule(helperOptions),
@@ -372,14 +377,12 @@ function configureExperiments({
     };
 }
 
-function configureRspackExperiments(options: HelperOptions): Rspack.Configuration['experiments'] {
+function configureRspackLazyCompilation(
+    options: HelperOptions,
+): Rspack.Configuration['lazyCompilation'] {
     const {config, isSsr, isEnvProduction} = options;
 
-    if (isSsr) {
-        return config.ssr?.moduleType === 'esm' ? {outputModule: true} : undefined;
-    }
-
-    if (isEnvProduction) {
+    if (isSsr || isEnvProduction) {
         return undefined;
     }
 
@@ -396,6 +399,18 @@ function configureRspackExperiments(options: HelperOptions): Rspack.Configuratio
         };
     }
 
+    return lazyCompilation;
+}
+
+function configureRspackCache(
+    options: HelperOptions,
+    enabled: boolean,
+): Rspack.Configuration['cache'] {
+    if (!enabled) {
+        return false;
+    }
+
+    const {config} = options;
     const filesystemCacheOptions =
         typeof config.cache === 'object' && config.cache.type === 'filesystem'
             ? config.cache
@@ -408,19 +423,16 @@ function configureRspackExperiments(options: HelperOptions): Rspack.Configuratio
         .join('-');
 
     return {
-        cache: {
-            version: cacheVersion || undefined,
-            type: 'persistent',
-            snapshot: {
-                managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
-            },
-            storage: {
-                type: 'filesystem',
-                directory: filesystemCacheOptions?.cacheDirectory,
-            },
-            buildDependencies: Object.values(getCacheBuildDependencies(options)).flat(),
+        version: cacheVersion || undefined,
+        type: 'persistent',
+        snapshot: {
+            managedPaths: config.watchOptions?.watchPackages ? [] : undefined,
         },
-        lazyCompilation,
+        storage: {
+            type: 'filesystem',
+            directory: filesystemCacheOptions?.cacheDirectory,
+        },
+        buildDependencies: Object.values(getCacheBuildDependencies(options)).flat(),
     };
 }
 
@@ -545,6 +557,10 @@ function configureOutput(options: HelperOptions) {
         ssrOptions = {
             library: {type: options.config.ssr?.moduleType === 'esm' ? 'module' : 'commonjs2'},
             chunkFormat: false,
+            module:
+                options.config.bundler === 'rspack' && options.config.ssr?.moduleType === 'esm'
+                    ? true
+                    : undefined,
         } satisfies NonNullable<webpack.Configuration['output']>;
     }
     if (options.config.moduleFederation) {
@@ -764,8 +780,18 @@ function createJavaScriptRule(
     };
 }
 
-function createSourceMapRules(shouldUseSourceMap: boolean): webpack.RuleSetRule[] {
-    if (shouldUseSourceMap) {
+function createSourceMapRules({config}: HelperOptions): webpack.RuleSetRule[] {
+    if (!config.disableSourceMapGeneration) {
+        if (config.bundler === 'rspack') {
+            return [
+                {
+                    test: [/\.jsx?$/, /\.[cm]js$/],
+                    include: /node_modules/,
+                    extractSourceMap: true,
+                } as webpack.RuleSetRule & {extractSourceMap: true},
+            ];
+        }
+
         return [
             {
                 test: [/\.jsx?$/, /\.[cm]js$/],
@@ -1388,17 +1414,29 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
             );
         }
         if (config.analyzeBundle === 'statoscope') {
-            const customStatoscopeConfig = config.statoscopeConfig || {};
+            const {statsOptions: customStatsOptions, ...customStatoscopeConfig} =
+                config.statoscopeConfig ?? {};
 
             plugins.push(
                 new StatoscopeWebpackPlugin({
                     saveReportTo: path.resolve(options.buildDirectory, 'report.html'),
                     saveStatsTo: path.resolve(options.buildDirectory, 'stats.json'),
                     open: false,
-                    statsOptions: {
-                        all: true,
-                    },
                     ...customStatoscopeConfig,
+                    // Starting from rspack 2 these options are disabled by default: their
+                    // `DEFAULTS` entries are `NORMAL_OFF`, i.e. they are only enabled when
+                    // `all: true` is passed. In webpack and rspack 1.x they were enabled for
+                    // `toJson()` implicitly. Without them `stats.json` contains no modules,
+                    // chunks or assets and the Statoscope report is empty, so they must stay
+                    // enabled even when a project provides its own `statsOptions`.
+                    statsOptions: {
+                        assets: true,
+                        chunks: true,
+                        modules: true,
+                        chunkGroups: true,
+                        entrypoints: true,
+                        ...customStatsOptions,
+                    },
                 }),
             );
         }
@@ -1504,33 +1542,11 @@ function configureRspackPlugins(options: HelperOptions): Rspack.Configuration['p
     ];
 
     if (!isSsr && isEnvDevelopment && config.reactRefresh !== false) {
-        const {webSocketPath = path.normalize(`/${config.publicPath}/sockjs-node`)} =
-            config.devServer || {};
-
-        const {overlay, ...reactRefreshConfig} = config.reactRefresh({
-            overlay: {sockPath: webSocketPath},
+        const {overlay: _overlay, ...reactRefreshConfig} = config.reactRefresh({
             exclude: [/node_modules/, /\.worker\.[jt]sx?$/],
         });
 
-        rspackPlugins.push(
-            new ReactRefreshRspackPlugin({
-                ...reactRefreshConfig,
-                overlay:
-                    typeof overlay === 'object'
-                        ? {
-                              entry: typeof overlay.entry === 'string' ? overlay.entry : undefined,
-                              module:
-                                  typeof overlay.module === 'string' ? overlay.module : undefined,
-                              sockPath: overlay.sockPath,
-                              sockHost: overlay.sockHost,
-                              sockPort: overlay.sockPort?.toString(),
-                              sockProtocol: overlay.sockProtocol,
-                              sockIntegration:
-                                  overlay.sockIntegration === 'wds' ? 'wds' : undefined,
-                          }
-                        : undefined,
-            }),
-        );
+        rspackPlugins.push(new ReactRefreshRspackPlugin(reactRefreshConfig));
     }
 
     return rspackPlugins;

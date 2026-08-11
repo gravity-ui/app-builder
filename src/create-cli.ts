@@ -5,6 +5,11 @@ import * as path from 'node:path';
 import logger from './common/logger';
 import {getProjectConfig} from './common/config';
 import {isLibraryConfig} from './common/models';
+import {
+    cleanupRspackProfile,
+    getRspackProfileOptions,
+    startRspackProfile,
+} from './common/rspack-profile';
 
 import type {ProjectConfig} from './common/models';
 
@@ -36,6 +41,25 @@ export function createCli(argv: string[]) {
         .option('verbose', {
             type: 'boolean',
             describe: 'Turn on verbose output',
+            global: true,
+        })
+        .option('rspack-profile', {
+            group: 'Rspack profiling',
+            type: 'string',
+            describe:
+                'Enable Rspack tracing with the provided filter (for example: ALL or rspack_core=info)',
+            global: true,
+        })
+        .option('rspack-trace-layer', {
+            group: 'Rspack profiling',
+            choices: ['perfetto', 'logger'] as const,
+            describe: 'Select the Rspack trace output format',
+            global: true,
+        })
+        .option('rspack-trace-output', {
+            group: 'Rspack profiling',
+            type: 'string',
+            describe: 'Set the trace filename inside the generated profile directory',
             global: true,
         })
         .option('c', {
@@ -221,8 +245,14 @@ function getVersionInfo(): string {
 function handlerP(fn: (args: Arguments) => void) {
     return (args: Arguments): void => {
         Promise.resolve(fn(args)).then(
-            () => process.exit(0),
-            (err) => logger.panic(err),
+            async () => {
+                await cleanupRspackProfile();
+                process.exit(0);
+            },
+            async (err) => {
+                await cleanupRspackProfile();
+                logger.panic(err);
+            },
         );
     };
 }
@@ -234,6 +264,22 @@ function getCommandHandler(
     return async (argv) => {
         const config = await getProjectConfig(command, argv as CliArgs);
         logger.setVerbose(Boolean(config.verbose));
+
+        const profileOptions = getRspackProfileOptions(argv as CliArgs);
+        if (profileOptions) {
+            if (
+                isLibraryConfig(config) ||
+                config.client.bundler !== 'rspack' ||
+                config.target === 'server'
+            ) {
+                throw new Error(
+                    "Rspack profiling requires a service client configured with bundler: 'rspack'.",
+                );
+            }
+
+            const profile = await startRspackProfile(profileOptions);
+            logger.message(`Rspack ${profile.layer} tracing enabled: ${profile.output}`);
+        }
 
         const args = {...config, logger};
         const localCmd = resolveLocalCommand(command);

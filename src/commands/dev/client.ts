@@ -11,8 +11,13 @@ import {
     Compiler as RspackCompiler,
     Configuration as RspackConfiguration,
     MultiCompiler as RspackMultiCompiler,
+    lazyCompilationMiddleware,
     rspack,
+    // TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
+    // @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/core 2 is ESM.
 } from '@rspack/core';
+// TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
+// @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/dev-server 2 is ESM.
 import {RspackDevServer} from '@rspack/dev-server';
 
 import paths from '../../common/paths';
@@ -121,11 +126,9 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         static: staticFolder,
         setupMiddlewares(middlewares) {
             if (config.client.lazyCompilation && bundler === 'rspack') {
-                const lazyCompilationMiddleware = rspack.experiments.lazyCompilationMiddleware(
-                    compiler as RspackCompiler,
-                );
+                const middleware = lazyCompilationMiddleware(compiler as RspackCompiler);
 
-                return [lazyCompilationMiddleware, ...middlewares];
+                return [middleware, ...middlewares];
             }
 
             return middlewares;

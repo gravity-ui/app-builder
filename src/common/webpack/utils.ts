@@ -5,6 +5,8 @@ import {getTsProjectConfig} from '../typescript/utils';
 
 import type * as Webpack from 'webpack';
 import type {Logger} from '../logger';
+// TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
+// @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/core 2 is ESM.
 import {MultiStats} from '@rspack/core';
 import {NormalizedClientConfig, WebWorkerHandle} from '../models';
 

@@ -24,6 +24,15 @@ npx app-builder dev # to view supported options add the --help flag.
 npx app-builder build # to view supported options add the --help flag.
 ```
 
+### Profile a Rspack build
+
+```sh
+npx app-builder dev --rspack-profile 'rspack_core=info'
+```
+
+See [Rspack profiling](docs/rspack-profiling.md) for trace lifecycle, filters, environment
+variables, and Perfetto analysis.
+
 ### Configuration
 
 You can use any of these files:
