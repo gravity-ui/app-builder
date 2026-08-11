@@ -1414,21 +1414,29 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
             );
         }
         if (config.analyzeBundle === 'statoscope') {
-            const customStatoscopeConfig = config.statoscopeConfig || {};
+            const {statsOptions: customStatsOptions, ...customStatoscopeConfig} =
+                config.statoscopeConfig ?? {};
 
             plugins.push(
                 new StatoscopeWebpackPlugin({
                     saveReportTo: path.resolve(options.buildDirectory, 'report.html'),
                     saveStatsTo: path.resolve(options.buildDirectory, 'stats.json'),
                     open: false,
+                    ...customStatoscopeConfig,
+                    // Starting from rspack 2 these options are disabled by default: their
+                    // `DEFAULTS` entries are `NORMAL_OFF`, i.e. they are only enabled when
+                    // `all: true` is passed. In webpack and rspack 1.x they were enabled for
+                    // `toJson()` implicitly. Without them `stats.json` contains no modules,
+                    // chunks or assets and the Statoscope report is empty, so they must stay
+                    // enabled even when a project provides its own `statsOptions`.
                     statsOptions: {
                         assets: true,
                         chunks: true,
                         modules: true,
                         chunkGroups: true,
                         entrypoints: true,
+                        ...customStatsOptions,
                     },
-                    ...customStatoscopeConfig,
                 }),
             );
         }
