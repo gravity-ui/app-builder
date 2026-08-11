@@ -1,3 +1,4 @@
+import path from 'node:path';
 import {rimraf} from 'rimraf';
 
 import {ControllableScript} from '../../common/child-process/controllable-script';
@@ -28,7 +29,8 @@ watch(
         onAfterFilesEmitted: () => {
             process.send({type: 'Emitted'});
         },
-        enableSourceMap: true
+        enableSourceMap: true,
+        tsBuildInfoFile: ${JSON.stringify(path.join(config.server.outputPath, '.tsbuildinfo'))}
     }
 );`;
 }
