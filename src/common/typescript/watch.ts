@@ -1,7 +1,8 @@
+import nodePath from 'node:path';
 import type Typescript from 'typescript';
 import type {Logger} from '../logger';
 import {createTransformPathsToLocalModules} from './transformers';
-import {displayFilename, getTsProjectConfigPath, onHostEvent} from './utils';
+import {displayFilename, getTsProjectConfig, getTsProjectConfigPath, onHostEvent} from './utils';
 import {formatDiagnosticBrief} from './diagnostic';
 
 /** @see https://github.com/microsoft/TypeScript/blob/9059e5bda0bb603ae6b41eca09dcd2a071af45fd/src/compiler/diagnosticMessages.json#L5400-L5403 */
@@ -17,11 +18,24 @@ export function watch(
         logger,
         onAfterFilesEmitted,
         enableSourceMap,
-    }: {logger: Logger; onAfterFilesEmitted?: () => void; enableSourceMap?: boolean},
+        tsBuildInfoFile,
+    }: {
+        logger: Logger;
+        onAfterFilesEmitted?: () => void;
+        enableSourceMap?: boolean;
+        tsBuildInfoFile?: string;
+    },
 ) {
     logger.message('Start compilation in watch mode');
     logger.message(`Typescript v${ts.version}`);
     const configPath = getTsProjectConfigPath(ts, projectPath);
+    const optionsToExtend = {
+        noEmit: false,
+        noEmitOnError: false,
+        inlineSourceMap: enableSourceMap,
+        inlineSources: enableSourceMap,
+        ...(enableSourceMap ? {sourceMap: false} : undefined),
+    };
 
     const createProgram = ts.createEmitAndSemanticDiagnosticsBuilderProgram;
 
@@ -32,6 +46,18 @@ export function watch(
         reportDiagnostic,
         reportWatchStatusChanged,
     );
+
+    if (tsBuildInfoFile) {
+        host.getParsedCommandLine = (fileName) =>
+            getTsProjectConfig(
+                ts,
+                nodePath.dirname(fileName),
+                nodePath.basename(fileName),
+                nodePath.resolve(fileName) === nodePath.resolve(configPath)
+                    ? {...optionsToExtend, tsBuildInfoFile}
+                    : optionsToExtend,
+            );
+    }
 
     onHostEvent(
         host,
@@ -68,13 +94,7 @@ export function watch(
 
     // `createSolutionBuilderWithWatch` creates an initial program, watches files, and updates
     // the program over time.
-    const solutionBuilder = ts.createSolutionBuilderWithWatch(host, [configPath], {
-        noEmit: false,
-        noEmitOnError: false,
-        inlineSourceMap: enableSourceMap,
-        inlineSources: enableSourceMap,
-        ...(enableSourceMap ? {sourceMap: false} : undefined),
-    });
+    const solutionBuilder = ts.createSolutionBuilderWithWatch(host, [configPath], optionsToExtend);
 
     const transformPathsToLocalModules = createTransformPathsToLocalModules(ts);
 
