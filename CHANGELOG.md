@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.51.0](https://github.com/gravity-ui/app-builder/compare/v0.50.0...v0.51.0) (2026-08-12)
+
+
+### Features
+
+* bump `@module-federation/enhanced@2.8.0` ([#342](https://github.com/gravity-ui/app-builder/issues/342)) ([b003588](https://github.com/gravity-ui/app-builder/commit/b00358835254e8fd3eff2087825003326db0a9c4))
+
+
+### Bug Fixes
+
+* **dev:** clean TypeScript incremental state with server output ([#340](https://github.com/gravity-ui/app-builder/issues/340)) ([8e0366b](https://github.com/gravity-ui/app-builder/commit/8e0366b1968d362211fbb3adf11e4bc6272516f5))
+
 ## [0.50.0](https://github.com/gravity-ui/app-builder/compare/v0.49.1...v0.50.0) (2026-08-11)
 
 
