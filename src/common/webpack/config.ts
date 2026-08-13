@@ -1444,8 +1444,13 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         if (config.analyzeBundle === 'rsdoctor') {
             plugins.push(
                 new bundlerPlugins.RSDoctorPlugin({
-                    mode: 'brief',
                     ...config.rsdoctorConfig,
+                    output: {
+                        mode: 'brief',
+                        ...config.rsdoctorConfig?.output,
+                    } as NonNullable<
+                        NonNullable<NormalizedClientBaseConfig['rsdoctorConfig']>['output']
+                    >,
                 }),
             );
         }

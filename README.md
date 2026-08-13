@@ -320,7 +320,26 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   - `rsdoctor` — enable [Rsdoctor](https://rsdoctor.dev/) plugin (`@rsdoctor/webpack-plugin` or `@rsdoctor/rspack-plugin` depending on the chosen bundler). Defaults to `brief` mode.
 - `reactProfiling` (`boolean`) — use react profiler API in production, this option also disable minimization. The API is required by React developers tools for profile.
 - `statoscopeConfig` (`Options`) — `@statoscope/webpack-plugin` [configuration options](https://github.com/statoscope/statoscope/tree/master/packages/webpack-plugin#usage). Might be used to override the defaults. Requires `analyzeBundle: statoscope`.
-- `rsdoctorConfig` (`RsdoctorRspackPluginOptions`) — Rsdoctor plugin [configuration options](https://rsdoctor.dev/config/options/options). Merged on top of the defaults (`{ mode: 'brief' }`). Requires `analyzeBundle: rsdoctor`.
+- `rsdoctorConfig` (`RsdoctorRspackPluginOptions`) — Rsdoctor plugin [configuration options](https://rsdoctor.dev/config/options/options). Merged on top of the defaults (`{ output: {mode: 'brief'} }`). Requires `analyzeBundle: rsdoctor`.
+
+  ```ts
+  import {defineConfig} from '@gravity-ui/app-builder';
+
+  export default defineConfig({
+    client: {
+      analyzeBundle: 'rsdoctor',
+      rsdoctorConfig: {
+        disableClientServer: true,
+        output: {
+          mode: 'normal',
+          reportDir: './reports/rsdoctor',
+        },
+        features: ['loader', 'plugins', 'bundle'],
+      },
+    },
+  });
+  ```
+
 - `cdn` (`CdnUploadConfig | CdnUploadConfig[]`) - upload bundled client files to CDN.
   - `bucket` (`string`) — bucket name
   - `prefix` (`string`) — path to files inside the bucket

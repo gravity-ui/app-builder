@@ -322,7 +322,11 @@ export interface ClientCommonConfig {
     excludeFromClean?: string[];
     analyzeBundle?: 'true' | 'statoscope' | 'rsdoctor';
     statoscopeConfig?: Partial<StatoscopeOptions>;
-    rsdoctorConfig?: Partial<NonNullable<ConstructorParameters<typeof RsdoctorRspackPlugin>[0]>>;
+    /** Rsdoctor plugin options. Requires `analyzeBundle: 'rsdoctor'`. */
+    rsdoctorConfig?: Omit<
+        Partial<NonNullable<ConstructorParameters<typeof RsdoctorRspackPlugin>[0]>>,
+        'mode'
+    >;
     reactProfiling?: boolean;
     /**
      * Disable react-refresh in dev mode
