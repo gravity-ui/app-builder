@@ -1,5 +1,5 @@
 import {tmpNameSync} from './utils.js';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 
 import type {ChildProcess, Serializable} from 'child_process';
 

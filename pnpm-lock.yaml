@@ -143,11 +143,11 @@ importers:
         specifier: ~3.44.0
         version: 3.44.0
       cosmiconfig:
-        specifier: ^8.3.6
-        version: 8.3.6(typescript@5.6.3)
+        specifier: ^9.0.1
+        version: 9.0.1(typescript@5.6.3)
       cosmiconfig-typescript-loader:
-        specifier: ^5.0.0
-        version: 5.1.0(@types/node@18.19.130)(cosmiconfig@8.3.6(typescript@5.6.3))(typescript@5.6.3)
+        specifier: ^6.2.0
+        version: 6.2.0(@types/node@18.19.130)(cosmiconfig@9.0.1(typescript@5.6.3))(typescript@5.6.3)
       css-loader:
         specifier: ^7.1.2
         version: 7.1.4(@rspack/core@2.1.2(@module-federation/runtime-tools@2.8.0))(webpack@5.95.0(@swc/core@1.15.43))
@@ -4238,14 +4238,6 @@ packages:
     resolution: {integrity: sha512-KIHbLJqu73RGr/hnbrO9uBeixNGuvSQjul/jdFvS/KFSIH1hWVd1ng7zOHx+YrEfInLG7q4n6GHQ9cDtxv/P6g==}
     engines: {node: '>= 0.10'}
 
-  cosmiconfig-typescript-loader@5.1.0:
-    resolution: {integrity: sha512-7PtBB+6FdsOvZyJtlF3hEPpACq7RQX6BVGsgC7/lfVXnKMvNCu/XY3ykreqG5w/rBNdu2z8LCIKoF3kpHHdHlA==}
-    engines: {node: '>=v16'}
-    peerDependencies:
-      '@types/node': '*'
-      cosmiconfig: '>=8.2'
-      typescript: '>=4'
-
   cosmiconfig-typescript-loader@6.2.0:
     resolution: {integrity: sha512-GEN39v7TgdxgIoNcdkRE3uiAzQt3UXLyHbRHD6YoL048XAeOomyxaP+Hh/+2C6C2wYjxJ2onhJcsQp+L4YEkVQ==}
     engines: {node: '>=v18'}
@@ -5948,10 +5940,6 @@ packages:
     peerDependenciesMeta:
       node-notifier:
         optional: true
-
-  jiti@1.21.7:
-    resolution: {integrity: sha512-/imKNG4EbWNrVjoNC/1H5/9GFy+tqjGBHCaSsN+P2RnPqjsLmv6UD3Ej+Kj8nBWaRAwyk7kK5ZUc+OEatnTR3A==}
-    hasBin: true
 
   jiti@2.4.2:
     resolution: {integrity: sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==}
@@ -13734,13 +13722,6 @@ snapshots:
       object-assign: 4.1.1
       vary: 1.1.2
 
-  cosmiconfig-typescript-loader@5.1.0(@types/node@18.19.130)(cosmiconfig@8.3.6(typescript@5.6.3))(typescript@5.6.3):
-    dependencies:
-      '@types/node': 18.19.130
-      cosmiconfig: 8.3.6(typescript@5.6.3)
-      jiti: 1.21.7
-      typescript: 5.6.3
-
   cosmiconfig-typescript-loader@6.2.0(@types/node@18.19.130)(cosmiconfig@9.0.1(typescript@5.6.3))(typescript@5.6.3):
     dependencies:
       '@types/node': 18.19.130
@@ -15860,8 +15841,6 @@ snapshots:
       - babel-plugin-macros
       - supports-color
       - ts-node
-
-  jiti@1.21.7: {}
 
   jiti@2.4.2: {}
 
