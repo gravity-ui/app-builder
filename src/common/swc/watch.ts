@@ -1,8 +1,8 @@
-import type {Logger} from '../logger';
+import type {Logger} from '../logger/index.js';
 // @ts-ignore @swc/cli is not typed
 import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils';
-import type {GetSwcOptionsParams} from './utils';
+import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils.js';
+import type {GetSwcOptionsParams} from './utils.js';
 
 type SwcWatchOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
     outputPath: string;

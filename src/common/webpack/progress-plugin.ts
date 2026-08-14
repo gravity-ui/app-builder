@@ -2,8 +2,8 @@
 // @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/core 2 is ESM.
 import type * as Rspack from '@rspack/core';
 import type * as Webpack from 'webpack';
-import type {Logger} from '../logger';
-import {elapsedTime} from '../logger/pretty-time';
+import type {Logger} from '../logger/index.js';
+import {elapsedTime} from '../logger/pretty-time.js';
 
 interface State {
     done?: boolean;

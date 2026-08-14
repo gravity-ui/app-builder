@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import {colors} from './colors';
+import {colors} from './colors.js';
 
 export function logConfig(caption: string, config: unknown) {
     console.log(colors.cyan(caption));

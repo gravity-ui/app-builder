@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import paths from '../paths';
+import paths from '../paths.js';
 
 type Pattern = RegExp | ((v: string) => boolean) | string;
 

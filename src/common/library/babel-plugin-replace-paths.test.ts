@@ -1,5 +1,5 @@
-import pluginTester from 'babel-plugin-tester';
-import plugin from './babel-plugin-replace-paths';
+import {pluginTester} from 'babel-plugin-tester';
+import plugin from './babel-plugin-replace-paths.js';
 
 pluginTester({
     plugin,

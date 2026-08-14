@@ -3,10 +3,10 @@ import webpack from 'webpack';
 // @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/core 2 is ESM.
 import {Configuration as RspackConfiguration, rspack} from '@rspack/core';
 
-import type {NormalizedClientConfig} from '../models';
-import {Logger} from '../logger';
-import {WebpackMode, rspackConfigFactory, webpackConfigFactory} from './config';
-import {compilerHandlerFactory} from './utils';
+import type {NormalizedClientConfig} from '../models/index.js';
+import {Logger} from '../logger/index.js';
+import {WebpackMode, rspackConfigFactory, webpackConfigFactory} from './config.js';
+import {compilerHandlerFactory} from './utils.js';
 
 export async function clientCompile(
     config: NormalizedClientConfig,

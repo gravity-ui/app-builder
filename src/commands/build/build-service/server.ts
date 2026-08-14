@@ -1,29 +1,42 @@
 import {onExit} from 'signal-exit';
+import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
 
-import {ControllableScript} from '../../../common/child-process/controllable-script';
-import paths from '../../../common/paths';
-import {createRunFolder} from '../../../common/utils';
+import {ControllableScript} from '../../../common/child-process/controllable-script.js';
+import paths from '../../../common/paths.js';
+import {createRunFolder} from '../../../common/utils.js';
 
-import type {NormalizedServiceConfig} from '../../../common/models';
+import type {NormalizedServiceConfig} from '../../../common/models/index.js';
+
+const require = createRequire(import.meta.url);
+
+function resolveImportUrl(specifier: string) {
+    return pathToFileURL(require.resolve(specifier)).href;
+}
 
 function createSWCBuildScript(config: NormalizedServiceConfig) {
     return `
-const {Logger} = require(${JSON.stringify(require.resolve('../../../common/logger'))});
-const {compile} = require(${JSON.stringify(require.resolve('../../../common/swc/compile'))});
+(async () => {
+const [{Logger}, {compile}] = await Promise.all([
+    import(${JSON.stringify(resolveImportUrl('../../../common/logger/index.js'))}),
+    import(${JSON.stringify(resolveImportUrl('../../../common/swc/compile.js'))}),
+]);
 
 const logger = new Logger('server', ${config.verbose});
-compile({
+await compile({
     logger,
     outputPath: ${JSON.stringify(paths.appDist)},
     projectPath: ${JSON.stringify(paths.appServer)},
     additionalPaths: ${JSON.stringify(config.server.swcOptions?.additionalPaths)},
     exclude: ${JSON.stringify(config.server.swcOptions?.exclude)},
     publicPath: ${JSON.stringify(config.client.browserPublicPath)},
-});`;
+});
+})();`;
 }
 
 function createTypescriptBuildScript(config: NormalizedServiceConfig) {
     return `
+(async () => {
 let ts;
 try {
     ts = require('typescript');
@@ -33,11 +46,14 @@ try {
     }
     ts = require(${JSON.stringify(require.resolve('typescript'))});
 }
-const {Logger} = require(${JSON.stringify(require.resolve('../../../common/logger'))});
-const {compile} = require(${JSON.stringify(require.resolve('../../../common/typescript/compile'))});
+const [{Logger}, {compile}] = await Promise.all([
+    import(${JSON.stringify(resolveImportUrl('../../../common/logger/index.js'))}),
+    import(${JSON.stringify(resolveImportUrl('../../../common/typescript/compile.js'))}),
+]);
 
 const logger = new Logger('server', ${config.verbose});
-compile(ts, {logger, projectPath: ${JSON.stringify(paths.appServer)}});`;
+await compile(ts, {logger, projectPath: ${JSON.stringify(paths.appServer)}});
+})();`;
 }
 
 export function buildServer(config: NormalizedServiceConfig): Promise<void> {

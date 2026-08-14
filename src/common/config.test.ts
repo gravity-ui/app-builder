@@ -1,5 +1,35 @@
-import {normalizeConfig} from './config';
-import type {ClientConfig, CssLoaderOptions} from './models';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+
+import {getProjectConfig, normalizeConfig} from './config.js';
+import type {ClientConfig, CssLoaderOptions} from './models/index.js';
+
+describe('configuration loading', () => {
+    it('loads a conditional ESM config', async () => {
+        const configDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'app-builder-config-'));
+        const configPath = path.join(configDir, 'app-builder.config.mjs');
+
+        await fs.promises.writeFile(
+            configPath,
+            "export default (command, env) => ({lib: {internalDirs: [command + '-' + env.channel]}});",
+        );
+
+        try {
+            await expect(
+                getProjectConfig('build', {
+                    config: configPath,
+                    // yargs types this as the pre-coercion string array.
+                    env: {channel: 'next'} as unknown as string[],
+                }),
+            ).resolves.toMatchObject({
+                lib: {internalDirs: ['build-next']},
+            });
+        } finally {
+            await fs.promises.rm(configDir, {recursive: true, force: true});
+        }
+    });
+});
 
 // Type guard for url filter
 function isUrlFilterObject(

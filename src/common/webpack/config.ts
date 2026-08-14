@@ -1,5 +1,6 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
+import {createRequire} from 'node:module';
 import * as webpack from 'webpack';
 import {CleanWebpackPlugin} from 'clean-webpack-plugin';
 import {WebpackManifestPlugin} from 'webpack-manifest-plugin';
@@ -18,7 +19,7 @@ import type {sentryWebpackPlugin} from '@sentry/webpack-plugin';
 import {CircularDependencyRspackPlugin, rspack} from '@rspack/core';
 // @ts-ignore -- see the runtime import directly above.
 import type * as Rspack from '@rspack/core';
-import {generateAssetsManifest} from './rspack';
+import {generateAssetsManifest} from './rspack.js';
 import {TsCheckerRspackPlugin} from 'ts-checker-rspack-plugin';
 // TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
 // @ts-ignore -- ts-jest uses CommonJS resolution while the Rspack plugin is ESM.
@@ -29,8 +30,8 @@ import type * as Lightningcss from 'lightningcss';
 import type CssMinimizerWebpackPlugin from 'css-minimizer-webpack-plugin';
 import type * as Babel from '@babel/core';
 
-import paths from '../paths';
-import {babelPreset} from '../babel';
+import paths from '../paths.js';
+import {babelPreset} from '../babel/index.js';
 import type {
     Bundler,
     ExtendedPostCSSConfig,
@@ -39,20 +40,23 @@ import type {
     NormalizedClientRspackConfig,
     NormalizedClientWebpackConfig,
     WebWorkerHandle,
-} from '../models';
-import type {Logger} from '../logger';
-import {createProgressPlugin} from './progress-plugin';
-import {getNormalizedWorkerOption, resolveTsConfigPathsToAlias} from './utils';
-import {createS3UploadPlugins} from '../s3-upload';
-import {logConfig} from '../logger/log-config';
-import {resolveTypescript} from '../typescript/utils';
-import {nodeExternals} from './node-externals';
-import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
+} from '../models/index.js';
+import type {Logger} from '../logger/index.js';
+import {createProgressPlugin} from './progress-plugin.js';
+import {getNormalizedWorkerOption, resolveTsConfigPathsToAlias} from './utils.js';
+import {createS3UploadPlugins} from '../s3-upload/index.js';
+import {logConfig} from '../logger/log-config.js';
+import {resolveTypescript} from '../typescript/utils.js';
+import {nodeExternals} from './node-externals.js';
+import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options.js';
 import type {moduleFederationPlugin} from '@module-federation/enhanced';
-import {hasMFAssetsIsolation} from '../utils';
+import {hasMFAssetsIsolation} from '../utils.js';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
+const StatoscopePlugin =
+    StatoscopeWebpackPlugin as unknown as typeof import('@statoscope/webpack-plugin').default;
+const require = createRequire(import.meta.url);
 
 export interface HelperOptions {
     config: NormalizedClientConfig;
@@ -463,10 +467,10 @@ export function configureResolve({isEnvProduction, config}: HelperOptions) {
 
 function createEntryArray(entry: string | string[]) {
     if (typeof entry === 'string') {
-        return [require.resolve('./public-path'), entry];
+        return [require.resolve('./public-path.js'), entry];
     }
 
-    return [require.resolve('./public-path'), ...entry];
+    return [require.resolve('./public-path.js'), ...entry];
 }
 
 function addEntry(entry: Record<string, string[]>, file: string) {
@@ -821,7 +825,7 @@ async function createWorkerRule(options: HelperOptions): Promise<webpack.RuleSet
             break;
         case 'cdn-compat':
             ruleset.push({
-                loader: require.resolve('./worker/worker-loader'),
+                loader: require.resolve('./worker/worker-loader.js'),
             });
             break;
         case 'none':
@@ -1381,7 +1385,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
             const actualRuntimePlugins = runtimePlugins?.slice() || [];
 
             if (remotesRuntimeVersioning) {
-                actualRuntimePlugins.push(require.resolve('./runtime-versioning-plugin'));
+                actualRuntimePlugins.push(require.resolve('./runtime-versioning-plugin.js'));
             }
 
             plugins.push(
@@ -1418,7 +1422,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
                 config.statoscopeConfig ?? {};
 
             plugins.push(
-                new StatoscopeWebpackPlugin({
+                new StatoscopePlugin({
                     saveReportTo: path.resolve(options.buildDirectory, 'report.html'),
                     saveStatsTo: path.resolve(options.buildDirectory, 'stats.json'),
                     open: false,
@@ -1444,8 +1448,13 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         if (config.analyzeBundle === 'rsdoctor') {
             plugins.push(
                 new bundlerPlugins.RSDoctorPlugin({
-                    mode: 'brief',
                     ...config.rsdoctorConfig,
+                    output: {
+                        mode: 'brief',
+                        ...config.rsdoctorConfig?.output,
+                    } as NonNullable<
+                        NonNullable<NormalizedClientBaseConfig['rsdoctorConfig']>['output']
+                    >,
                 }),
             );
         }

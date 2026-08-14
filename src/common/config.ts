@@ -1,14 +1,14 @@
 import * as path from 'node:path';
+import {createRequire} from 'node:module';
 
-import {cosmiconfigSync} from 'cosmiconfig';
+import {cosmiconfig} from 'cosmiconfig';
 import {TypeScriptLoader as getTsLoader} from 'cosmiconfig-typescript-loader';
 import {stripIndent} from 'common-tags';
 
-import {isLibraryConfig, isServiceConfig} from './models';
-import paths from './paths';
+import {isLibraryConfig, isServiceConfig} from './models/index.js';
+import paths from './paths.js';
 
-import type {Loader} from 'cosmiconfig';
-import type {CosmiconfigResult} from 'cosmiconfig/dist/types';
+import type {CosmiconfigResult} from 'cosmiconfig';
 
 import type {
     ClientConfig,
@@ -21,10 +21,12 @@ import type {
     ProjectConfig,
     ServerConfig,
     ServiceConfig,
-} from './models';
-import type {CliArgs} from '../create-cli';
-import {getPort, hasMFAssetsIsolation} from './utils';
-import logger from './logger';
+} from './models/index.js';
+import type {CliArgs} from '../create-cli.js';
+import {getPort, hasMFAssetsIsolation} from './utils.js';
+import logger from './logger/index.js';
+
+const require = createRequire(import.meta.url);
 
 function splitPaths(paths: string | string[]) {
     return (Array.isArray(paths) ? paths : [paths]).flatMap((p) => p.split(','));
@@ -68,20 +70,10 @@ export async function getProjectConfig(
     command: string,
     {env, storybook, ...argv}: Partial<CliArgs> & {storybook?: boolean},
 ) {
-    function getLoader(loader: Loader): Loader {
-        return async (pathname: string, content: string) => {
-            const config = loader(pathname, content);
-            if (typeof config === 'function') {
-                return await config(command, env);
-            }
-            return config;
-        };
-    }
-
-    const tsLoader = getLoader(getModuleLoader({storybook}));
+    const tsLoader = getModuleLoader({storybook});
 
     const moduleName = 'app-builder';
-    const explorer = cosmiconfigSync(moduleName, {
+    const explorer = cosmiconfig(moduleName, {
         cache: false,
         stopDir: process.cwd(),
         searchPlaces: [
@@ -91,27 +83,32 @@ export async function getProjectConfig(
             `.${moduleName}rc.yaml`,
             `.${moduleName}rc.yml`,
             `.${moduleName}rc.js`,
+            `.${moduleName}rc.mjs`,
             `.${moduleName}rc.ts`,
+            `.${moduleName}rc.mts`,
             `.${moduleName}rc.cjs`,
             `${moduleName}.config.js`,
+            `${moduleName}.config.mjs`,
             `${moduleName}.config.ts`,
+            `${moduleName}.config.mts`,
             `${moduleName}.config.cjs`,
         ],
         loaders: {
-            '.js': tsLoader,
-            '.cjs': tsLoader,
             '.ts': tsLoader,
+            '.mts': tsLoader,
         },
     });
 
     let cfg: CosmiconfigResult;
     if (argv.config && typeof argv.config === 'string') {
-        cfg = explorer.load(argv.config);
+        cfg = await explorer.load(argv.config);
     } else {
-        cfg = explorer.search();
+        cfg = await explorer.search();
     }
 
-    const config = {verbose: false, ...(await cfg?.config)};
+    const loadedConfig =
+        typeof cfg?.config === 'function' ? await cfg.config(command, env) : await cfg?.config;
+    const config = {verbose: false, ...loadedConfig};
     if (isLibraryConfig(config)) {
         return normalizeConfig({
             ...config,

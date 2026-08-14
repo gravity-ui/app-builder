@@ -8,11 +8,13 @@ import {
     S3Client,
 } from '@aws-sdk/client-s3';
 import * as mime from 'mime-types';
-import {globSync} from 'fast-glob';
+import fastGlob from 'fast-glob';
 
 import type {PutObjectCommandInput, S3ClientConfig} from '@aws-sdk/client-s3';
 
 export type S3ClientOptions = S3ClientConfig;
+const {globSync} = fastGlob;
+
 export function getS3Client(options: S3ClientOptions) {
     const s3Client = new S3Client(options);
 

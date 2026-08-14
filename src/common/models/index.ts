@@ -1,6 +1,4 @@
-import type {EditorLanguage} from 'monaco-editor-webpack-plugin/out/languages';
-import type {EditorFeature} from 'monaco-editor-webpack-plugin/out/features';
-import type {IFeatureDefinition} from 'monaco-editor-webpack-plugin/out/types';
+import type MonacoEditorWebpackPlugin from 'monaco-editor-webpack-plugin';
 import type {Options as MomentTzOptions} from 'moment-timezone-data-webpack-plugin';
 import type {Configuration, DefinePlugin, FileCacheOptions, MemoryCacheOptions} from 'webpack';
 import type {
@@ -20,14 +18,14 @@ import type {
 } from 'webpack-dev-server';
 import type {Options as CircularDependenciesOptions} from 'circular-dependency-plugin';
 import type {Config as SvgrConfig} from '@svgr/core';
-import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options';
+import type ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import type {Options as StatoscopeOptions} from '@statoscope/webpack-plugin';
 import type {RsdoctorRspackPlugin} from '@rsdoctor/rspack-plugin';
 import type {SentryWebpackPluginOptions} from '@sentry/webpack-plugin';
-import type {WebpackMode} from '../webpack/config';
-import type {UploadOptions} from '../s3-upload/upload';
+import type {WebpackMode} from '../webpack/config.js';
+import type {UploadOptions} from '../s3-upload/upload.js';
 import type {TerserOptions} from 'terser-webpack-plugin';
-import type {ReactRefreshPluginOptions} from '@pmmmwh/react-refresh-webpack-plugin/types/lib/types';
+import type ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import type {moduleFederationPlugin} from '@module-federation/enhanced';
 import type {PluginOptions as ReactCompilerOptions} from 'babel-plugin-react-compiler';
 import type {Config as PostCSSConfig} from 'postcss-load-config';
@@ -35,6 +33,13 @@ import type {Config as PostCSSConfig} from 'postcss-load-config';
 export type Bundler = 'webpack' | 'rspack';
 type JavaScriptLoader = 'babel' | 'swc';
 type ServerCompiler = 'typescript' | 'swc';
+type MonacoOptions = NonNullable<ConstructorParameters<typeof MonacoEditorWebpackPlugin>[0]>;
+type ForkTsCheckerWebpackPluginOptions = NonNullable<
+    ConstructorParameters<typeof ForkTsCheckerWebpackPlugin>[0]
+>;
+type ReactRefreshPluginOptions = NonNullable<
+    ConstructorParameters<typeof ReactRefreshWebpackPlugin>[0]
+>;
 
 export type SwcConfig = Swc.Config & Pick<Swc.Options, 'isModule'>;
 
@@ -269,12 +274,7 @@ export interface ClientCommonConfig {
     /**
      * Add monaco-editor support
      */
-    monaco?: {
-        filename?: string;
-        languages?: EditorLanguage[];
-        features?: EditorFeature[];
-        customLanguages?: IFeatureDefinition[];
-    };
+    monaco?: Pick<MonacoOptions, 'filename' | 'languages' | 'features' | 'customLanguages'>;
     /**
      * if false - source maps will be generated for prod builds
      */
@@ -322,7 +322,11 @@ export interface ClientCommonConfig {
     excludeFromClean?: string[];
     analyzeBundle?: 'true' | 'statoscope' | 'rsdoctor';
     statoscopeConfig?: Partial<StatoscopeOptions>;
-    rsdoctorConfig?: Partial<NonNullable<ConstructorParameters<typeof RsdoctorRspackPlugin>[0]>>;
+    /** Rsdoctor plugin options. Requires `analyzeBundle: 'rsdoctor'`. */
+    rsdoctorConfig?: Omit<
+        Partial<NonNullable<ConstructorParameters<typeof RsdoctorRspackPlugin>[0]>>,
+        'mode'
+    >;
     reactProfiling?: boolean;
     /**
      * Disable react-refresh in dev mode

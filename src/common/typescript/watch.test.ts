@@ -1,6 +1,7 @@
 import type Typescript from 'typescript';
+import {jest} from '@jest/globals';
 
-import {watch} from './watch';
+import {watch} from './watch.js';
 
 describe('TypeScript watch', () => {
     it('overrides tsBuildInfoFile only for the root project', () => {
@@ -36,11 +37,13 @@ describe('TypeScript watch', () => {
             getParsedCommandLineOfConfigFile,
             createEmitAndSemanticDiagnosticsBuilderProgram: jest.fn(),
             createSolutionBuilderWithWatchHost: jest.fn(() => host),
-            createSolutionBuilderWithWatch: jest.fn((solutionHost) => {
-                solutionHost.getParsedCommandLine(configPath);
-                solutionHost.getParsedCommandLine(referencedConfigPath);
-                return {build};
-            }),
+            createSolutionBuilderWithWatch: jest.fn(
+                (solutionHost: typeof host & {getParsedCommandLine(path: string): unknown}) => {
+                    solutionHost.getParsedCommandLine(configPath);
+                    solutionHost.getParsedCommandLine(referencedConfigPath);
+                    return {build};
+                },
+            ),
         } as unknown as typeof Typescript;
         const logger = {
             message: jest.fn(),

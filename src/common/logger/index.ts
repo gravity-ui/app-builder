@@ -1,5 +1,5 @@
-import {colors} from './colors';
-import {elapsedTime} from './pretty-time';
+import {colors} from './colors.js';
+import {elapsedTime} from './pretty-time.js';
 import stripAnsi from 'strip-ansi';
 
 const allColors = [

@@ -1,9 +1,9 @@
-import type {Logger} from '../logger';
-import {elapsedTime} from '../logger/pretty-time';
+import type {Logger} from '../logger/index.js';
+import {elapsedTime} from '../logger/pretty-time.js';
 // @ts-ignore @swc/cli is not typed
 import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils';
-import type {GetSwcOptionsParams} from './utils';
+import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils.js';
+import type {GetSwcOptionsParams} from './utils.js';
 
 type SwcCompileOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
     projectPath: string;

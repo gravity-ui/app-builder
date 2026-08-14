@@ -1,22 +1,28 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import * as childProcess from 'node:child_process';
+import {createRequire} from 'node:module';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import * as babel from '@babel/core';
-import {globStream} from 'fast-glob';
+import fastGlob from 'fast-glob';
 import {rimraf} from 'rimraf';
 import sass from 'sass';
 import postcss from 'postcss';
 import postcssPresetEnv from 'postcss-preset-env';
 import {transform} from '@svgr/core';
 
-import paths from '../../common/paths';
-import logger from '../../common/logger';
-import {babelPreset} from '../babel';
+import paths from '../../common/paths.js';
+import logger from '../../common/logger/index.js';
+import {babelPreset} from '../babel/index.js';
 
 import type {PluginConfig} from 'svgo';
 import type {TransformOptions} from '@babel/core';
-import type {LibraryConfig} from '../models';
+import type {LibraryConfig} from '../models/index.js';
+
+const createPostcssPresetEnv =
+    postcssPresetEnv as unknown as typeof import('postcss-preset-env').default;
+const require = createRequire(import.meta.url);
+const {globStream} = fastGlob;
 
 interface GetFilePathOpts {
     ext?: string;
@@ -173,7 +179,7 @@ function compileStyles(
                         });
                     }
                     const postcssTransformed = await postcss([
-                        postcssPresetEnv({enableClientSidePolyfills: false}),
+                        createPostcssPresetEnv({enableClientSidePolyfills: false}),
                     ]).process(sassTransformed.css, {
                         to: path.basename(cssFile),
                         from: path.basename(scssFile),
@@ -256,7 +262,7 @@ export function buildLibrary(config: LibraryConfig) {
                             tsconfig: tsConfigFilePath,
                         },
                     ],
-                    require.resolve('./babel-plugin-replace-paths'),
+                    require.resolve('./babel-plugin-replace-paths.js'),
                     ...(config.lib.babelPlugins || []),
                 ],
                 sourceMaps: true,

@@ -1,9 +1,9 @@
 import type Typescript from 'typescript';
-import type {Logger} from '../logger';
-import {displayFilename, getTsProjectConfigPath} from './utils';
-import {createTransformPathsToLocalModules} from './transformers';
-import {elapsedTime} from '../logger/pretty-time';
-import {formatDiagnosticBrief} from './diagnostic';
+import type {Logger} from '../logger/index.js';
+import {displayFilename, getTsProjectConfigPath} from './utils.js';
+import {createTransformPathsToLocalModules} from './transformers.js';
+import {elapsedTime} from '../logger/pretty-time.js';
+import {formatDiagnosticBrief} from './diagnostic.js';
 
 interface CompileOptions {
     projectPath: string;

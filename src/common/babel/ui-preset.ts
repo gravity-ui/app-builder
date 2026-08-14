@@ -1,3 +1,7 @@
+import {createRequire} from 'node:module';
+
+const require = createRequire(import.meta.url);
+
 function getOption<T>(value: T, defaultValue: T) {
     if (typeof value === 'undefined') {
         return defaultValue;
@@ -6,7 +10,7 @@ function getOption<T>(value: T, defaultValue: T) {
     return value;
 }
 
-module.exports = function (_context: unknown, options: Record<string, unknown> = {}) {
+export default function (_context: unknown, options: Record<string, unknown> = {}) {
     const env = process.env.BABEL_ENV || process.env.NODE_ENV || 'development';
     const isEnvDevelopment = env === 'development';
     const isEnvProduction = env === 'production';
@@ -65,4 +69,4 @@ module.exports = function (_context: unknown, options: Record<string, unknown> =
         presets,
         plugins,
     };
-};
+}

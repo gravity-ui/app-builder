@@ -1,6 +1,10 @@
+import {createRequire} from 'node:module';
+
+const require = createRequire(import.meta.url);
+
 export function babelPreset(config: {newJsxTransform?: boolean; isSsr?: boolean}) {
     return [
-        require.resolve('./ui-preset'),
+        require.resolve('./ui-preset.js'),
         {
             env: {
                 targets: config.isSsr ? {node: 'current'} : undefined,

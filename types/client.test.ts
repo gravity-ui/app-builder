@@ -1,10 +1,22 @@
 import fs from 'fs';
 import path from 'path';
+import {fileURLToPath} from 'node:url';
 
-import packageJson from '../package.json';
+import packageJson from '../package.json' with {type: 'json'};
 
-const projectRoot = path.resolve(__dirname, '..');
+const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 const typesDir = path.join(projectRoot, 'types');
+
+describe('@gravity-ui/app-builder', () => {
+    it('should expose an ESM-only entry point', () => {
+        expect(packageJson.type).toBe('module');
+        expect(packageJson.exports['.']).toEqual({
+            types: './dist/index.d.ts',
+            import: './dist/index.js',
+        });
+        expect(packageJson.exports['.']).not.toHaveProperty('require');
+    });
+});
 
 describe('@gravity-ui/app-builder/client', () => {
     it('should export client ambient types from package.json', () => {

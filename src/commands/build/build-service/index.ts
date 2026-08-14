@@ -1,6 +1,6 @@
-import {shouldCompileTarget} from '../../../common/utils';
+import {shouldCompileTarget} from '../../../common/utils.js';
 
-import type {NormalizedServiceConfig} from '../../../common/models';
+import type {NormalizedServiceConfig} from '../../../common/models/index.js';
 
 export default function (config: NormalizedServiceConfig) {
     const shouldCompileClient = shouldCompileTarget(config.target, 'client');
