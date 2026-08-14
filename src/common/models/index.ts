@@ -102,10 +102,6 @@ export interface LibraryConfig {
     lib: {
         internalDirs?: string[];
         /**
-         * Use new JSX Transform
-         */
-        newJsxTransform?: boolean;
-        /**
          * Additional Babel plugins appended to the library compile pipeline
          * (also injected into the Storybook babel-loader via configureServiceWebpackConfig).
          */
@@ -354,10 +350,6 @@ export interface ClientCommonConfig {
      * ```
      */
     reactCompiler?: boolean | ReactCompilerOptions;
-    /**
-     * use new JSX Transform
-     */
-    newJsxTransform?: boolean;
     /**
      * @deprecated use `forkTsChecker: false` instead
      */

@@ -35,7 +35,6 @@ export async function configureServiceWebpackConfig(
         const libBabelPlugins = serviceConfig.lib?.babelPlugins || [];
         options = {
             includes: ['src'],
-            newJsxTransform: serviceConfig.lib?.newJsxTransform,
             babel: (babelConfig) => ({
                 ...babelConfig,
                 plugins: [...(babelConfig.plugins || []), ...libBabelPlugins],

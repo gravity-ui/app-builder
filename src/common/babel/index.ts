@@ -2,7 +2,11 @@ import {createRequire} from 'node:module';
 
 const require = createRequire(import.meta.url);
 
-export function babelPreset(config: {newJsxTransform?: boolean; isSsr?: boolean}) {
+interface BabelPresetConfig {
+    isSsr?: boolean;
+}
+
+export function babelPreset(config: BabelPresetConfig) {
     return [
         require.resolve('./ui-preset.js'),
         {
@@ -16,9 +20,26 @@ export function babelPreset(config: {newJsxTransform?: boolean; isSsr?: boolean}
             },
             runtime: {version: '^7.26.0'},
             typescript: true,
-            react: {
-                runtime: config.newJsxTransform ? 'automatic' : 'classic',
-            },
+            react: {runtime: 'automatic'},
+        },
+    ];
+}
+
+/**
+ * Library consumers are responsible for choosing their supported runtimes and
+ * applying polyfills at the application boundary. Keep published library code
+ * modern and only strip TypeScript syntax and transform JSX here.
+ *
+ * @returns Babel preset configuration for published library files.
+ */
+export function libraryBabelPreset() {
+    return [
+        require.resolve('./ui-preset.js'),
+        {
+            env: false,
+            runtime: false,
+            typescript: true,
+            react: {runtime: 'automatic'},
         },
     ];
 }

@@ -206,9 +206,7 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
         return config;
     }
 
-    const config = structuredClone(userConfig);
-    config.lib.newJsxTransform = config.lib.newJsxTransform ?? true;
-    return config;
+    return structuredClone(userConfig);
 }
 
 function getBundlerOptions(client: ClientConfig) {
@@ -263,7 +261,6 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
         reactRefresh: client.disableReactRefresh
             ? false
             : (client.reactRefresh ?? ((options) => options)),
-        newJsxTransform: client.newJsxTransform ?? true,
         publicPath,
         cdnPublicPath: cdnConfig?.publicPath,
         browserPublicPath,

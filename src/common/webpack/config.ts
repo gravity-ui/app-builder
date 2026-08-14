@@ -622,7 +622,7 @@ async function createJavaScriptLoader({
                     },
                     transform: {
                         react: {
-                            runtime: config.newJsxTransform ? 'automatic' : 'classic',
+                            runtime: 'automatic',
                             development: isEnvDevelopment,
                             refresh: !isSsr && isEnvDevelopment && config.reactRefresh !== false,
                             useBuiltins: true,
@@ -712,7 +712,7 @@ async function createJavaScriptLoader({
 
     const babelTransformOptions = await config.babel(
         {
-            presets: [babelPreset({newJsxTransform: config.newJsxTransform, isSsr})],
+            presets: [babelPreset({isSsr})],
             plugins,
         },
         {configType, isSsr},
@@ -986,8 +986,8 @@ function createIconsRule(
                           options: {
                               babel: false,
                               dimensions: false,
-                              jsxRuntime: config.newJsxTransform ? 'automatic' : 'classic',
                               ...config.svgr,
+                              jsxRuntime: 'automatic',
                           },
                       },
                   ],

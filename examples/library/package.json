@@ -1,0 +1,22 @@
+{
+  "name": "@examples/library",
+  "version": "1.0.0",
+  "private": true,
+  "main": "build/cjs/index.js",
+  "module": "build/esm/index.js",
+  "types": "build/esm/index.d.ts",
+  "scripts": {
+    "build": "app-builder build && pnpm run verify",
+    "verify": "node scripts/verify-build.mjs"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@gravity-ui/app-builder": "workspace:*",
+    "@gravity-ui/tsconfig": "^1.0.0",
+    "@types/react": "^18.3.2",
+    "react": "^18.3.1",
+    "typescript": "~5.6.3"
+  }
+}

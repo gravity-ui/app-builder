@@ -13,7 +13,7 @@ import {transform} from '@svgr/core';
 
 import paths from '../../common/paths.js';
 import logger from '../../common/logger/index.js';
-import {babelPreset} from '../babel/index.js';
+import {libraryBabelPreset} from '../babel/index.js';
 
 import type {PluginConfig} from 'svgo';
 import type {TransformOptions} from '@babel/core';
@@ -237,7 +237,7 @@ export function buildLibrary(config: LibraryConfig) {
                 babelrc: false,
                 configFile: false,
                 filename: sourceFile,
-                presets: [babelPreset(config.lib)],
+                presets: [libraryBabelPreset()],
                 plugins: [
                     [
                         require.resolve('babel-plugin-inline-react-svg'),
@@ -358,7 +358,7 @@ export function buildLibrary(config: LibraryConfig) {
         if (svgoRegEx.test(iconFile)) {
             try {
                 const component = await transform(fs.readFileSync(iconFile, 'utf-8'), {
-                    jsxRuntime: config.lib.newJsxTransform ? 'automatic' : 'classic',
+                    jsxRuntime: 'automatic',
                     plugins: [require.resolve('@svgr/plugin-jsx')],
                 });
 
@@ -368,7 +368,7 @@ export function buildLibrary(config: LibraryConfig) {
                         babelrc: false,
                         configFile: false,
                         filename: iconFile,
-                        presets: [babelPreset(config.lib)],
+                        presets: [libraryBabelPreset()],
                         sourceMaps: true,
                     },
                     (err, transformed) => {

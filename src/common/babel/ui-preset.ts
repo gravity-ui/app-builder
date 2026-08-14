@@ -23,16 +23,21 @@ export default function (_context: unknown, options: Record<string, unknown> = {
 
     const presets = [
         // Latest stable ECMAScript features
-        (isEnvDevelopment || isEnvProduction) && [require.resolve('@babel/preset-env'), envOptions],
+        envOptions !== false &&
+            (isEnvDevelopment || isEnvProduction) && [
+                require.resolve('@babel/preset-env'),
+                envOptions,
+            ],
         // ES features necessary for current Node version
-        isEnvTest && [
-            require.resolve('@babel/preset-env'),
-            Object.assign({}, envOptions, {
-                targets: {
-                    node: 'current',
-                },
-            }),
-        ],
+        envOptions !== false &&
+            isEnvTest && [
+                require.resolve('@babel/preset-env'),
+                Object.assign({}, envOptions, {
+                    targets: {
+                        node: 'current',
+                    },
+                }),
+            ],
         // JSX
         [
             require.resolve('@babel/preset-react'),
@@ -52,7 +57,10 @@ export default function (_context: unknown, options: Record<string, unknown> = {
 
     const plugins = [
         // Polyfills the runtime needed for async/await and generators
-        [require.resolve('@babel/plugin-transform-runtime'), runtimeOptions],
+        runtimeOptions !== false && [
+            require.resolve('@babel/plugin-transform-runtime'),
+            runtimeOptions,
+        ],
         isEnvProduction && [
             require.resolve('babel-plugin-transform-react-remove-prop-types'),
             {

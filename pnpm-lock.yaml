@@ -411,6 +411,24 @@ importers:
         specifier: ^29.1.2
         version: 29.4.6(@babel/core@7.29.0)(@jest/transform@29.7.0)(@jest/types@30.3.0)(babel-jest@29.7.0(@babel/core@7.29.0))(jest-util@30.3.0)(jest@29.7.0(@types/node@18.19.130)(ts-node@10.9.2(@swc/core@1.15.43)(@types/node@18.19.130)(typescript@5.6.3)))(typescript@5.6.3)
 
+  examples/library:
+    devDependencies:
+      '@gravity-ui/app-builder':
+        specifier: workspace:*
+        version: link:../..
+      '@gravity-ui/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
+      '@types/react':
+        specifier: ^18.3.2
+        version: 18.3.28
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      typescript:
+        specifier: ~5.6.3
+        version: 5.6.3
+
   examples/ssr:
     dependencies:
       '@babel/runtime':
