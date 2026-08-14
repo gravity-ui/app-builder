@@ -1,0 +1,18 @@
+.example-card {
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+
+    border: 1px solid currentColor;
+    border-radius: 8px;
+
+    &__metadata,
+    &__tags {
+        display: flex;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+
+        list-style: none;
+    }
+}

@@ -27,6 +27,11 @@ npx app-builder dev # to view supported options add the --help flag.
 npx app-builder build # to view supported options add the --help flag.
 ```
 
+### Examples
+
+- [Library build](examples/library)
+- [SSR application](examples/ssr)
+
 ### Profile a Rspack build
 
 ```sh
@@ -248,7 +253,6 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 - `hiddenSourceMap` (`boolean=true`) - if `false` - source maps will be generated for prod builds
 - `disableSourceMapGeneration` (`boolean`) — disable sourcemap generation;
 - `definitions` — add additional options to DefinePlugin. [more](https://webpack.js.org/plugins/define-plugin/#usage)
-- `newJsxTransform` (`boolean=true`) — use new JSX Transform.
 - `svgr` (`SvgrConfig`) — svgr plugin options. [more](https://react-svgr.com/docs/options/)
 - `entry` (`string | string[] | Record<string, string | string[]>`) — entry for bundler, overrides entry which is generated from entries directory
 - `entryFilter` (`string[]`) — filter used entrypoints.

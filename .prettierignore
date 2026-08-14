@@ -1,4 +1,5 @@
 dist
+examples/**/build
 CHANGELOG.md
 CONTRIBUTING.md
 pnpm-lock.yaml
