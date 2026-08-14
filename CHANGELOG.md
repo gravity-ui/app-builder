@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.52.0](https://github.com/gravity-ui/app-builder/compare/v0.51.0...v0.52.0) (2026-08-14)
+
+
+### Features
+
+* modernize library build output ([#344](https://github.com/gravity-ui/app-builder/issues/344)) ([b0bfe53](https://github.com/gravity-ui/app-builder/commit/b0bfe53fb2334c3fb1396508bc6f02206ecb205c))
+* upgrade Rsdoctor and migrate package to ESM ([#343](https://github.com/gravity-ui/app-builder/issues/343)) ([90849e2](https://github.com/gravity-ui/app-builder/commit/90849e2b30c64ad4999b1256ea083c2485d94070))
+
 ## [0.51.0](https://github.com/gravity-ui/app-builder/compare/v0.50.0...v0.51.0) (2026-08-12)
 
 
