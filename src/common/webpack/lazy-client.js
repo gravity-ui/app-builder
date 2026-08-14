@@ -41,7 +41,7 @@ const updateEventSource = function updateEventSource() {
     }
 };
 
-exports.keepAlive = function (options) {
+export function keepAlive(options) {
     const data = options.data;
     const onError = options.onError;
     const active = options.active;
@@ -69,4 +69,4 @@ exports.keepAlive = function (options) {
             }
         }, 1000);
     };
-};
+}

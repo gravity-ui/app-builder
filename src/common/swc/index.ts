@@ -1,2 +1,2 @@
-export {compile} from './compile';
-export {watch} from './watch';
+export {compile} from './compile.js';
+export {watch} from './watch.js';

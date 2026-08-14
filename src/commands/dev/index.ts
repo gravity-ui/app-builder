@@ -3,12 +3,12 @@ import nodemon from 'nodemon';
 import {onExit} from 'signal-exit';
 import {rimraf} from 'rimraf';
 
-import {createRunFolder, getAppRunPath, shouldCompileTarget} from '../../common/utils';
-import logger from '../../common/logger';
+import {createRunFolder, getAppRunPath, shouldCompileTarget} from '../../common/utils.js';
+import logger from '../../common/logger/index.js';
 
 import type WebpackDevServer from 'webpack-dev-server';
-import type {NormalizedServiceConfig} from '../../common/models';
-import type {ControllableScript} from '../../common/child-process/controllable-script';
+import type {NormalizedServiceConfig} from '../../common/models/index.js';
+import type {ControllableScript} from '../../common/child-process/controllable-script.js';
 // TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
 // @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/dev-server 2 is ESM.
 import {RspackDevServer} from '@rspack/dev-server';

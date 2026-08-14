@@ -1,17 +1,25 @@
 import * as path from 'node:path';
+import {createRequire} from 'node:module';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import MiniCSSExtractPlugin from 'mini-css-extract-plugin';
 import OptimizeCSSAssetsPlugin from 'css-minimizer-webpack-plugin';
 
-import {WebpackMode, configureModuleRules, configureOptimization, configureResolve} from './config';
-import {getProjectConfig, normalizeConfig} from '../config';
-import {isLibraryConfig} from '../models';
-import paths from '../paths';
+import {
+    WebpackMode,
+    configureModuleRules,
+    configureOptimization,
+    configureResolve,
+} from './config.js';
+import {getProjectConfig, normalizeConfig} from '../config.js';
+import {isLibraryConfig} from '../models/index.js';
+import paths from '../paths.js';
 
-import type {HelperOptions} from './config';
-import type {ClientCommonConfig, ClientWebpackConfig} from '../models';
+import type {HelperOptions} from './config.js';
+import type {ClientCommonConfig, ClientWebpackConfig} from '../models/index.js';
 import type * as Webpack from 'webpack';
-import {getNormalizedWorkerOption} from './utils';
+import {getNormalizedWorkerOption} from './utils.js';
+
+const require = createRequire(import.meta.url);
 
 type Mode = `${WebpackMode}`;
 

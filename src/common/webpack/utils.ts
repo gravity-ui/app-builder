@@ -1,14 +1,14 @@
 import * as path from 'node:path';
 import * as ts from 'typescript';
-import {prettyTime} from '../logger/pretty-time';
-import {getTsProjectConfig} from '../typescript/utils';
+import {prettyTime} from '../logger/pretty-time.js';
+import {getTsProjectConfig} from '../typescript/utils.js';
 
 import type * as Webpack from 'webpack';
-import type {Logger} from '../logger';
+import type {Logger} from '../logger/index.js';
 // TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
 // @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/core 2 is ESM.
 import {MultiStats} from '@rspack/core';
-import {NormalizedClientConfig, WebWorkerHandle} from '../models';
+import {NormalizedClientConfig, WebWorkerHandle} from '../models/index.js';
 
 export function compilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
     return async (err?: Error | null, stats?: Webpack.MultiStats | MultiStats) => {

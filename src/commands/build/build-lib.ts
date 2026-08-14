@@ -1,14 +1,22 @@
 import {onExit} from 'signal-exit';
-import {ControllableScript} from '../../common/child-process/controllable-script';
+import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
+import {ControllableScript} from '../../common/child-process/controllable-script.js';
 
-import type {LibraryConfig} from '../../common/models';
+import type {LibraryConfig} from '../../common/models/index.js';
+
+const require = createRequire(import.meta.url);
 
 export default function (config: LibraryConfig) {
     return new Promise((resolve, reject) => {
         const build = new ControllableScript(
             `
-        const {buildLibrary} = require(${JSON.stringify(require.resolve('../../common/library'))});
-        buildLibrary({lib: ${JSON.stringify(config.lib)}});
+(async () => {
+    const {buildLibrary} = await import(${JSON.stringify(
+        pathToFileURL(require.resolve('../../common/library/index.js')).href,
+    )});
+    buildLibrary({lib: ${JSON.stringify(config.lib)}});
+})();
             `,
             null,
         );

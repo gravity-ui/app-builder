@@ -1,11 +1,11 @@
 export {
     configureWebpackConfigForStorybook,
     configureServiceWebpackConfig,
-} from './common/webpack/storybook';
-export * from './common/s3-upload';
-export {createTransformPathsToLocalModules} from './common/typescript/transformers';
-export {defineConfig} from './common/models';
-export {babelPreset} from './common/babel';
+} from './common/webpack/storybook.js';
+export * from './common/s3-upload/index.js';
+export {createTransformPathsToLocalModules} from './common/typescript/transformers.js';
+export {defineConfig} from './common/models/index.js';
+export {babelPreset} from './common/babel/index.js';
 
 export type {
     DevServerConfig,
@@ -14,4 +14,4 @@ export type {
     LibraryConfig,
     ModuleFederationConfig,
     ProjectFileConfig,
-} from './common/models';
+} from './common/models/index.js';

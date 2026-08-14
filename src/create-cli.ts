@@ -1,17 +1,17 @@
 import yargs, {Arguments} from 'yargs';
 import {hideBin} from 'yargs/helpers';
-import * as path from 'node:path';
+import fs from 'node:fs';
 
-import logger from './common/logger';
-import {getProjectConfig} from './common/config';
-import {isLibraryConfig} from './common/models';
+import logger from './common/logger/index.js';
+import {getProjectConfig} from './common/config.js';
+import {isLibraryConfig} from './common/models/index.js';
 import {
     cleanupRspackProfile,
     getRspackProfileOptions,
     startRspackProfile,
-} from './common/rspack-profile';
+} from './common/rspack-profile.js';
 
-import type {ProjectConfig} from './common/models';
+import type {ProjectConfig} from './common/models/index.js';
 
 export type CliArgs = Awaited<ReturnType<typeof createCli>>;
 
@@ -238,8 +238,10 @@ export function createCli(argv: string[]) {
 }
 
 function getVersionInfo(): string {
-    const {version} = require('../package.json');
-    return `app-builder CLI version: ${version}`;
+    const packageJson = JSON.parse(
+        fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+    ) as {version: string};
+    return `app-builder CLI version: ${packageJson.version}`;
 }
 
 function handlerP(fn: (args: Arguments) => void) {
@@ -282,25 +284,22 @@ function getCommandHandler(
         }
 
         const args = {...config, logger};
-        const localCmd = resolveLocalCommand(command);
+        const localCmd = await resolveLocalCommand(command);
 
         logger.verbose(`running command: ${command}`);
         return handler ? handler(args, localCmd) : localCmd(args);
     };
 }
 
-function resolveLocalCommand(command: string): ((...args: Array<unknown>) => void) | never {
+async function resolveLocalCommand(
+    command: string,
+): Promise<((...args: Array<unknown>) => void) | never> {
     try {
-        const cmdPath = path.resolve(__dirname, `commands/${command}`);
-        if (!cmdPath) return logger.panic(`There was a problem loading the ${command} command.`);
+        const cmdUrl = new URL(`./commands/${command}/index.js`, import.meta.url);
 
-        logger.verbose(`loading command from: ${cmdPath}`);
+        logger.verbose(`loading command from: ${cmdUrl.href}`);
 
-        // eslint-disable-next-line security/detect-non-literal-require
-        let cmd = require(cmdPath);
-        if (cmd.__esModule) {
-            cmd = cmd.default;
-        }
+        const {default: cmd} = await import(cmdUrl.href);
         if (typeof cmd === 'function') {
             return cmd;
         }

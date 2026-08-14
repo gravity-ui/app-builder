@@ -1,4 +1,4 @@
-import {globSync} from 'fast-glob';
+import fastGlob from 'fast-glob';
 
 import {uploadFiles} from './upload.js';
 
@@ -6,6 +6,8 @@ import type * as Webpack from 'webpack';
 import type {Logger} from '../logger/index.js';
 import type {UploadOptions} from './upload.js';
 import type {S3ClientOptions} from './s3-client.js';
+
+const {globSync} = fastGlob;
 
 interface S3UploadPluginOptions {
     include?: Rule | Rule[];

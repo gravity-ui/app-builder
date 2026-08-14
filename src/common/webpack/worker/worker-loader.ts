@@ -1,12 +1,13 @@
 import * as path from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 import type * as Webpack from 'webpack';
 
-import paths from '../../paths';
+import paths from '../../paths.js';
 
 const pluginId = 'APP_BUILDER_WORKER_LOADER';
 
-const publicPath = path.resolve(__dirname, 'public-path.worker.js');
+const publicPath = fileURLToPath(new URL('./public-path.worker.js', import.meta.url));
 
 interface Cache {
     content?: string | Buffer;

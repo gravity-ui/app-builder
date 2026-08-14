@@ -3,13 +3,13 @@ import semver from 'semver';
 import util from 'util';
 import {stripIndent} from 'common-tags';
 
-import './common/env';
-import logger from './common/logger';
-import {createCli} from './create-cli';
+import './common/env.js';
+import logger from './common/logger/index.js';
+import {createCli} from './create-cli.js';
 
-export type {ProjectConfig} from './common/models';
+export type {ProjectConfig} from './common/models/index.js';
 
-const MIN_NODE_VERSION = '18.0.0';
+const MIN_NODE_VERSION = '20.19.0';
 
 const {version} = process;
 

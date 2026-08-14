@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import paths from './paths';
-import type {ModuleFederationConfig, NormalizedServiceConfig} from './models';
+import paths from './paths.js';
+import type {ModuleFederationConfig, NormalizedServiceConfig} from './models/index.js';
 
 export function hasMFAssetsIsolation(
     mfConfig: ModuleFederationConfig | undefined,

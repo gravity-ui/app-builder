@@ -1,19 +1,18 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import {jest} from '@jest/globals';
 
-import {cleanupRspackProfile, getRspackProfileOptions, startRspackProfile} from './rspack-profile';
-import type {GlobalTraceApi} from './rspack-profile';
+import {
+    cleanupRspackProfile,
+    getRspackProfileOptions,
+    startRspackProfile,
+} from './rspack-profile.js';
+import type {GlobalTraceApi} from './rspack-profile.js';
 
 function createTraceApi() {
-    const register = jest.fn<
-        ReturnType<GlobalTraceApi['register']>,
-        Parameters<GlobalTraceApi['register']>
-    >(async () => undefined);
-    const cleanup = jest.fn<
-        ReturnType<GlobalTraceApi['cleanup']>,
-        Parameters<GlobalTraceApi['cleanup']>
-    >(async () => undefined);
+    const register = jest.fn<GlobalTraceApi['register']>(async () => undefined);
+    const cleanup = jest.fn<GlobalTraceApi['cleanup']>(async () => undefined);
 
     return {register, cleanup};
 }

@@ -1,9 +1,9 @@
-import {tmpNameSync} from './utils';
+import {tmpNameSync} from './utils.js';
 import * as fs from 'fs-extra';
 
 import type {ChildProcess, Serializable} from 'child_process';
 
-import {getCacheDir} from '../utils';
+import {getCacheDir} from '../utils.js';
 
 interface IDebugInfo {
     break?: boolean;

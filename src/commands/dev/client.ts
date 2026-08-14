@@ -4,7 +4,7 @@ import webpack from 'webpack';
 import WebpackDevServer from 'webpack-dev-server';
 import {getCompilerHooks} from 'webpack-manifest-plugin';
 import WebpackAssetsManifest from 'webpack-assets-manifest';
-import {deferredPromise, getAppRunPath} from '../../common/utils';
+import {deferredPromise, getAppRunPath} from '../../common/utils.js';
 import {getCompilerHooks as getRspackCompilerHooks} from 'rspack-manifest-plugin';
 import {
     DevServer,
@@ -20,16 +20,20 @@ import {
 // @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/dev-server 2 is ESM.
 import {RspackDevServer} from '@rspack/dev-server';
 
-import paths from '../../common/paths';
-import {Logger} from '../../common/logger';
-import {WebpackMode, rspackConfigFactory, webpackConfigFactory} from '../../common/webpack/config';
+import paths from '../../common/paths.js';
+import {Logger} from '../../common/logger/index.js';
+import {
+    WebpackMode,
+    rspackConfigFactory,
+    webpackConfigFactory,
+} from '../../common/webpack/config.js';
 
 import type {Configuration, HttpProxyMiddlewareOptionsFilter} from 'webpack-dev-server';
 import type {
     DevServerConfig,
     NormalizedClientConfig,
     NormalizedServiceConfig,
-} from '../../common/models';
+} from '../../common/models/index.js';
 
 export async function watchClientCompilation(
     config: NormalizedServiceConfig,

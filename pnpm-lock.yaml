@@ -311,6 +311,9 @@ importers:
       '@gravity-ui/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
+      '@jest/globals':
+        specifier: ^29.7.0
+        version: 29.7.0
       '@sentry/webpack-plugin':
         specifier: ^2.7.1
         version: 2.23.1(webpack@5.95.0(@swc/core@1.15.43))
@@ -10630,7 +10633,7 @@ snapshots:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 18.19.130
+      '@types/node': 22.19.15
       jest-mock: 29.7.0
 
   '@jest/expect-utils@29.7.0':
@@ -15679,7 +15682,7 @@ snapshots:
   jest-mock@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 18.19.130
+      '@types/node': 22.19.15
       jest-util: 29.7.0
 
   jest-pnp-resolver@1.2.3(jest-resolve@29.7.0):

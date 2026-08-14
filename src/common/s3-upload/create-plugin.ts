@@ -1,9 +1,9 @@
 import * as path from 'node:path';
-import {NormalizedClientConfig} from '../models';
-import {S3UploadPlugin} from './webpack-plugin';
+import {NormalizedClientConfig} from '../models/index.js';
+import {S3UploadPlugin} from './webpack-plugin.js';
 import type {Configuration} from 'webpack';
-import type {Logger} from '../logger';
-import {hasMFAssetsIsolation} from '../utils';
+import type {Logger} from '../logger/index.js';
+import {hasMFAssetsIsolation} from '../utils.js';
 
 export function createS3UploadPlugins(config: NormalizedClientConfig, logger?: Logger) {
     const plugins: Required<Configuration['plugins']> = [];

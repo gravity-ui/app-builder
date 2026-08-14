@@ -1,9 +1,9 @@
 import nodePath from 'node:path';
 import type Typescript from 'typescript';
-import type {Logger} from '../logger';
-import {createTransformPathsToLocalModules} from './transformers';
-import {displayFilename, getTsProjectConfig, getTsProjectConfigPath, onHostEvent} from './utils';
-import {formatDiagnosticBrief} from './diagnostic';
+import type {Logger} from '../logger/index.js';
+import {createTransformPathsToLocalModules} from './transformers.js';
+import {displayFilename, getTsProjectConfig, getTsProjectConfigPath, onHostEvent} from './utils.js';
+import {formatDiagnosticBrief} from './diagnostic.js';
 
 /** @see https://github.com/microsoft/TypeScript/blob/9059e5bda0bb603ae6b41eca09dcd2a071af45fd/src/compiler/diagnosticMessages.json#L5400-L5403 */
 const COMPILATION_COMPLETE_WITH_ERROR = 6193;

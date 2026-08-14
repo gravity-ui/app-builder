@@ -1,8 +1,9 @@
 {
   "extends": "./tsconfig",
   "compilerOptions": {
-    "module": "CommonJS",
-    "moduleResolution": "Node10"
+    "isolatedModules": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
   },
-  "include": ["types/**/*"]
+  "include": ["src/**/*", "types/**/*"]
 }

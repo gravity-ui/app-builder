@@ -1,5 +1,5 @@
-export {S3UploadPlugin} from './webpack-plugin';
-export {uploadFiles} from './upload';
-export {createS3UploadPlugins} from './create-plugin';
+export {S3UploadPlugin} from './webpack-plugin.js';
+export {uploadFiles} from './upload.js';
+export {createS3UploadPlugins} from './create-plugin.js';
 
-export type {UploadFilesOptions} from './upload';
+export type {UploadFilesOptions} from './upload.js';

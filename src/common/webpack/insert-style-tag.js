@@ -34,4 +34,4 @@ function insertStyleTag($targetStyle) {
     });
 }
 
-module.exports = insertStyleTag;
+export default insertStyleTag;

@@ -1,8 +1,11 @@
 import path from 'node:path';
-import paths from '../paths';
+import {createRequire} from 'node:module';
+import paths from '../paths.js';
 
 import type Typescript from 'typescript';
-import type {Logger} from '../logger';
+import type {Logger} from '../logger/index.js';
+
+const require = createRequire(import.meta.url);
 
 export function getTsProjectConfigPath(
     ts: typeof Typescript,

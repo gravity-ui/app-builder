@@ -1,7 +1,7 @@
 import type Typescript from 'typescript';
 import * as path from 'node:path';
 
-import {colors} from '../logger/colors';
+import {colors} from '../logger/colors.js';
 
 export function formatDiagnosticBrief(
     ts: typeof Typescript,

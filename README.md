@@ -8,6 +8,9 @@ Develop and build your client-server projects, powered by typescript and webpack
 npm install --save-dev @gravity-ui/app-builder
 ```
 
+`@gravity-ui/app-builder` is ESM-only and requires Node.js 20.19 or newer. Use `import`
+or dynamic `import()` to load its API; CommonJS `require()` is not supported.
+
 ## Usage
 
 `@gravity-ui/app-builder` provides CLI (`npx app-builder`). You can view available commands with the `--help` flag.
@@ -38,7 +41,10 @@ variables, and Perfetto analysis.
 You can use any of these files:
 
 - app-builder.config.ts
+- app-builder.config.mts
 - app-builder.config.js
+- app-builder.config.mjs
+- app-builder.config.cjs
 - app-builder.config.json
 - app-builder property in your package.json
 
