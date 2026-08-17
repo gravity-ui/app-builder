@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import {createRequire} from 'node:module';
-import * as webpack from 'webpack';
+import webpack from 'webpack';
 import {CleanWebpackPlugin} from 'clean-webpack-plugin';
 import {WebpackManifestPlugin} from 'webpack-manifest-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
