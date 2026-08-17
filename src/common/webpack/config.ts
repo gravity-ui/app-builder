@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import {createRequire} from 'node:module';
-import * as webpack from 'webpack';
+import webpack from 'webpack';
 import {CleanWebpackPlugin} from 'clean-webpack-plugin';
 import {WebpackManifestPlugin} from 'webpack-manifest-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
@@ -11,7 +11,6 @@ import WebpackAssetsManifest from 'webpack-assets-manifest';
 import {RspackManifestPlugin} from 'rspack-manifest-plugin';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import MomentTimezoneDataPlugin from 'moment-timezone-data-webpack-plugin';
-import StatoscopeWebpackPlugin from '@statoscope/webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
 import type {sentryWebpackPlugin} from '@sentry/webpack-plugin';
 // TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
@@ -56,11 +55,10 @@ import {nodeExternals} from './node-externals.js';
 import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-plugin/lib/plugin-options.js';
 import type {moduleFederationPlugin} from '@module-federation/enhanced';
 import {hasMFAssetsIsolation} from '../utils.js';
+import {StatoscopePlugin} from './statoscope-plugin.js';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
-const StatoscopePlugin =
-    StatoscopeWebpackPlugin as unknown as typeof import('@statoscope/webpack-plugin').default;
 const require = createRequire(import.meta.url);
 
 export interface HelperOptions {
