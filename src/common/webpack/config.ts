@@ -43,7 +43,12 @@ import type {
 } from '../models/index.js';
 import type {Logger} from '../logger/index.js';
 import {createProgressPlugin} from './progress-plugin.js';
-import {getNormalizedWorkerOption, resolveTsConfigPathsToAlias} from './utils.js';
+import {
+    getNormalizedWorkerOption,
+    isRsdoctorOnlyJson,
+    resolveTsConfigPathsToAlias,
+    shouldUseRsdoctor,
+} from './utils.js';
 import {createS3UploadPlugins} from '../s3-upload/index.js';
 import {logConfig} from '../logger/log-config.js';
 import {resolveTypescript} from '../typescript/utils.js';
@@ -1445,13 +1450,19 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
             );
         }
 
-        if (config.analyzeBundle === 'rsdoctor') {
+        if (shouldUseRsdoctor(config)) {
+            const onlyJson = isRsdoctorOnlyJson();
+            const output = config.rsdoctorConfig?.output;
+            const options = onlyJson ? {options: {...output?.options, type: ['json']}} : {};
+
             plugins.push(
                 new bundlerPlugins.RSDoctorPlugin({
                     ...config.rsdoctorConfig,
+                    disableClientServer: onlyJson,
                     output: {
                         mode: 'brief',
-                        ...config.rsdoctorConfig?.output,
+                        ...output,
+                        ...options,
                     } as NonNullable<
                         NonNullable<NormalizedClientBaseConfig['rsdoctorConfig']>['output']
                     >,

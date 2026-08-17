@@ -8,7 +8,11 @@ import type {Logger} from '../logger/index.js';
 // TypeScript 5.6 does not know that modern Node.js can require synchronous ESM.
 // @ts-ignore -- ts-jest uses CommonJS resolution while @rspack/core 2 is ESM.
 import {MultiStats} from '@rspack/core';
-import {NormalizedClientConfig, WebWorkerHandle} from '../models/index.js';
+import {
+    NormalizedClientBaseConfig,
+    NormalizedClientConfig,
+    WebWorkerHandle,
+} from '../models/index.js';
 
 export function compilerHandlerFactory(logger: Logger, onCompilationEnd?: () => void) {
     return async (err?: Error | null, stats?: Webpack.MultiStats | MultiStats) => {
@@ -106,6 +110,23 @@ export function resolveTsConfigPathsToAlias(projectPath: string, filename = 'tsc
     }
 
     return {aliases, modules};
+}
+
+export function isRsdoctorOnlyJson(
+    env: Readonly<Record<string, string | undefined>> = process.env,
+): boolean {
+    const value = env.RSDOCTOR_ONLY_JSON;
+    return (
+        typeof value === 'string' &&
+        new Set(['1', 'true', 'yes', 'on']).has(value.trim().toLowerCase())
+    );
+}
+
+export function shouldUseRsdoctor(
+    config: Pick<NormalizedClientBaseConfig, 'analyzeBundle'>,
+    env: Readonly<Record<string, string | undefined>> = process.env,
+): boolean {
+    return config.analyzeBundle === 'rsdoctor' || isRsdoctorOnlyJson(env);
 }
 
 export function getNormalizedWorkerOption(config: NormalizedClientConfig) {
