@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.52.1](https://github.com/gravity-ui/app-builder/compare/v0.52.0...v0.52.1) (2026-08-17)
+
+
+### Bug Fixes
+
+* handle CommonJS interop after ESM migration ([#346](https://github.com/gravity-ui/app-builder/issues/346)) ([ef3047d](https://github.com/gravity-ui/app-builder/commit/ef3047dc85a1a1c1c392c168bc957f2cfb80ad0b))
+
 ## [0.52.0](https://github.com/gravity-ui/app-builder/compare/v0.51.0...v0.52.0) (2026-08-14)
 
 
