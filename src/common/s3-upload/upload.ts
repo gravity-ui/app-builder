@@ -44,11 +44,17 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
         }),
     );
 
-    function doesExist(bucket: string, key: string): Promise<boolean> {
-        return queue
-            .add(() => s3Client.headObject(bucket, key))
-            .then(() => true)
-            .catch(() => false);
+    async function doesExist(bucket: string, key: string): Promise<boolean> {
+        try {
+            await queue.add(() => s3Client.headObject(bucket, key));
+            return true;
+        } catch (error) {
+            if (isNotFoundError(error)) {
+                return false;
+            }
+
+            throw error;
+        }
     }
 
     function uploadFile(
@@ -148,6 +154,23 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
 }
 
 const NOT_COMPRESS = ['png', 'zip', 'gz', 'br'];
+
+function isNotFoundError(error: unknown) {
+    if (!error || typeof error !== 'object') {
+        return false;
+    }
+
+    const s3Error = error as {
+        name?: string;
+        $metadata?: {httpStatusCode?: number};
+    };
+
+    return (
+        s3Error.$metadata?.httpStatusCode === 404 ||
+        s3Error.name === 'NotFound' ||
+        s3Error.name === 'NoSuchKey'
+    );
+}
 
 function shouldCompress(filePath: string) {
     const fileName = path.basename(filePath);
