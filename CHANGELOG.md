@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.52.2](https://github.com/gravity-ui/app-builder/compare/v0.52.1...v0.52.2) (2026-08-18)
+
+
+### Bug Fixes
+
+* **s3-upload:** S3 upload fixes ([#349](https://github.com/gravity-ui/app-builder/issues/349)) ([c836457](https://github.com/gravity-ui/app-builder/commit/c8364577d5058ad7b13445a0eee424e7ae754668))
+
 ## [0.52.1](https://github.com/gravity-ui/app-builder/compare/v0.52.0...v0.52.1) (2026-08-17)
 
 
