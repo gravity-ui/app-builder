@@ -373,6 +373,22 @@ export interface ClientCommonConfig {
     // TODO(DakEnviy): Allow only one cdn config
     cdn?: CdnUploadConfig | CdnUploadConfig[];
     /**
+     * Retry loading async chunks from another public path when the current one fails.
+     *
+     * When a chunk fails to load, the runtime switches to the next candidate public path
+     * and sticks to it for all subsequent loads. Failures are reported with `console.warn`.
+     *
+     * The candidate list is fully resolved at build time from `cdn[*].publicPath`
+     * (in declaration order) with `publicPath` appended last. Entries with `cdn[*].hosts`
+     * are only used when `location.hostname` matches, which allows per-region backups.
+     *
+     * Has no effect in dev mode, with `moduleFederation`,
+     * or when fewer than two distinct candidates are resolved.
+     *
+     * @default false
+     */
+    publicPathFallback?: boolean | PublicPathFallbackConfig;
+    /**
      * use webpack 5 Web Workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
      *
      * @deprecated use `webWorkerHandle` instead
@@ -490,6 +506,39 @@ export interface CdnUploadConfig {
      * pattern for additional files in build that need to be loaded to CDN
      */
     additionalPattern?: string | string[];
+    /**
+     * Hosts this CDN may be used on by the `publicPathFallback` runtime.
+     *
+     * A string is matched against the whole `location.hostname`, case-insensitively;
+     * use a RegExp for anything else. When omitted, the CDN is used on every host.
+     *
+     * Affects only the runtime fallback, never the upload — files are still uploaded
+     * to every configured bucket.
+     *
+     * @example ['app.example.ru', /\.example\.kz$/]
+     */
+    hosts?: CdnHostPattern | CdnHostPattern[];
+}
+
+export type CdnHostPattern = string | RegExp;
+
+export interface PublicPathFallbackConfig {
+    /**
+     * Append `publicPath` (`/build/` by default) as the last candidate.
+     *
+     * @default true
+     */
+    includeLocalPublicPath?: boolean;
+}
+
+/**
+ * A single candidate for the `publicPathFallback` runtime, serialized into the client
+ * bundle with `DefinePlugin`. `hosts` holds `RegExp` sources rather than `RegExp`
+ * instances because it has to survive `JSON.stringify`.
+ */
+export interface PublicPathFallback {
+    publicPath: string;
+    hosts?: {source: string; flags: string}[];
 }
 
 export interface ServerConfig {
@@ -587,6 +636,12 @@ export type NormalizedClientBaseConfig = Omit<
      * (concatenated with micro-frontend name if module federation is configured).
      */
     browserPublicPath: string;
+    /**
+     * Ordered list of public paths the runtime may load async chunks from,
+     * derived from `publicPathFallback`, `cdn` and `publicPath`.
+     * Empty if the fallback is disabled.
+     */
+    publicPathFallbacks: PublicPathFallback[];
     assetsManifestFile: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;

@@ -463,31 +463,49 @@ export function configureResolve({isEnvProduction, config}: HelperOptions) {
     } satisfies webpack.ResolveOptions;
 }
 
-function createEntryArray(entry: string | string[]) {
-    if (typeof entry === 'string') {
-        return [require.resolve('./public-path.js'), entry];
+/*
+ * Runtime modules that app-builder prepends to every entry.
+ * `public-path.js` must stay first: it establishes the initial
+ * `__webpack_public_path__` that `public-path-fallback.js` reads as its first candidate.
+ */
+function getRuntimeEntries({config, isSsr}: HelperOptions) {
+    const runtimeEntries = [require.resolve('./public-path.js')];
+
+    if (!isSsr && config.publicPathFallbacks.length > 1) {
+        runtimeEntries.push(require.resolve('./public-path-fallback.js'));
     }
 
-    return [require.resolve('./public-path.js'), ...entry];
+    return runtimeEntries;
 }
 
-function addEntry(entry: Record<string, string[]>, file: string) {
+function createEntryArray(entry: string | string[], runtimeEntries: string[]) {
+    if (typeof entry === 'string') {
+        return [...runtimeEntries, entry];
+    }
+
+    return [...runtimeEntries, ...entry];
+}
+
+function addEntry(entry: Record<string, string[]>, file: string, runtimeEntries: string[]) {
     return {
         ...entry,
-        [path.parse(file).name]: createEntryArray(file),
+        [path.parse(file).name]: createEntryArray(file, runtimeEntries),
     };
 }
 
-function configureEntry({config, entriesDirectory}: HelperOptions) {
+function configureEntry(options: HelperOptions) {
+    const {config, entriesDirectory} = options;
+    const runtimeEntries = getRuntimeEntries(options);
+
     if (typeof config.entry === 'string' || Array.isArray(config.entry)) {
-        return createEntryArray(config.entry);
+        return createEntryArray(config.entry, runtimeEntries);
     }
 
     if (typeof config.entry === 'object') {
         return Object.entries(config.entry).reduce<Record<string, string[]>>(
             (acc, [key, value]) => ({
                 ...acc,
-                [key]: createEntryArray(value),
+                [key]: createEntryArray(value, runtimeEntries),
             }),
             {},
         );
@@ -535,7 +553,7 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
     }
 
     return entryFiles.reduce<Record<string, string[]>>(
-        (acc, file) => addEntry(acc, path.resolve(entriesDirectory, file)),
+        (acc, file) => addEntry(acc, path.resolve(entriesDirectory, file), runtimeEntries),
         {},
     );
 }
@@ -1125,6 +1143,10 @@ function getDefinitions({config, isSsr}: HelperOptions) {
         'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
         'process.env.IS_SSR': JSON.stringify(isSsr),
         'process.env.PUBLIC_PATH': JSON.stringify(config.browserPublicPath),
+        // Always defined, so that a stray reference can never become a ReferenceError.
+        // Not a `process.env.*` key: NodeJS.ProcessEnv has a `string` index signature,
+        // so a non-string member there is a TS2411 error in every consumer project.
+        __PUBLIC_PATH_FALLBACKS__: JSON.stringify(isSsr ? [] : config.publicPathFallbacks),
         ...config.definitions,
     };
 }

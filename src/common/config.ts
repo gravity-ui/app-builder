@@ -11,6 +11,7 @@ import paths from './paths.js';
 import type {CosmiconfigResult} from 'cosmiconfig';
 
 import type {
+    CdnUploadConfig,
     ClientConfig,
     LibraryConfig,
     NormalizedClientConfig,
@@ -19,6 +20,7 @@ import type {
     NormalizedServerConfig,
     NormalizedServiceConfig,
     ProjectConfig,
+    PublicPathFallback,
     ServerConfig,
     ServiceConfig,
 } from './models/index.js';
@@ -34,6 +36,75 @@ function splitPaths(paths: string | string[]) {
 
 function remapPaths(paths: string | string[]) {
     return splitPaths(paths).map((p) => path.resolve(process.cwd(), p));
+}
+
+function withTrailingSlash(publicPath: string) {
+    // `path.normalize` yields backslashes on win32, so accept either separator
+    return /[\\/]$/.test(publicPath) ? publicPath : `${publicPath}/`;
+}
+
+function normalizeHostPatterns(hosts: CdnUploadConfig['hosts']) {
+    if (!hosts) {
+        return undefined;
+    }
+
+    const patterns = (Array.isArray(hosts) ? hosts : [hosts]).map((host) => ({
+        // A string is an exact `location.hostname` match, a RegExp is used as is.
+        source:
+            typeof host === 'string'
+                ? `^${host.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`
+                : host.source,
+        // `location.hostname` is always lower case, and `g`/`y` would make `test` stateful
+        flags: `i${typeof host === 'string' ? '' : host.flags.replace(/[giy]/g, '')}`,
+    }));
+
+    return patterns.length > 0 ? patterns : undefined;
+}
+
+function normalizePublicPathFallbacks(
+    client: ClientConfig,
+    publicPath: string,
+    mode?: string,
+): PublicPathFallback[] {
+    if (!client.publicPathFallback || mode === 'dev') {
+        return [];
+    }
+
+    if (client.moduleFederation) {
+        logger.warning(
+            stripIndent`
+                publicPathFallback option is disabled because moduleFederation is configured.
+                Module federation remotes load their entries and chunks through their own runtime,
+                which the fallback cannot reach.
+            `,
+        );
+        return [];
+    }
+
+    const {includeLocalPublicPath = true} =
+        typeof client.publicPathFallback === 'object' ? client.publicPathFallback : {};
+
+    const cdns = client.cdn ? [client.cdn].flat() : [];
+
+    const candidates: PublicPathFallback[] = [];
+    for (const cdn of [...cdns, ...(includeLocalPublicPath ? [{publicPath}] : [])]) {
+        if (!cdn.publicPath) {
+            continue;
+        }
+
+        const candidate = {
+            publicPath: withTrailingSlash(cdn.publicPath),
+            hosts: normalizeHostPatterns('hosts' in cdn ? cdn.hosts : undefined),
+        };
+
+        // Keep the first occurrence, so declaration order stays priority order
+        if (!candidates.some((added) => added.publicPath === candidate.publicPath)) {
+            candidates.push(omitUndefined(candidate) as PublicPathFallback);
+        }
+    }
+
+    // Nothing to fall back to
+    return candidates.length > 1 ? candidates : [];
 }
 
 function omitUndefined<T extends object>(obj: T) {
@@ -264,6 +335,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
         publicPath,
         cdnPublicPath: cdnConfig?.publicPath,
         browserPublicPath,
+        publicPathFallbacks: normalizePublicPathFallbacks(client, publicPath, mode),
         assetsManifestFile:
             client.assetsManifestFile ||
             (client.moduleFederation?.version
