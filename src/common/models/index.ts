@@ -476,6 +476,13 @@ export interface CdnUploadConfig {
     prefix?: string;
     region?: string;
     endpoint?: string;
+    /**
+     * Maximum number of S3 request attempts, including the initial request.
+     * @default 5
+     */
+    maxAttempts?: number;
+    /** @default 'adaptive' */
+    retryMode?: 'standard' | 'adaptive';
     publicPath?: string;
     compress?: boolean;
     cacheControl?: UploadOptions['cacheControl'];
