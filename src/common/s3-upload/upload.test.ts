@@ -1,11 +1,13 @@
-import {getS3Client} from './s3-client';
-import {uploadFiles} from './upload';
+import {jest} from '@jest/globals';
 
-import type {Logger} from '../logger';
+import type {Logger} from '../logger/index.js';
 
-jest.mock('./s3-client');
-jest.mock('p-queue', () => ({
-    __esModule: true,
+const mockedGetS3Client = jest.fn<typeof import('./s3-client.js').getS3Client>();
+
+jest.unstable_mockModule('./s3-client.js', () => ({
+    getS3Client: mockedGetS3Client,
+}));
+jest.unstable_mockModule('p-queue', () => ({
     default: class {
         add<T>(task: () => T | PromiseLike<T>) {
             return Promise.resolve().then(task);
@@ -13,10 +15,10 @@ jest.mock('p-queue', () => ({
     },
 }));
 
-const mockedGetS3Client = jest.mocked(getS3Client);
+const {uploadFiles} = await import('./upload.js');
 
-const headObject = jest.fn();
-const uploadFile = jest.fn();
+const headObject = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+const uploadFile = jest.fn<(...args: unknown[]) => Promise<unknown>>();
 
 const logger = {
     verbose: jest.fn(),
@@ -43,7 +45,7 @@ beforeEach(() => {
         uploadFile,
         uploadDir: jest.fn(),
         deleteObject: jest.fn(),
-    } as unknown as ReturnType<typeof getS3Client>);
+    } as unknown as ReturnType<typeof import('./s3-client.js').getS3Client>);
     uploadFile.mockResolvedValue({});
 });
 

@@ -1,11 +1,16 @@
-import {createS3UploadPlugins} from './create-plugin';
-import {S3UploadPlugin} from './webpack-plugin';
+import {jest} from '@jest/globals';
 
-import type {NormalizedClientConfig} from '../models';
+import type {NormalizedClientConfig} from '../models/index.js';
+import type {S3UploadPlugin} from './webpack-plugin.js';
 
-jest.mock('./webpack-plugin');
+const mockedS3UploadPlugin =
+    jest.fn<(...args: ConstructorParameters<typeof S3UploadPlugin>) => S3UploadPlugin>();
 
-const mockedS3UploadPlugin = jest.mocked(S3UploadPlugin);
+jest.unstable_mockModule('./webpack-plugin.js', () => ({
+    S3UploadPlugin: mockedS3UploadPlugin,
+}));
+
+const {createS3UploadPlugins} = await import('./create-plugin.js');
 
 beforeEach(() => {
     jest.clearAllMocks();
