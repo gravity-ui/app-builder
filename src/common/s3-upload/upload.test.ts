@@ -68,4 +68,35 @@ describe('uploadFiles', () => {
         await expect(uploadFiles(['file.txt'], createConfig())).rejects.toBe(error);
         expect(uploadFile).not.toHaveBeenCalled();
     });
+
+    it('builds an S3 key from the target prefix and a relative file path', async () => {
+        headObject.mockRejectedValueOnce({name: 'NotFound'});
+
+        await uploadFiles(['/build/assets/file.txt'], {
+            ...createConfig(),
+            options: {
+                ...createConfig().options,
+                targetPath: 'releases/current',
+            },
+        });
+
+        expect(headObject).toHaveBeenCalledWith('bucket', 'releases/current/assets/file.txt');
+        expect(uploadFile).toHaveBeenCalledWith(
+            'bucket',
+            '/build/assets/file.txt',
+            'releases/current/assets/file.txt',
+            {cacheControl: undefined},
+        );
+    });
+
+    it.each(['../outside.txt', '/outside.txt'])(
+        'rejects a file outside of sourcePath: %s',
+        async (filePath) => {
+            await expect(uploadFiles([filePath], createConfig())).rejects.toThrow(
+                `File ${filePath} is outside of source path /build`,
+            );
+            expect(headObject).not.toHaveBeenCalled();
+            expect(uploadFile).not.toHaveBeenCalled();
+        },
+    );
 });

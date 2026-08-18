@@ -37,9 +37,7 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
 
     return Promise.all(
         files.flatMap((filePath) => {
-            const relativeFilePath = path.isAbsolute(filePath)
-                ? path.relative(config.options.sourcePath, filePath)
-                : filePath;
+            const relativeFilePath = getRelativeFilePath(config.options.sourcePath, filePath);
             return processFile(relativeFilePath);
         }),
     );
@@ -70,8 +68,11 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
 
     function fileUploader(options: UploadOptions) {
         return async (relativeFilePath: string) => {
-            const sourceFilePath = path.join(options.sourcePath, relativeFilePath);
-            const targetFilePath = path.join(options.targetPath || '', relativeFilePath);
+            const sourceFilePath = path.resolve(options.sourcePath, relativeFilePath);
+            const targetFilePath = path.posix.join(
+                toPosixPath(options.targetPath ?? ''),
+                toPosixPath(relativeFilePath),
+            );
 
             log.verbose(`Uploading file ${relativeFilePath} ...`);
             const exists = await doesExist(options.bucket, targetFilePath);
@@ -154,6 +155,26 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
 }
 
 const NOT_COMPRESS = ['png', 'zip', 'gz', 'br'];
+
+function getRelativeFilePath(sourcePath: string, filePath: string) {
+    const absoluteSourcePath = path.resolve(sourcePath);
+    const absoluteFilePath = path.resolve(absoluteSourcePath, filePath);
+    const relativeFilePath = path.relative(absoluteSourcePath, absoluteFilePath);
+
+    if (
+        relativeFilePath === '..' ||
+        relativeFilePath.startsWith(`..${path.sep}`) ||
+        path.isAbsolute(relativeFilePath)
+    ) {
+        throw new Error(`File ${filePath} is outside of source path ${sourcePath}`);
+    }
+
+    return relativeFilePath;
+}
+
+function toPosixPath(filePath: string) {
+    return filePath.split(path.sep).join(path.posix.sep);
+}
 
 function isNotFoundError(error: unknown) {
     if (!error || typeof error !== 'object') {
