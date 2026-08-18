@@ -11,6 +11,7 @@ export interface UploadOptions {
     bucket: string;
     sourcePath: string;
     targetPath?: string;
+    /** @default 'ignore' */
     existsBehavior?: 'overwrite' | 'throw' | 'ignore';
     cacheControl?: string | ((filename: string) => string);
 }
@@ -78,7 +79,9 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
             const exists = await doesExist(options.bucket, targetFilePath);
 
             if (exists) {
-                switch (options.existsBehavior) {
+                const existsBehavior = options.existsBehavior ?? 'ignore';
+
+                switch (existsBehavior) {
                     case 'overwrite': {
                         log.verbose(`File ${targetFilePath} will be overwritten.`);
                         break;
@@ -88,7 +91,7 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
                             `File ${targetFilePath} already exists in ${options.bucket}`,
                         );
                     }
-                    default: {
+                    case 'ignore': {
                         log.message(
                             `Nothing to do with '${relativeFilePath}' because '${targetFilePath}' already exists in '${options.bucket}'`,
                         );

@@ -69,6 +69,16 @@ describe('uploadFiles', () => {
         expect(uploadFile).not.toHaveBeenCalled();
     });
 
+    it('ignores an existing file by default', async () => {
+        headObject.mockResolvedValueOnce({});
+
+        await expect(uploadFiles(['file.txt'], createConfig())).resolves.toEqual(['file.txt']);
+        expect(uploadFile).not.toHaveBeenCalled();
+        expect(logger.message).toHaveBeenCalledWith(
+            "Nothing to do with 'file.txt' because 'file.txt' already exists in 'bucket'",
+        );
+    });
+
     it('builds an S3 key from the target prefix and a relative file path', async () => {
         headObject.mockRejectedValueOnce({name: 'NotFound'});
 
