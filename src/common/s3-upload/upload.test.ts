@@ -99,4 +99,18 @@ describe('uploadFiles', () => {
             expect(uploadFile).not.toHaveBeenCalled();
         },
     );
+
+    it.each([
+        ['file.js.gz', 'gzip'],
+        ['file.js.br', 'br'],
+    ])('sets Content-Encoding when uploading %s', async (filePath, contentEncoding) => {
+        headObject.mockRejectedValueOnce({name: 'NotFound'});
+
+        await uploadFiles([filePath], createConfig());
+
+        expect(uploadFile).toHaveBeenCalledWith('bucket', `/build/${filePath}`, filePath, {
+            cacheControl: undefined,
+            contentEncoding,
+        });
+    });
 });

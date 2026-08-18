@@ -101,9 +101,11 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
                 typeof options.cacheControl === 'function'
                     ? options.cacheControl(targetFilePath)
                     : options.cacheControl;
+            const contentEncoding = getContentEncoding(relativeFilePath);
 
             return uploadFile(options.bucket, sourceFilePath, targetFilePath, {
                 cacheControl,
+                ...(contentEncoding && {contentEncoding}),
             })
                 .then(() => {
                     log.message(`Uploaded ${relativeFilePath} => ${targetFilePath}`);
@@ -174,6 +176,17 @@ function getRelativeFilePath(sourcePath: string, filePath: string) {
 
 function toPosixPath(filePath: string) {
     return filePath.split(path.sep).join(path.posix.sep);
+}
+
+function getContentEncoding(filePath: string) {
+    switch (path.extname(filePath).toLowerCase()) {
+        case '.gz':
+            return 'gzip';
+        case '.br':
+            return 'br';
+        default:
+            return undefined;
+    }
 }
 
 function isNotFoundError(error: unknown) {
