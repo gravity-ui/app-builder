@@ -11,6 +11,7 @@ export interface UploadOptions {
     bucket: string;
     sourcePath: string;
     targetPath?: string;
+    /** @default 'ignore' */
     existsBehavior?: 'overwrite' | 'throw' | 'ignore';
     cacheControl?: string | ((filename: string) => string);
 }
@@ -37,18 +38,22 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
 
     return Promise.all(
         files.flatMap((filePath) => {
-            const relativeFilePath = path.isAbsolute(filePath)
-                ? path.relative(config.options.sourcePath, filePath)
-                : filePath;
+            const relativeFilePath = getRelativeFilePath(config.options.sourcePath, filePath);
             return processFile(relativeFilePath);
         }),
     );
 
-    function doesExist(bucket: string, key: string): Promise<boolean> {
-        return queue
-            .add(() => s3Client.headObject(bucket, key))
-            .then(() => true)
-            .catch(() => false);
+    async function doesExist(bucket: string, key: string): Promise<boolean> {
+        try {
+            await queue.add(() => s3Client.headObject(bucket, key));
+            return true;
+        } catch (error) {
+            if (isNotFoundError(error)) {
+                return false;
+            }
+
+            throw error;
+        }
     }
 
     function uploadFile(
@@ -64,29 +69,29 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
 
     function fileUploader(options: UploadOptions) {
         return async (relativeFilePath: string) => {
-            const sourceFilePath = path.join(options.sourcePath, relativeFilePath);
-            const targetFilePath = path.join(options.targetPath || '', relativeFilePath);
+            const sourceFilePath = path.resolve(options.sourcePath, relativeFilePath);
+            const targetFilePath = path.posix.join(
+                toPosixPath(options.targetPath ?? ''),
+                toPosixPath(relativeFilePath),
+            );
 
             log.verbose(`Uploading file ${relativeFilePath} ...`);
-            const exists = await doesExist(options.bucket, targetFilePath);
+            const existsBehavior = options.existsBehavior ?? 'ignore';
 
-            if (exists) {
-                switch (options.existsBehavior) {
-                    case 'overwrite': {
-                        log.verbose(`File ${targetFilePath} will be overwritten.`);
-                        break;
-                    }
-                    case 'throw': {
+            if (existsBehavior !== 'overwrite') {
+                const exists = await doesExist(options.bucket, targetFilePath);
+
+                if (exists) {
+                    if (existsBehavior === 'throw') {
                         throw new Error(
                             `File ${targetFilePath} already exists in ${options.bucket}`,
                         );
                     }
-                    default: {
-                        log.message(
-                            `Nothing to do with '${relativeFilePath}' because '${targetFilePath}' already exists in '${options.bucket}'`,
-                        );
-                        return Promise.resolve(relativeFilePath);
-                    }
+
+                    log.message(
+                        `Nothing to do with '${relativeFilePath}' because '${targetFilePath}' already exists in '${options.bucket}'`,
+                    );
+                    return relativeFilePath;
                 }
             }
 
@@ -94,9 +99,11 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
                 typeof options.cacheControl === 'function'
                     ? options.cacheControl(targetFilePath)
                     : options.cacheControl;
+            const contentEncoding = getContentEncoding(relativeFilePath);
 
             return uploadFile(options.bucket, sourceFilePath, targetFilePath, {
                 cacheControl,
+                ...(contentEncoding && {contentEncoding}),
             })
                 .then(() => {
                     log.message(`Uploaded ${relativeFilePath} => ${targetFilePath}`);
@@ -148,6 +155,54 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
 }
 
 const NOT_COMPRESS = ['png', 'zip', 'gz', 'br'];
+
+function getRelativeFilePath(sourcePath: string, filePath: string) {
+    const absoluteSourcePath = path.resolve(sourcePath);
+    const absoluteFilePath = path.resolve(absoluteSourcePath, filePath);
+    const relativeFilePath = path.relative(absoluteSourcePath, absoluteFilePath);
+
+    if (
+        relativeFilePath === '..' ||
+        relativeFilePath.startsWith(`..${path.sep}`) ||
+        path.isAbsolute(relativeFilePath)
+    ) {
+        throw new Error(`File ${filePath} is outside of source path ${sourcePath}`);
+    }
+
+    return relativeFilePath;
+}
+
+function toPosixPath(filePath: string) {
+    return filePath.split(path.sep).join(path.posix.sep);
+}
+
+function getContentEncoding(filePath: string) {
+    switch (path.extname(filePath).toLowerCase()) {
+        case '.gz':
+            return 'gzip';
+        case '.br':
+            return 'br';
+        default:
+            return undefined;
+    }
+}
+
+function isNotFoundError(error: unknown) {
+    if (!error || typeof error !== 'object') {
+        return false;
+    }
+
+    const s3Error = error as {
+        name?: string;
+        $metadata?: {httpStatusCode?: number};
+    };
+
+    return (
+        s3Error.$metadata?.httpStatusCode === 404 ||
+        s3Error.name === 'NotFound' ||
+        s3Error.name === 'NoSuchKey'
+    );
+}
 
 function shouldCompress(filePath: string) {
     const fileName = path.basename(filePath);

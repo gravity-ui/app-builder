@@ -5,6 +5,9 @@ import type {Configuration} from 'webpack';
 import type {Logger} from '../logger/index.js';
 import {hasMFAssetsIsolation} from '../utils.js';
 
+const DEFAULT_S3_MAX_ATTEMPTS = 5;
+const DEFAULT_S3_RETRY_MODE = 'adaptive';
+
 export function createS3UploadPlugins(config: NormalizedClientConfig, logger?: Logger) {
     const plugins: Required<Configuration['plugins']> = [];
 
@@ -45,6 +48,8 @@ export function createS3UploadPlugins(config: NormalizedClientConfig, logger?: L
                     region: cdn.region,
                     endpoint: cdn.endpoint,
                     credentials,
+                    maxAttempts: cdn.maxAttempts ?? DEFAULT_S3_MAX_ATTEMPTS,
+                    retryMode: cdn.retryMode ?? DEFAULT_S3_RETRY_MODE,
                 },
                 s3UploadOptions: {
                     bucket: cdn.bucket,

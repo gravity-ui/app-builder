@@ -1,0 +1,144 @@
+import {jest} from '@jest/globals';
+
+import type {Logger} from '../logger/index.js';
+
+const mockedGetS3Client = jest.fn<typeof import('./s3-client.js').getS3Client>();
+
+jest.unstable_mockModule('./s3-client.js', () => ({
+    getS3Client: mockedGetS3Client,
+}));
+jest.unstable_mockModule('p-queue', () => ({
+    default: class {
+        add<T>(task: () => T | PromiseLike<T>) {
+            return Promise.resolve().then(task);
+        }
+    },
+}));
+
+const {uploadFiles} = await import('./upload.js');
+
+const headObject = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+const uploadFile = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+
+const logger = {
+    verbose: jest.fn(),
+    message: jest.fn(),
+    error: jest.fn(),
+} as unknown as Logger;
+
+function createConfig() {
+    return {
+        s3: {},
+        concurrency: 1,
+        options: {
+            bucket: 'bucket',
+            sourcePath: '/build',
+        },
+        logger,
+    };
+}
+
+beforeEach(() => {
+    jest.resetAllMocks();
+    mockedGetS3Client.mockReturnValue({
+        headObject,
+        uploadFile,
+        uploadDir: jest.fn(),
+        deleteObject: jest.fn(),
+    } as unknown as ReturnType<typeof import('./s3-client.js').getS3Client>);
+    uploadFile.mockResolvedValue({});
+});
+
+describe('uploadFiles', () => {
+    it.each([{$metadata: {httpStatusCode: 404}}, {name: 'NotFound'}, {name: 'NoSuchKey'}])(
+        'uploads a file when HeadObject reports that it does not exist',
+        async (error) => {
+            headObject.mockRejectedValueOnce(error);
+
+            await expect(uploadFiles(['file.txt'], createConfig())).resolves.toEqual(['file.txt']);
+            expect(uploadFile).toHaveBeenCalledTimes(1);
+        },
+    );
+
+    it('propagates HeadObject errors other than not found', async () => {
+        const error = Object.assign(new Error('Forbidden'), {
+            name: 'AccessDenied',
+            $metadata: {httpStatusCode: 403},
+        });
+        headObject.mockRejectedValueOnce(error);
+
+        await expect(uploadFiles(['file.txt'], createConfig())).rejects.toBe(error);
+        expect(uploadFile).not.toHaveBeenCalled();
+    });
+
+    it('ignores an existing file by default', async () => {
+        headObject.mockResolvedValueOnce({});
+
+        await expect(uploadFiles(['file.txt'], createConfig())).resolves.toEqual(['file.txt']);
+        expect(uploadFile).not.toHaveBeenCalled();
+        expect(logger.message).toHaveBeenCalledWith(
+            "Nothing to do with 'file.txt' because 'file.txt' already exists in 'bucket'",
+        );
+    });
+
+    it('uploads without HeadObject when existsBehavior is overwrite', async () => {
+        headObject.mockRejectedValueOnce(new Error('HeadObject must not be called'));
+
+        await expect(
+            uploadFiles(['file.txt'], {
+                ...createConfig(),
+                options: {
+                    ...createConfig().options,
+                    existsBehavior: 'overwrite',
+                },
+            }),
+        ).resolves.toEqual(['file.txt']);
+        expect(headObject).not.toHaveBeenCalled();
+        expect(uploadFile).toHaveBeenCalledTimes(1);
+    });
+
+    it('builds an S3 key from the target prefix and a relative file path', async () => {
+        headObject.mockRejectedValueOnce({name: 'NotFound'});
+
+        await uploadFiles(['/build/assets/file.txt'], {
+            ...createConfig(),
+            options: {
+                ...createConfig().options,
+                targetPath: 'releases/current',
+            },
+        });
+
+        expect(headObject).toHaveBeenCalledWith('bucket', 'releases/current/assets/file.txt');
+        expect(uploadFile).toHaveBeenCalledWith(
+            'bucket',
+            '/build/assets/file.txt',
+            'releases/current/assets/file.txt',
+            {cacheControl: undefined},
+        );
+    });
+
+    it.each(['../outside.txt', '/outside.txt'])(
+        'rejects a file outside of sourcePath: %s',
+        async (filePath) => {
+            await expect(uploadFiles([filePath], createConfig())).rejects.toThrow(
+                `File ${filePath} is outside of source path /build`,
+            );
+            expect(headObject).not.toHaveBeenCalled();
+            expect(uploadFile).not.toHaveBeenCalled();
+        },
+    );
+
+    it.each([
+        ['file.js.gz', 'gzip'],
+        ['file.js.br', 'br'],
+    ])('sets Content-Encoding when uploading %s', async (filePath, contentEncoding) => {
+        headObject.mockRejectedValueOnce({name: 'NotFound'});
+
+        await uploadFiles([filePath], createConfig());
+
+        expect(uploadFile).toHaveBeenCalledWith('bucket', `/build/${filePath}`, filePath, {
+            cacheControl: undefined,
+            contentEncoding,
+        });
+    });
+});
