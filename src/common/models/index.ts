@@ -373,21 +373,24 @@ export interface ClientCommonConfig {
     // TODO(DakEnviy): Allow only one cdn config
     cdn?: CdnUploadConfig | CdnUploadConfig[];
     /**
-     * Retry loading async chunks from another public path when the current one fails.
+     * Public paths to retry an async chunk from when the current one fails, in order.
      *
-     * When a chunk fails to load, the runtime switches to the next candidate public path
-     * and sticks to it for all subsequent loads. Failures are reported with `console.warn`.
+     * When a chunk fails to load, the runtime switches to the next candidate and sticks
+     * to it for all subsequent loads. Failures are reported with `console.warn`.
      *
-     * The candidate list is fully resolved at build time from `cdn[*].publicPath`
-     * (in declaration order) with `publicPath` appended last. Entries with `cdn[*].hosts`
-     * are only used when `location.hostname` matches, which allows per-region backups.
+     * `window.__PUBLIC_PATH__` is always tried first, so this list usually holds only the
+     * backups; a candidate equal to it is deduplicated. Entries with `hosts` are used
+     * only when `location.hostname` matches, which allows per-region backups.
+     *
+     * Covers async chunks and their CSS. The initial `<script>`/`<link>` tags cannot be
+     * covered: they are requested before any bundle code runs.
      *
      * Has no effect in dev mode, with `moduleFederation`,
      * or when fewer than two distinct candidates are resolved.
      *
-     * @default false
+     * @example [{publicPath: 'https://cdn.example.ru/build/', hosts: /\.ru$/}, '/build/']
      */
-    publicPathFallback?: boolean | PublicPathFallbackConfig;
+    publicPathFallback?: (string | PublicPathFallbackEntry)[];
     /**
      * use webpack 5 Web Workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
      *
@@ -506,29 +509,22 @@ export interface CdnUploadConfig {
      * pattern for additional files in build that need to be loaded to CDN
      */
     additionalPattern?: string | string[];
-    /**
-     * Hosts this CDN may be used on by the `publicPathFallback` runtime.
-     *
-     * A string is matched against the whole `location.hostname`, case-insensitively;
-     * use a RegExp for anything else. When omitted, the CDN is used on every host.
-     *
-     * Affects only the runtime fallback, never the upload — files are still uploaded
-     * to every configured bucket.
-     *
-     * @example ['app.example.ru', /\.example\.kz$/]
-     */
-    hosts?: CdnHostPattern | CdnHostPattern[];
 }
 
 export type CdnHostPattern = string | RegExp;
 
-export interface PublicPathFallbackConfig {
+export interface PublicPathFallbackEntry {
+    publicPath: string;
     /**
-     * Append `publicPath` (`/build/` by default) as the last candidate.
+     * Hosts this public path may be used on.
      *
-     * @default true
+     * A string is matched against the whole `location.hostname`, a RegExp is tested
+     * against it; matching is always case-insensitive because `location.hostname` is
+     * lower case. When omitted, the public path is used on every host.
+     *
+     * @example ['app.example.ru', /\.example\.kz$/]
      */
-    includeLocalPublicPath?: boolean;
+    hosts?: CdnHostPattern | CdnHostPattern[];
 }
 
 /**

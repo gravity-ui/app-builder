@@ -17,10 +17,21 @@ const RU = 'https://cdn.example.ru/build/';
 const KZ = 'https://cdn.example.kz/build/';
 const LOCAL = '/build/';
 
+/*
+ * What `client.publicPathFallback` normalizes to. The primary (CDN) is intentionally
+ * present here as well, to cover the case where a project does list it explicitly - it is
+ * deduplicated against the page-provided public path.
+ */
 const FALLBACKS = [
     {publicPath: CDN},
     {publicPath: RU, hosts: [{source: '\\.ru$', flags: 'i'}]},
     {publicPath: KZ, hosts: [{source: '^app\\.example\\.kz$', flags: 'i'}]},
+    {publicPath: LOCAL},
+];
+
+/* Backups only, which is how the option is meant to be used */
+const BACKUPS_ONLY = [
+    {publicPath: RU, hosts: [{source: '\\.ru$', flags: 'i'}]},
     {publicPath: LOCAL},
 ];
 
@@ -164,6 +175,35 @@ describe('public-path-fallback runtime', () => {
         await harness.ensureChunk('5');
 
         expect(harness.requests).toEqual([`${pagePath}js/5.chunk.js`, `${CDN}js/5.chunk.js`]);
+    });
+
+    it('walks the configured backups when only they are listed', async () => {
+        const harness = createHarness({
+            deadPaths: [CDN],
+            fallbacks: BACKUPS_ONLY,
+            hostname: 'app.example.ru',
+        });
+
+        await harness.ensureChunk('1');
+
+        expect(harness.requests).toEqual([`${CDN}js/1.chunk.js`, `${RU}js/1.chunk.js`]);
+    });
+
+    /*
+     * The on-call fix for an outage is to point the page at a backup. Chunks must follow it
+     * immediately rather than keep probing the dead primary on every session.
+     */
+    it('does not probe a dead primary once the page points at a backup', async () => {
+        const harness = createHarness({
+            deadPaths: [CDN],
+            fallbacks: BACKUPS_ONLY,
+            hostname: 'app.example.ru',
+            initialPath: RU,
+        });
+
+        await harness.ensureChunk('1');
+
+        expect(harness.requests).toEqual([`${RU}js/1.chunk.js`]);
     });
 
     it('does not patch chunk loading when there is nothing to fall back to', async () => {

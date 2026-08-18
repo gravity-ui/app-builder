@@ -465,13 +465,16 @@ export function configureResolve({isEnvProduction, config}: HelperOptions) {
 
 /*
  * Runtime modules that app-builder prepends to every entry.
+ *
  * `public-path.js` must stay first: it establishes the initial
- * `__webpack_public_path__` that `public-path-fallback.js` reads as its first candidate.
+ * `__webpack_public_path__` that `public-path-fallback.js` takes as its first candidate.
+ * A single configured fallback is already enough, because that initial value is prepended
+ * to the list at runtime; the module no-ops on its own if it ends up with one candidate.
  */
 function getRuntimeEntries({config, isSsr}: HelperOptions) {
     const runtimeEntries = [require.resolve('./public-path.js')];
 
-    if (!isSsr && config.publicPathFallbacks.length > 1) {
+    if (!isSsr && config.publicPathFallbacks.length > 0) {
         runtimeEntries.push(require.resolve('./public-path-fallback.js'));
     }
 

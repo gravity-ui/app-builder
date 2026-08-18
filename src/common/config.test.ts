@@ -288,9 +288,9 @@ describe('cssLoader configuration', () => {
 });
 
 describe('publicPathFallback configuration', () => {
-    const BUILD_PATH = path.normalize('/build/');
-    const CDN_1 = {bucket: 'bucket-1', publicPath: 'https://cdn1.example.com/build/'};
-    const CDN_2 = {bucket: 'bucket-2', publicPath: 'https://cdn2.example.com/build/'};
+    const CDN = 'https://cdn.example.com/build/';
+    const RU = 'https://cdn.example.ru/build/';
+    const LOCAL = '/build/';
 
     async function getFallbacks(client: ClientConfig, mode?: string) {
         const normalized = await normalizeConfig({client}, mode);
@@ -301,132 +301,84 @@ describe('publicPathFallback configuration', () => {
         await expect(getFallbacks({})).resolves.toEqual([]);
     });
 
-    it('should be disabled when cdn is configured but the option is not set', async () => {
-        await expect(getFallbacks({cdn: [CDN_1, CDN_2]})).resolves.toEqual([]);
+    it('should be disabled for an empty list', async () => {
+        await expect(getFallbacks({publicPathFallback: []})).resolves.toEqual([]);
     });
 
-    it('should derive candidates from the cdn array and append publicPath', async () => {
-        await expect(
-            getFallbacks({cdn: [CDN_1, CDN_2], publicPathFallback: true}),
-        ).resolves.toEqual([
-            {publicPath: CDN_1.publicPath},
-            {publicPath: CDN_2.publicPath},
-            {publicPath: BUILD_PATH},
+    it('should keep a single candidate, since the page public path is prepended at runtime', async () => {
+        await expect(getFallbacks({publicPathFallback: [LOCAL]})).resolves.toEqual([
+            {publicPath: LOCAL},
         ]);
     });
 
-    it('should support a single cdn object', async () => {
-        await expect(getFallbacks({cdn: CDN_1, publicPathFallback: true})).resolves.toEqual([
-            {publicPath: CDN_1.publicPath},
-            {publicPath: BUILD_PATH},
-        ]);
+    it('should accept string and object entries and keep their order', async () => {
+        await expect(
+            getFallbacks({publicPathFallback: [CDN, {publicPath: RU}, LOCAL]}),
+        ).resolves.toEqual([{publicPath: CDN}, {publicPath: RU}, {publicPath: LOCAL}]);
     });
 
-    it('should skip cdn entries without publicPath', async () => {
+    it('should ignore the cdn config', async () => {
         await expect(
-            getFallbacks({cdn: [{bucket: 'no-public-path'}, CDN_2], publicPathFallback: true}),
-        ).resolves.toEqual([{publicPath: CDN_2.publicPath}, {publicPath: BUILD_PATH}]);
+            getFallbacks({
+                cdn: [{bucket: 'bucket', publicPath: CDN}],
+                publicPathFallback: [RU, LOCAL],
+            }),
+        ).resolves.toEqual([{publicPath: RU}, {publicPath: LOCAL}]);
     });
 
     it('should add a trailing slash to candidates', async () => {
         await expect(
-            getFallbacks({
-                cdn: [{bucket: 'b', publicPath: 'https://cdn1.example.com/build'}],
-                publicPathFallback: true,
-            }),
-        ).resolves.toEqual([{publicPath: CDN_1.publicPath}, {publicPath: BUILD_PATH}]);
+            getFallbacks({publicPathFallback: ['https://cdn.example.com/build', LOCAL]}),
+        ).resolves.toEqual([{publicPath: CDN}, {publicPath: LOCAL}]);
     });
 
     it('should deduplicate candidates keeping the first occurrence', async () => {
         await expect(
-            getFallbacks({
-                cdn: [CDN_1, {...CDN_1, bucket: 'another-bucket'}],
-                publicPathFallback: true,
-            }),
-        ).resolves.toEqual([{publicPath: CDN_1.publicPath}, {publicPath: BUILD_PATH}]);
+            getFallbacks({publicPathFallback: [CDN, {publicPath: CDN, hosts: /\.ru$/}, LOCAL]}),
+        ).resolves.toEqual([{publicPath: CDN}, {publicPath: LOCAL}]);
     });
 
-    it('should not append local publicPath when includeLocalPublicPath is false', async () => {
-        await expect(
-            getFallbacks({
-                cdn: [CDN_1, CDN_2],
-                publicPathFallback: {includeLocalPublicPath: false},
-            }),
-        ).resolves.toEqual([{publicPath: CDN_1.publicPath}, {publicPath: CDN_2.publicPath}]);
-    });
-
-    it('should be disabled when includeLocalPublicPath is false and there is a single cdn', async () => {
-        await expect(
-            getFallbacks({cdn: [CDN_1], publicPathFallback: {includeLocalPublicPath: false}}),
-        ).resolves.toEqual([]);
-    });
-
-    it('should be disabled when there is nothing to fall back to', async () => {
-        await expect(getFallbacks({publicPathFallback: true})).resolves.toEqual([]);
-    });
-
-    it('should be disabled when the only cdn publicPath equals publicPath', async () => {
-        await expect(
-            getFallbacks({
-                publicPath: '/build/',
-                cdn: [{bucket: 'b', publicPath: '/build/'}],
-                publicPathFallback: true,
-            }),
-        ).resolves.toEqual([]);
+    it('should skip entries with an empty publicPath', async () => {
+        await expect(getFallbacks({publicPathFallback: ['', RU, LOCAL]})).resolves.toEqual([
+            {publicPath: RU},
+            {publicPath: LOCAL},
+        ]);
     });
 
     it('should convert host strings into anchored case-insensitive patterns', async () => {
         await expect(
-            getFallbacks({
-                cdn: [CDN_1, {...CDN_2, hosts: 'app.example.ru'}],
-                publicPathFallback: true,
-            }),
+            getFallbacks({publicPathFallback: [{publicPath: RU, hosts: 'app.example.ru'}, LOCAL]}),
         ).resolves.toEqual([
-            {publicPath: CDN_1.publicPath},
-            {
-                publicPath: CDN_2.publicPath,
-                hosts: [{source: '^app\\.example\\.ru$', flags: 'i'}],
-            },
-            {publicPath: BUILD_PATH},
+            {publicPath: RU, hosts: [{source: '^app\\.example\\.ru$', flags: 'i'}]},
+            {publicPath: LOCAL},
         ]);
     });
 
     it('should keep RegExp hosts as sources and drop stateful flags', async () => {
         await expect(
             getFallbacks({
-                cdn: [{...CDN_2, hosts: [/\.example\.kz$/giu, 'app.example.kz']}],
-                publicPathFallback: true,
+                publicPathFallback: [
+                    {publicPath: RU, hosts: [/\.example\.ru$/giu, 'app.example.ru']},
+                ],
             }),
         ).resolves.toEqual([
             {
-                publicPath: CDN_2.publicPath,
+                publicPath: RU,
                 hosts: [
-                    {source: '\\.example\\.kz$', flags: 'iu'},
-                    {source: '^app\\.example\\.kz$', flags: 'i'},
+                    {source: '\\.example\\.ru$', flags: 'iu'},
+                    {source: '^app\\.example\\.ru$', flags: 'i'},
                 ],
             },
-            {publicPath: BUILD_PATH},
         ]);
     });
 
     it('should be inert in dev mode', async () => {
-        await expect(
-            getFallbacks({cdn: [CDN_1, CDN_2], publicPathFallback: true}, 'dev'),
-        ).resolves.toEqual([]);
+        await expect(getFallbacks({publicPathFallback: [RU, LOCAL]}, 'dev')).resolves.toEqual([]);
     });
 
     it('should be disabled when moduleFederation is configured', async () => {
         await expect(
-            getFallbacks({
-                cdn: [CDN_1, CDN_2],
-                moduleFederation: {name: 'app'},
-                publicPathFallback: true,
-            }),
+            getFallbacks({moduleFederation: {name: 'app'}, publicPathFallback: [RU, LOCAL]}),
         ).resolves.toEqual([]);
-    });
-
-    it('should be disabled when cdn upload is disabled from cli', async () => {
-        // `--cdn false` sets `cdn: undefined` before normalization, see config.ts
-        await expect(getFallbacks({cdn: undefined, publicPathFallback: true})).resolves.toEqual([]);
     });
 });

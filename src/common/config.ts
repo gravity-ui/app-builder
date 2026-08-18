@@ -11,7 +11,6 @@ import paths from './paths.js';
 import type {CosmiconfigResult} from 'cosmiconfig';
 
 import type {
-    CdnUploadConfig,
     ClientConfig,
     LibraryConfig,
     NormalizedClientConfig,
@@ -21,6 +20,7 @@ import type {
     NormalizedServiceConfig,
     ProjectConfig,
     PublicPathFallback,
+    PublicPathFallbackEntry,
     ServerConfig,
     ServiceConfig,
 } from './models/index.js';
@@ -43,7 +43,7 @@ function withTrailingSlash(publicPath: string) {
     return /[\\/]$/.test(publicPath) ? publicPath : `${publicPath}/`;
 }
 
-function normalizeHostPatterns(hosts: CdnUploadConfig['hosts']) {
+function normalizeHostPatterns(hosts: PublicPathFallbackEntry['hosts']) {
     if (!hosts) {
         return undefined;
     }
@@ -61,12 +61,8 @@ function normalizeHostPatterns(hosts: CdnUploadConfig['hosts']) {
     return patterns.length > 0 ? patterns : undefined;
 }
 
-function normalizePublicPathFallbacks(
-    client: ClientConfig,
-    publicPath: string,
-    mode?: string,
-): PublicPathFallback[] {
-    if (!client.publicPathFallback || mode === 'dev') {
+function normalizePublicPathFallbacks(client: ClientConfig, mode?: string): PublicPathFallback[] {
+    if (!client.publicPathFallback?.length || mode === 'dev') {
         return [];
     }
 
@@ -81,20 +77,17 @@ function normalizePublicPathFallbacks(
         return [];
     }
 
-    const {includeLocalPublicPath = true} =
-        typeof client.publicPathFallback === 'object' ? client.publicPathFallback : {};
-
-    const cdns = client.cdn ? [client.cdn].flat() : [];
-
     const candidates: PublicPathFallback[] = [];
-    for (const cdn of [...cdns, ...(includeLocalPublicPath ? [{publicPath}] : [])]) {
-        if (!cdn.publicPath) {
+    for (const entry of client.publicPathFallback) {
+        const {publicPath, hosts} = typeof entry === 'string' ? {publicPath: entry} : entry;
+
+        if (!publicPath) {
             continue;
         }
 
         const candidate = {
-            publicPath: withTrailingSlash(cdn.publicPath),
-            hosts: normalizeHostPatterns('hosts' in cdn ? cdn.hosts : undefined),
+            publicPath: withTrailingSlash(publicPath),
+            hosts: normalizeHostPatterns(hosts),
         };
 
         // Keep the first occurrence, so declaration order stays priority order
@@ -103,8 +96,7 @@ function normalizePublicPathFallbacks(
         }
     }
 
-    // Nothing to fall back to
-    return candidates.length > 1 ? candidates : [];
+    return candidates;
 }
 
 function omitUndefined<T extends object>(obj: T) {
@@ -335,7 +327,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
         publicPath,
         cdnPublicPath: cdnConfig?.publicPath,
         browserPublicPath,
-        publicPathFallbacks: normalizePublicPathFallbacks(client, publicPath, mode),
+        publicPathFallbacks: normalizePublicPathFallbacks(client, mode),
         assetsManifestFile:
             client.assetsManifestFile ||
             (client.moduleFederation?.version
