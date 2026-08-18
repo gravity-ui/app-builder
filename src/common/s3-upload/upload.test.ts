@@ -37,7 +37,7 @@ function createConfig() {
 }
 
 beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     mockedGetS3Client.mockReturnValue({
         headObject,
         uploadFile,
@@ -77,6 +77,22 @@ describe('uploadFiles', () => {
         expect(logger.message).toHaveBeenCalledWith(
             "Nothing to do with 'file.txt' because 'file.txt' already exists in 'bucket'",
         );
+    });
+
+    it('uploads without HeadObject when existsBehavior is overwrite', async () => {
+        headObject.mockRejectedValueOnce(new Error('HeadObject must not be called'));
+
+        await expect(
+            uploadFiles(['file.txt'], {
+                ...createConfig(),
+                options: {
+                    ...createConfig().options,
+                    existsBehavior: 'overwrite',
+                },
+            }),
+        ).resolves.toEqual(['file.txt']);
+        expect(headObject).not.toHaveBeenCalled();
+        expect(uploadFile).toHaveBeenCalledTimes(1);
     });
 
     it('builds an S3 key from the target prefix and a relative file path', async () => {

@@ -76,27 +76,22 @@ export async function uploadFiles(files: string[], config: UploadFilesOptions) {
             );
 
             log.verbose(`Uploading file ${relativeFilePath} ...`);
-            const exists = await doesExist(options.bucket, targetFilePath);
+            const existsBehavior = options.existsBehavior ?? 'ignore';
 
-            if (exists) {
-                const existsBehavior = options.existsBehavior ?? 'ignore';
+            if (existsBehavior !== 'overwrite') {
+                const exists = await doesExist(options.bucket, targetFilePath);
 
-                switch (existsBehavior) {
-                    case 'overwrite': {
-                        log.verbose(`File ${targetFilePath} will be overwritten.`);
-                        break;
-                    }
-                    case 'throw': {
+                if (exists) {
+                    if (existsBehavior === 'throw') {
                         throw new Error(
                             `File ${targetFilePath} already exists in ${options.bucket}`,
                         );
                     }
-                    case 'ignore': {
-                        log.message(
-                            `Nothing to do with '${relativeFilePath}' because '${targetFilePath}' already exists in '${options.bucket}'`,
-                        );
-                        return Promise.resolve(relativeFilePath);
-                    }
+
+                    log.message(
+                        `Nothing to do with '${relativeFilePath}' because '${targetFilePath}' already exists in '${options.bucket}'`,
+                    );
+                    return relativeFilePath;
                 }
             }
 
