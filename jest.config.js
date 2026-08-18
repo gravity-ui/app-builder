@@ -10,9 +10,6 @@ const config = {
     moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1',
     },
-    moduleNameMapper: {
-        '^(\\.{1,2}/.*)\\.js$': '$1',
-    },
     coverageDirectory: './coverage',
     collectCoverageFrom: ['src/**/*.{ts,tsx}'],
     passWithNoTests: true,
