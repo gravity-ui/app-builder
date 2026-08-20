@@ -17,13 +17,7 @@ import {isLibraryConfig} from '../models/index.js';
 import paths from '../paths.js';
 
 import type {HelperOptions} from './config.js';
-import type {
-    ClientCommonConfig,
-    ClientRspackConfig,
-    ClientWebpackConfig,
-    LibraryConfig,
-    NormalizedClientConfig,
-} from '../models/index.js';
+import type {ClientCommonConfig, ClientRspackConfig, ClientWebpackConfig} from '../models/index.js';
 import type * as Webpack from 'webpack';
 import type * as Rspack from '@rspack/core';
 import {getNormalizedWorkerOption} from './utils.js';
@@ -31,31 +25,6 @@ import {getNormalizedWorkerOption} from './utils.js';
 const require = createRequire(import.meta.url);
 
 type Mode = `${WebpackMode}`;
-
-function configureLibraryForStorybook(config: LibraryConfig): ClientCommonConfig {
-    const libBabelPlugins = config.lib?.babelPlugins || [];
-
-    return {
-        includes: ['src'],
-        babel: (babelConfig) => ({
-            ...babelConfig,
-            plugins: [...(babelConfig.plugins || []), ...libBabelPlugins],
-        }),
-    };
-}
-
-function getStorybookHelperOptions(mode: Mode, config: NormalizedClientConfig): HelperOptions {
-    return {
-        isEnvDevelopment: mode === WebpackMode.Dev,
-        isEnvProduction: mode === WebpackMode.Prod,
-        config,
-        configType: mode,
-        buildDirectory: config.outputPath || paths.appBuild,
-        entriesDirectory: paths.appEntry,
-        isSsr: false,
-        webWorkerHandle: getNormalizedWorkerOption(config),
-    };
-}
 
 export async function configureServiceWebpackConfig(
     mode: Mode,
@@ -66,9 +35,13 @@ export async function configureServiceWebpackConfig(
     });
     let options: ClientCommonConfig & ClientWebpackConfig = {};
     if (isLibraryConfig(serviceConfig)) {
+        const libBabelPlugins = serviceConfig.lib?.babelPlugins || [];
         options = {
-            ...configureLibraryForStorybook(serviceConfig),
-            bundler: 'webpack',
+            includes: ['src'],
+            babel: (babelConfig) => ({
+                ...babelConfig,
+                plugins: [...(babelConfig.plugins || []), ...libBabelPlugins],
+            }),
         };
     } else if (serviceConfig.client.bundler === 'rspack') {
         throw new Error(
@@ -143,9 +116,14 @@ export async function configureServiceRspackConfig(
 
     let options: ClientCommonConfig & ClientRspackConfig;
     if (isLibraryConfig(serviceConfig)) {
+        const libBabelPlugins = serviceConfig.lib?.babelPlugins || [];
         options = {
-            ...configureLibraryForStorybook(serviceConfig),
             bundler: 'rspack',
+            includes: ['src'],
+            babel: (babelConfig) => ({
+                ...babelConfig,
+                plugins: [...(babelConfig.plugins || []), ...libBabelPlugins],
+            }),
         };
     } else if (serviceConfig.client.bundler === 'rspack') {
         options = serviceConfig.client;
@@ -201,12 +179,15 @@ export async function configureServiceRspackConfig(
     };
 }
 
-type WebpackModuleRule = NonNullable<NonNullable<Webpack.Configuration['module']>['rules']>[number];
+type ModuleRule = NonNullable<NonNullable<Webpack.Configuration['module']>['rules']>[number];
 export async function configureWebpackConfigForStorybook(
     mode: Mode,
     userConfig: ClientCommonConfig & ClientWebpackConfig = {},
-    storybookModuleRules: WebpackModuleRule[] = [],
+    storybookModuleRules: ModuleRule[] = [],
 ) {
+    const isEnvDevelopment = mode === WebpackMode.Dev;
+    const isEnvProduction = mode === WebpackMode.Prod;
+
     const config = await normalizeConfig({
         client: {
             ...userConfig,
@@ -215,14 +196,23 @@ export async function configureWebpackConfigForStorybook(
         },
     });
 
-    const helperOptions = getStorybookHelperOptions(mode, config.client);
+    const helperOptions: HelperOptions = {
+        isEnvDevelopment,
+        isEnvProduction,
+        config: config.client,
+        configType: mode,
+        buildDirectory: config.client.outputPath || paths.appBuild,
+        entriesDirectory: paths.appEntry,
+        isSsr: false,
+        webWorkerHandle: getNormalizedWorkerOption(config.client),
+    };
 
     return {
         module: {
             rules: await configureModuleRules(
                 helperOptions,
                 storybookModuleRules.filter((rule) => rule !== '...') as Exclude<
-                    WebpackModuleRule,
+                    ModuleRule,
                     '...'
                 >[],
             ),
@@ -242,6 +232,9 @@ export async function configureRspackConfigForStorybook(
     userConfig: ClientCommonConfig & ClientRspackConfig = {bundler: 'rspack'},
     storybookModuleRules: RspackModuleRule[] = [],
 ) {
+    const isEnvDevelopment = mode === WebpackMode.Dev;
+    const isEnvProduction = mode === WebpackMode.Prod;
+
     const config = await normalizeConfig({
         client: {
             ...userConfig,
@@ -251,7 +244,16 @@ export async function configureRspackConfigForStorybook(
         },
     });
 
-    const helperOptions = getStorybookHelperOptions(mode, config.client);
+    const helperOptions: HelperOptions = {
+        isEnvDevelopment,
+        isEnvProduction,
+        config: config.client,
+        configType: mode,
+        buildDirectory: config.client.outputPath || paths.appBuild,
+        entriesDirectory: paths.appEntry,
+        isSsr: false,
+        webWorkerHandle: getNormalizedWorkerOption(config.client),
+    };
     const additionalRules = storybookModuleRules.filter(
         (rule) => rule !== '...',
     ) as unknown as NonNullable<Webpack.RuleSetRule['oneOf']>;
@@ -286,7 +288,15 @@ function configurePlugins({isEnvDevelopment, isEnvProduction, config}: HelperOpt
     }
 
     if (config.monaco) {
-        plugins.push(createStorybookMonacoPlugin(config));
+        const MonacoEditorWebpackPlugin = require('monaco-editor-webpack-plugin');
+        plugins.push(
+            new MonacoEditorWebpackPlugin({
+                ...config.monaco,
+                // currently, workers located on cdn are not working properly, so we are enforcing loading workers from
+                // service instead
+                publicPath: '/',
+            }),
+        );
     }
 
     if (isEnvDevelopment && config.reactRefresh !== false) {
@@ -328,7 +338,15 @@ function configureRspackPlugins({config}: HelperOptions) {
     }
 
     if (config.monaco) {
-        plugins.push(createStorybookMonacoPlugin(config) as unknown as Rspack.Plugin);
+        const MonacoEditorWebpackPlugin = require('monaco-editor-webpack-plugin');
+        plugins.push(
+            new MonacoEditorWebpackPlugin({
+                ...config.monaco,
+                // currently, workers located on cdn are not working properly, so we are enforcing loading workers from
+                // service instead
+                publicPath: '/',
+            }) as unknown as Rspack.Plugin,
+        );
     }
 
     if (config.bundler === 'rspack' && config.detectCircularDependencies) {
@@ -341,15 +359,4 @@ function configureRspackPlugins({config}: HelperOptions) {
     }
 
     return plugins;
-}
-
-function createStorybookMonacoPlugin(config: NormalizedClientConfig) {
-    const MonacoEditorWebpackPlugin = require('monaco-editor-webpack-plugin');
-
-    return new MonacoEditorWebpackPlugin({
-        ...config.monaco,
-        // currently, workers located on cdn are not working properly, so we are enforcing loading workers from
-        // service instead
-        publicPath: '/',
-    });
 }
