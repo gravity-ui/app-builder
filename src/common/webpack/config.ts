@@ -51,6 +51,7 @@ import type {ForkTsCheckerWebpackPluginOptions} from 'fork-ts-checker-webpack-pl
 import type {moduleFederationPlugin} from '@module-federation/enhanced';
 import {hasMFAssetsIsolation} from '../utils.js';
 import {StatoscopePlugin} from './statoscope-plugin.js';
+import {getByDependencyResolveOptions} from './resolve.js';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -460,6 +461,7 @@ export function configureResolve({isEnvProduction, config}: HelperOptions) {
         extensions: ['.mjs', '.cjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
         symlinks: config.symlinks,
         fallback: config.fallback,
+        byDependency: getByDependencyResolveOptions(config.bundler),
     } satisfies webpack.ResolveOptions;
 }
 
