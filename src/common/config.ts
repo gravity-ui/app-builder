@@ -11,6 +11,7 @@ import paths from './paths.js';
 import type {CosmiconfigResult} from 'cosmiconfig';
 
 import type {
+    CdnHostPattern,
     ClientConfig,
     LibraryConfig,
     NormalizedClientConfig,
@@ -19,6 +20,8 @@ import type {
     NormalizedServerConfig,
     NormalizedServiceConfig,
     ProjectConfig,
+    PublicPathFallback,
+    PublicPathFallbackEntry,
     ServerConfig,
     ServiceConfig,
 } from './models/index.js';
@@ -34,6 +37,83 @@ function splitPaths(paths: string | string[]) {
 
 function remapPaths(paths: string | string[]) {
     return splitPaths(paths).map((p) => path.resolve(process.cwd(), p));
+}
+
+function withTrailingSlash(publicPath: string) {
+    return /[\\/]$/.test(publicPath) ? publicPath : `${publicPath}/`;
+}
+
+function normalizeHostPatterns(hosts: PublicPathFallbackEntry['hosts']) {
+    if (!hosts) {
+        return undefined;
+    }
+
+    const patterns = (Array.isArray(hosts) ? hosts : [hosts]).map((host) => ({
+        source: toPatternSource(host),
+        flags: toPatternFlags(host),
+    }));
+
+    return patterns.length > 0 ? patterns : undefined;
+}
+
+// 'app.example.ru' -> '^app\.example\.ru$';
+function toPatternSource(host: CdnHostPattern) {
+    return typeof host === 'string'
+        ? `^${host.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`
+        : host.source;
+}
+
+// Forces case-insensitivity (`location.hostname` is always lower case) and drops
+// `g`/`y`, which would make a shared RegExp instance stateful across calls.
+function toPatternFlags(host: CdnHostPattern) {
+    return `i${typeof host === 'string' ? '' : host.flags.replace(/[giy]/g, '')}`;
+}
+
+function normalizePublicPathFallbacks(client: ClientConfig, mode?: string): PublicPathFallback[] {
+    if (!client.publicPathFallback?.length || mode === 'dev') {
+        return [];
+    }
+
+    if (client.moduleFederation) {
+        logger.warning(
+            stripIndent`
+                publicPathFallback option is disabled because moduleFederation is configured.
+                Module federation remotes load their entries and chunks through their own runtime,
+                which the fallback cannot reach.
+            `,
+        );
+        return [];
+    }
+
+    const candidates: PublicPathFallback[] = [];
+    for (const entry of client.publicPathFallback) {
+        const candidate = normalizeFallbackEntry(entry);
+
+        if (candidate && !isDuplicatePublicPath(candidates, candidate.publicPath)) {
+            candidates.push(candidate);
+        }
+    }
+
+    return candidates;
+}
+
+function normalizeFallbackEntry(
+    entry: string | PublicPathFallbackEntry,
+): PublicPathFallback | undefined {
+    const {publicPath, hosts} = typeof entry === 'string' ? {publicPath: entry} : entry;
+
+    if (!publicPath) {
+        return undefined;
+    }
+
+    return omitUndefined({
+        publicPath: withTrailingSlash(publicPath),
+        hosts: normalizeHostPatterns(hosts),
+    }) as PublicPathFallback;
+}
+
+function isDuplicatePublicPath(candidates: PublicPathFallback[], publicPath: string) {
+    return candidates.some((candidate) => candidate.publicPath === publicPath);
 }
 
 function omitUndefined<T extends object>(obj: T) {
@@ -264,6 +344,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
         publicPath,
         cdnPublicPath: cdnConfig?.publicPath,
         browserPublicPath,
+        publicPathFallbacks: normalizePublicPathFallbacks(client, mode),
         assetsManifestFile:
             client.assetsManifestFile ||
             (client.moduleFederation?.version
