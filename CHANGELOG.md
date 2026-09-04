@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.52.3](https://github.com/gravity-ui/app-builder/compare/v0.52.2...v0.52.3) (2026-09-04)
+
+
+### Bug Fixes
+
+* **s3-upload:** revert path normalization ([#354](https://github.com/gravity-ui/app-builder/issues/354)) ([43fa703](https://github.com/gravity-ui/app-builder/commit/43fa7030bf2bc3563cd007bdc25986d866b257e9))
+
 ## [0.52.2](https://github.com/gravity-ui/app-builder/compare/v0.52.1...v0.52.2) (2026-08-18)
 
 
