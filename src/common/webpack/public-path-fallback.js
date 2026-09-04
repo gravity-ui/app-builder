@@ -7,6 +7,8 @@
  * right after public-path.js. Runs in the browser.
  */
 
+import {BrowserEvents, dispatchBrowserEvent} from './browser-events.js';
+
 const STATE_KEY = '__PUBLIC_PATH_FALLBACK_STATE__';
 const PREFIX = '[app-builder] ';
 
@@ -98,6 +100,13 @@ function install() {
                 (next ? `; switching public path to "${next}"` : '; no fallbacks left'),
             error,
         );
+
+        dispatchBrowserEvent(BrowserEvents.PublicPathFallback, {
+            chunkId,
+            deadPath,
+            nextPath: next,
+            error,
+        });
 
         if (!next) {
             return false;

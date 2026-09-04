@@ -534,6 +534,19 @@ export interface PublicPathFallback {
     hosts?: {source: string; flags: string}[];
 }
 
+/**
+ * `detail` of the `app-builder:public-path-fallback` window `CustomEvent`,
+ * dispatched on every switch or exhaustion. Cast to `CustomEvent<PublicPathFallbackEventDetail>`
+ * in the event listener, e.g. `window.addEventListener('app-builder:public-path-fallback', (event) => ...)`.
+ */
+export interface PublicPathFallbackEventDetail {
+    chunkId: string | number;
+    deadPath: string;
+    /** Next public path now active, or `null` when every candidate is exhausted. */
+    nextPath: string | null;
+    error: Error;
+}
+
 export interface ServerConfig {
     port?: number | true;
     watch?: string[];
