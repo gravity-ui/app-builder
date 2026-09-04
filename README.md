@@ -396,6 +396,16 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 
   The option has no effect in dev mode, in SSR builds, or with `moduleFederation`.
 
+  Every switch (or exhaustion) dispatches a `window` `CustomEvent` named `app-builder:public-path-fallback` with `detail` typed as the exported `PublicPathFallbackEventDetail` (`nextPath` is `null` when no candidate is left) — listen for it to report failures to your own monitoring.
+
+  ```ts
+  import type {PublicPathFallbackEventDetail} from '@gravity-ui/app-builder';
+
+  window.addEventListener('app-builder:public-path-fallback', (event) => {
+    const {chunkId, deadPath, nextPath, error} = (event as CustomEvent<PublicPathFallbackEventDetail>).detail;
+  });
+  ```
+
 - `sentryConfig` (`Options`) — `@sentry/webpack-plugin` [configuration options](https://www.npmjs.com/package/@sentry/webpack-plugin/v/2.7.1).
 
 ##### Optimization
