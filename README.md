@@ -402,7 +402,9 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   import type {PublicPathFallbackEventDetail} from '@gravity-ui/app-builder';
 
   window.addEventListener('app-builder:public-path-fallback', (event) => {
-    const {chunkId, deadPath, nextPath, error} = (event as CustomEvent<PublicPathFallbackEventDetail>).detail;
+    const {chunkId, deadPath, nextPath, error} = (
+      event as CustomEvent<PublicPathFallbackEventDetail>
+    ).detail;
   });
   ```
 
