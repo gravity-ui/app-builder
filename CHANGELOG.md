@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.52.4](https://github.com/gravity-ui/app-builder/compare/v0.52.3...v0.52.4) (2026-09-08)
+
+
+### Bug Fixes
+
+* resolve import exports for unknown Rspack dependencies ([#353](https://github.com/gravity-ui/app-builder/issues/353)) ([f1550e9](https://github.com/gravity-ui/app-builder/commit/f1550e99f7b2f7f98147ac7117138768000c899c))
+
 ## [0.52.3](https://github.com/gravity-ui/app-builder/compare/v0.52.2...v0.52.3) (2026-09-04)
 
 
