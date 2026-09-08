@@ -2,15 +2,14 @@
 /* eslint-disable camelcase, no-console */
 /* global __webpack_require__, __webpack_public_path__:writable, __PUBLIC_PATH_FALLBACKS__ */
 
-/*
- * Sticky public path fallback for async chunk loading, prepended to every client entry
- * right after public-path.js. Runs in the browser.
- */
-
 import {BrowserEvents, dispatchBrowserEvent} from './browser-events.js';
 
 const STATE_KEY = '__PUBLIC_PATH_FALLBACK_STATE__';
 const PREFIX = '[app-builder] ';
+const RECOVERY_BASE_DELAY = 3_000;
+const RECOVERY_MULTIPLIER = 2;
+const RECOVERY_MAX_DELAY = 300_000;
+const RECOVERY_JITTER = 0.5;
 
 install();
 
@@ -57,10 +56,23 @@ function install() {
         }
 
         if (!promise || typeof promise.then !== 'function') {
+            onLoadSucceeded(state.active);
             return promise;
         }
 
-        return promise.then(null, (error) => handleFailure(chunkId, state.active, error));
+        return promise.then(
+            (value) => {
+                onLoadSucceeded(state.active);
+                return value;
+            },
+            (error) => handleFailure(chunkId, state.active, error),
+        );
+    }
+
+    function onLoadSucceeded(path) {
+        if (path === state.candidates[0]) {
+            state.recoveryAttempts = 0;
+        }
     }
 
     function attempt(chunkId, candidate) {
@@ -88,8 +100,13 @@ function install() {
     }
 
     function markDead(deadPath, chunkId, error) {
-        if (state.dead.indexOf(deadPath) === -1) {
+        const wasAlive = state.dead.indexOf(deadPath) === -1;
+        if (wasAlive) {
             state.dead.push(deadPath);
+        }
+
+        if (wasAlive && deadPath === state.candidates[0]) {
+            scheduleRecovery();
         }
 
         const next = firstAlive();
@@ -128,6 +145,41 @@ function install() {
         }
         return null;
     }
+
+    function scheduleRecovery() {
+        if (state.recovering) {
+            return;
+        }
+
+        state.recovering = true;
+        const delay = computeRecoveryDelay(state.recoveryAttempts);
+        state.recoveryAttempts++;
+        setTimeout(recoverPrimary, delay);
+    }
+
+    function computeRecoveryDelay(recoveryAttempt) {
+        const raw = Math.min(
+            RECOVERY_BASE_DELAY * RECOVERY_MULTIPLIER ** recoveryAttempt,
+            RECOVERY_MAX_DELAY,
+        );
+        const jitterSpan = raw * RECOVERY_JITTER;
+        return raw + (Math.random() * 2 - 1) * jitterSpan;
+    }
+
+    function recoverPrimary() {
+        state.recovering = false;
+
+        const primary = state.candidates[0];
+        const deadIndex = state.dead.indexOf(primary);
+        if (deadIndex !== -1) {
+            state.dead.splice(deadIndex, 1);
+        }
+
+        console.warn(PREFIX + `retrying primary public path "${primary}"`);
+
+        state.active = primary;
+        setPublicPath(primary);
+    }
 }
 
 function isUnsupportedRuntime() {
@@ -157,7 +209,7 @@ function getOrCreateState() {
     // Shared via window, not a closure, so multiple webpack runtimes on one page
     // (a micro-frontend shell, an embedded second bundle) agree on one dead CDN.
     if (!window[STATE_KEY]) {
-        window[STATE_KEY] = {dead: [], active: null};
+        window[STATE_KEY] = {dead: [], active: null, recoveryAttempts: 0, recovering: false};
     }
 
     return window[STATE_KEY];
