@@ -375,8 +375,8 @@ export interface ClientCommonConfig {
     /**
      * Ordered public paths to retry a failed async chunk from.
      *
-     * On failure, the runtime switches to and sticks with the next candidate for all
-     * later loads.
+     * On failure, the runtime switches to the next path for all later loads. The primary
+     * path (window.__PUBLIC_PATH__) retries automatically after a backoff delay.
      *
      * `window.__PUBLIC_PATH__` is always tried first - moved to the front whether or not
      * it's also listed here, so this array usually holds only backups. Entries with
