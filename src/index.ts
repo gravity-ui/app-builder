@@ -14,4 +14,5 @@ export type {
     LibraryConfig,
     ModuleFederationConfig,
     ProjectFileConfig,
+    PublicPathFallbackEventDetail,
 } from './common/models/index.js';
