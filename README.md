@@ -264,6 +264,9 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 - `babel` (`(config: babel.TransformOptions, options: {configType: 'development' | 'production'; isSsr: boolean}) => babel.TransformOptions | Promise<babel.TransformOptions>`) - Allow override the default babel transform options.
 - `babelCacheDirectory` (`boolean | string`) — Set directory for babel-loader cache (`default: node_modules/.cache/babel-loader``)
 - `swc` (`(config: SwcConfig, options: {configType: 'development' | 'production'; isSsr: boolean}) => SwcConfig | Promise<SwcConfig>`) - Allow override the default swc configuration.
+
+  **Note**: if you add your own wasm plugins via `jsc.experimental.plugins`, their version must match the `swc_core` ABI of the bundler actually running the build — for `bundler: 'rspack'` that is the `swc_core` embedded in Rspack, not the `@swc/core` version. Use the [swc plugin compatibility table](https://plugins.swc.rs/) to pick a matching plugin version; a mismatched plugin fails to load at build time.
+
 - `webpack` (`(config: webpack.Configuration, options: {configType: 'development' | 'production'; isSsr: boolean}) => webpack.Configuration | Promise<webpack.Configuration>`) - Allow override the default webpack configuration.
 - `rspack` (`(config: rspack.Configuration, options: {configType: 'development' | 'production'; isSsr: boolean}) => rspack.Configuration | Promise<rspack.Configuration>`) - Allow override the default rspack configuration.
 - `ssr` - build SSR bundle. The SSR entries should be inside `src/ui/ssr` directory and match the client entries.
