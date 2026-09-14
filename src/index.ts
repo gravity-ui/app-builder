@@ -1,4 +1,6 @@
 export {
+    configureRspackConfigForStorybook,
+    configureServiceRspackConfig,
     configureWebpackConfigForStorybook,
     configureServiceWebpackConfig,
 } from './common/webpack/storybook.js';
