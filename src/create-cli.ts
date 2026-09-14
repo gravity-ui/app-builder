@@ -134,6 +134,7 @@ export function createCli(argv: string[]) {
                         coerce: (arg) => (arg === undefined ? true : arg),
                     })
                     .option('entry-filter', {
+                        alias: ['entries', 'e'],
                         group: 'Client',
                         type: 'string',
                         describe:
@@ -151,6 +152,7 @@ export function createCli(argv: string[]) {
                         type: 'boolean',
                     })
                     .option('lazy-compilation', {
+                        alias: ['lazy', 'l'],
                         group: 'Client',
                         type: 'boolean',
                         describe: 'Enable lazy compilation',
