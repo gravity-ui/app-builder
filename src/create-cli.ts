@@ -5,11 +5,9 @@ import fs from 'node:fs';
 import logger from './common/logger/index.js';
 import {getProjectConfig} from './common/config.js';
 import {isLibraryConfig} from './common/models/index.js';
-import {
-    cleanupRspackProfile,
-    getRspackProfileOptions,
-    startRspackProfile,
-} from './common/rspack-profile.js';
+import {getRspackProfileOptions, startRspackProfile} from './common/rspack-profile.js';
+
+import {handlerP} from './common/cli-handler.js';
 
 import type {ProjectConfig} from './common/models/index.js';
 
@@ -203,6 +201,11 @@ export function createCli(argv: string[]) {
                         describe: 'Enable react profiling',
                         type: 'boolean',
                     })
+                    .option('keep-alive', {
+                        type: 'boolean',
+                        default: false,
+                        describe: 'Keep plugin services running after a successful build',
+                    })
                     .option('analyze-bundle', {
                         group: 'Client',
                         describe: 'Analyze bundle',
@@ -242,21 +245,6 @@ function getVersionInfo(): string {
         fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
     ) as {version: string};
     return `app-builder CLI version: ${packageJson.version}`;
-}
-
-function handlerP(fn: (args: Arguments) => void) {
-    return (args: Arguments): void => {
-        Promise.resolve(fn(args)).then(
-            async () => {
-                await cleanupRspackProfile();
-                process.exit(0);
-            },
-            async (err) => {
-                await cleanupRspackProfile();
-                logger.panic(err);
-            },
-        );
-    };
 }
 
 function getCommandHandler(
