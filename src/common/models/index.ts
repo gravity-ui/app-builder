@@ -373,6 +373,25 @@ export interface ClientCommonConfig {
     // TODO(DakEnviy): Allow only one cdn config
     cdn?: CdnUploadConfig | CdnUploadConfig[];
     /**
+     * Ordered public paths to retry a failed async chunk from.
+     *
+     * On failure, the runtime switches to the next path for all later loads. The primary
+     * path (window.__PUBLIC_PATH__) retries automatically after a backoff delay.
+     *
+     * `window.__PUBLIC_PATH__` is always tried first - moved to the front whether or not
+     * it's also listed here, so this array usually holds only backups. Entries with
+     * `hosts` apply only when `location.hostname` matches.
+     *
+     * Covers only lazy JS chunks and their async CSS. Not covered: initial `<script>`/
+     * `<link>` tags (they load before any bundle code runs - a primary outage there
+     * has to be handled in the page template) and worker scripts.
+     *
+     * Has no effect in dev mode, in SSR builds, or with `moduleFederation`.
+     *
+     * @example [{publicPath: 'https://cdn.example.ru/build/', hosts: /\.ru$/}, '/build/']
+     */
+    publicPathFallback?: (string | PublicPathFallbackEntry)[];
+    /**
      * use webpack 5 Web Workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
      *
      * @deprecated use `webWorkerHandle` instead
@@ -492,6 +511,42 @@ export interface CdnUploadConfig {
     additionalPattern?: string | string[];
 }
 
+export type CdnHostPattern = string | RegExp;
+
+export interface PublicPathFallbackEntry {
+    /** The backup base URL to retry a failed chunk from. */
+    publicPath: string;
+    /**
+     * Hosts this public path may be used on.
+     *
+     * A string must match the whole `location.hostname` exactly; a RegExp is tested
+     * as-is. Matching is always case-insensitive (`location.hostname` is lower case).
+     * When omitted, the public path is used on every host.
+     *
+     * @example ['app.example.ru', /\.example\.kz$/]
+     */
+    hosts?: CdnHostPattern | CdnHostPattern[];
+}
+
+/** Serialized form of `PublicPathFallbackEntry`, injected into the bundle via `DefinePlugin`. */
+export interface PublicPathFallback {
+    publicPath: string;
+    hosts?: {source: string; flags: string}[];
+}
+
+/**
+ * `detail` of the `app-builder:public-path-fallback` window `CustomEvent`,
+ * dispatched on every switch or exhaustion. Cast to `CustomEvent<PublicPathFallbackEventDetail>`
+ * in the event listener, e.g. `window.addEventListener('app-builder:public-path-fallback', (event) => ...)`.
+ */
+export interface PublicPathFallbackEventDetail {
+    chunkId: string | number;
+    deadPath: string;
+    /** Next public path now active, or `null` when every candidate is exhausted. */
+    nextPath: string | null;
+    error: Error;
+}
+
 export interface ServerConfig {
     port?: number | true;
     watch?: string[];
@@ -587,6 +642,11 @@ export type NormalizedClientBaseConfig = Omit<
      * (concatenated with micro-frontend name if module federation is configured).
      */
     browserPublicPath: string;
+    /**
+     * Ordered list of public paths the runtime may load async chunks from,
+     * derived from `publicPathFallback`. Empty if the fallback is disabled.
+     */
+    publicPathFallbacks: PublicPathFallback[];
     assetsManifestFile: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;
