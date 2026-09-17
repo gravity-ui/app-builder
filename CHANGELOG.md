@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.53.1](https://github.com/gravity-ui/app-builder/compare/v0.53.0...v0.53.1) (2026-09-17)
+
+
+### Bug Fixes
+
+* allow keeping Rsdoctor services alive after builds ([#361](https://github.com/gravity-ui/app-builder/issues/361)) ([e2ef662](https://github.com/gravity-ui/app-builder/commit/e2ef662158abc6d2ef0756f460b8a99d4707584d))
+
 ## [0.53.0](https://github.com/gravity-ui/app-builder/compare/v0.52.3...v0.53.0) (2026-09-14)
 
 
