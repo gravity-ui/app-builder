@@ -10,7 +10,11 @@ export function handlerP(fn: (args: Arguments) => void) {
                 await cleanupRspackProfile();
                 if (args.keepAlive === true) {
                     // Let active plugin services keep Node alive until the user stops them.
+                    // The build succeeded, so stopping it must not look like a failure
+                    // (compile.ts installs SIGINT/SIGTERM handlers that exit with 1).
                     process.exitCode = 0;
+                    process.once('SIGINT', () => process.exit(0));
+                    process.once('SIGTERM', () => process.exit(0));
                 } else {
                     process.exit(0);
                 }

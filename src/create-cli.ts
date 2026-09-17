@@ -255,6 +255,18 @@ function getCommandHandler(
         const config = await getProjectConfig(command, argv as CliArgs);
         logger.setVerbose(Boolean(config.verbose));
 
+        if (
+            command === 'build' &&
+            argv.keepAlive !== true &&
+            !isLibraryConfig(config) &&
+            config.client.analyzeBundle === 'rsdoctor' &&
+            config.client.rsdoctorConfig?.disableClientServer === false
+        ) {
+            logger.warning(
+                'Rsdoctor client server is enabled but the process exits after the build. Pass --keep-alive to keep it running.',
+            );
+        }
+
         const profileOptions = getRspackProfileOptions(argv as CliArgs);
         if (profileOptions) {
             if (
