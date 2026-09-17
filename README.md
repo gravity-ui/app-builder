@@ -353,6 +353,19 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   });
   ```
 
+  For interactive analysis and the [Rsdoctor MCP server](https://rsdoctor.dev/guide/usage/mcp), set
+  `disableClientServer: false` and `output.mode: 'normal'`, then run:
+
+  ```sh
+  pnpm exec app-builder build --analyze-bundle rsdoctor --keep-alive
+  ```
+
+  The build-only `--keep-alive` flag (or `APP_BUILDER_KEEP_ALIVE=true`) lets active plugin services
+  keep the process running after a successful build. Stop it with Ctrl+C when finished. Without
+  the flag, app-builder exits after the build as before. Build failures still exit with an error.
+  Keep `CI` unset for interactive Rsdoctor runs; Rsdoctor disables its service in CI and disposes
+  it for JSON-only brief reports. Start the MCP server separately in your MCP client.
+
 - `cdn` (`CdnUploadConfig | CdnUploadConfig[]`) - upload bundled client files to CDN.
   - `bucket` (`string`) — bucket name
   - `prefix` (`string`) — path to files inside the bucket
