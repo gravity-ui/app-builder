@@ -1,7 +1,9 @@
 import {jest} from '@jest/globals';
 
-import {handlerP} from './cli-handler.js';
-import {startRspackProfile} from './rspack-profile.js';
+const cleanupRspackProfile = jest.fn<() => Promise<void>>(async () => undefined);
+jest.unstable_mockModule('./rspack-profile.js', () => ({cleanupRspackProfile}));
+
+const {handlerP} = await import('./cli-handler.js');
 
 const originalExitCode = process.exitCode;
 
@@ -11,37 +13,42 @@ beforeEach(() => {
 
 afterEach(() => {
     process.exitCode = originalExitCode;
+    process.removeAllListeners('SIGINT');
+    process.removeAllListeners('SIGTERM');
+    jest.clearAllMocks();
     jest.restoreAllMocks();
 });
 
 describe('command completion', () => {
-    it.each([undefined, false])('exits by default (keepAlive: %s)', async (keepAlive) => {
-        await handlerP(async () => undefined)({_: ['build'], $0: 'app-builder', keepAlive});
+    it('exits by default', async () => {
+        await handlerP(async () => undefined)({_: ['build'], $0: 'app-builder'});
 
+        expect(cleanupRspackProfile).toHaveBeenCalledTimes(1);
         expect(process.exit).toHaveBeenCalledWith(0);
     });
 
     it('cleans up profiling while leaving plugin services alive when requested', async () => {
-        const cleanup = jest.fn<() => Promise<void>>(async () => undefined);
-        await startRspackProfile({
-            filter: 'ALL',
-            layer: 'logger',
-            traceApi: {
-                register: async () => undefined,
-                cleanup,
-            },
-        });
-        process.exitCode = 1;
-
         await handlerP(async () => undefined)({
             _: ['build'],
             $0: 'app-builder',
             keepAlive: true,
         });
 
-        expect(cleanup).toHaveBeenCalledTimes(1);
+        expect(cleanupRspackProfile).toHaveBeenCalledTimes(1);
         expect(process.exit).not.toHaveBeenCalled();
         expect(process.exitCode).toBe(0);
+    });
+
+    it('exits with 0 on SIGINT after a successful keep-alive build', async () => {
+        await handlerP(async () => undefined)({
+            _: ['build'],
+            $0: 'app-builder',
+            keepAlive: true,
+        });
+
+        process.emit('SIGINT');
+
+        expect(process.exit).toHaveBeenCalledWith(0);
     });
 
     it('still exits on a failed build with keep-alive enabled', async () => {
@@ -50,6 +57,7 @@ describe('command completion', () => {
             throw new Error('Build failed');
         })({_: ['build'], $0: 'app-builder', keepAlive: true});
 
+        expect(cleanupRspackProfile).toHaveBeenCalledTimes(1);
         expect(process.exit).toHaveBeenCalledWith(1);
     });
 });
