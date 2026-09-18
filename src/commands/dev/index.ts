@@ -37,6 +37,27 @@ export default async function (config: NormalizedServiceConfig) {
     let clientCompiled = !shouldCompileClient;
     let serverCompiled = !shouldCompileServer;
     let needToStartNodemon = shouldCompileServer;
+    let serverCompilation: ControllableScript | undefined;
+    let clientCompilation: WebpackDevServer | RspackDevServer | undefined;
+    let applicationExit = Promise.resolve();
+    let resolveApplicationExit = () => {};
+    let shutdownPromise: Promise<void> | undefined;
+
+    const shutdown = (signal: NodeJS.Signals) => {
+        if (!shutdownPromise) {
+            needToStartNodemon = false;
+            shutdownPromise = (async () => {
+                logger.success('\nCleaning up...');
+                await Promise.all([
+                    applicationExit,
+                    serverCompilation?.stop(signal),
+                    clientCompilation?.stop(),
+                ]);
+                process.exit(1);
+            })();
+        }
+        return shutdownPromise;
+    };
 
     const serverPath = config.server.outputPath;
     const {inspect, inspectBrk} = config.server;
@@ -44,9 +65,9 @@ export default async function (config: NormalizedServiceConfig) {
     const startNodemon = () => {
         if (needToStartNodemon && serverCompiled && clientCompiled) {
             logger.message('Starting application at', serverPath);
-            const nodeArgs = ['--enable-source-maps'];
+            const nodeOptions = [process.env.NODE_OPTIONS, '--enable-source-maps'];
             if (inspect || inspectBrk) {
-                nodeArgs.push(
+                nodeOptions.push(
                     `--${inspect ? 'inspect' : 'inspect-brk'}=:::${inspect || inspectBrk}`,
                 );
             }
@@ -59,18 +80,25 @@ export default async function (config: NormalizedServiceConfig) {
                 args: ['--dev', config.server.port ? `--port=${config.server.port}` : ''],
                 env: {
                     ...(config.server.port ? {APP_PORT: `${config.server.port}`} : undefined),
+                    // Node arguments make nodemon spawn a shell instead of forking the server.
+                    NODE_OPTIONS: nodeOptions.filter(Boolean).join(' '),
                 },
-                nodeArgs,
                 watch: [serverPath, ...serverWatch],
                 delay,
             });
 
-            nodemonInstance.on('quit', () => process.exit());
+            nodemonInstance.on('start', () => {
+                applicationExit = new Promise<void>((resolve) => {
+                    resolveApplicationExit = resolve;
+                });
+            });
+            nodemonInstance.on('exit', () => resolveApplicationExit());
+            nodemonInstance.on('crash', () => resolveApplicationExit());
+            nodemonInstance.on('quit', () => shutdown('SIGINT'));
             needToStartNodemon = false;
         }
     };
 
-    let serverCompilation: ControllableScript | undefined;
     if (shouldCompileServer) {
         const {watchServerCompilation} = await import('./server.js');
         serverCompilation = await watchServerCompilation(config);
@@ -82,7 +110,6 @@ export default async function (config: NormalizedServiceConfig) {
         });
     }
 
-    let clientCompilation: WebpackDevServer | RspackDevServer | undefined;
     if (shouldCompileClient) {
         const {watchClientCompilation} = await import('./client.js');
         try {
@@ -98,22 +125,13 @@ export default async function (config: NormalizedServiceConfig) {
         }
     }
 
-    process.on('SIGINT', async () => {
-        logger.success('\nCleaning up...');
-        await serverCompilation?.stop('SIGINT');
-        await clientCompilation?.stop();
-        process.exit(1);
-    });
-
-    process.on('SIGTERM', async () => {
-        logger.success('\nCleaning up...');
-        await serverCompilation?.stop('SIGTERM');
-        await clientCompilation?.stop();
-        process.exit(1);
-    });
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
 
     onExit((_code, signal) => {
-        serverCompilation?.stop(signal);
-        clientCompilation?.stop();
+        if (!shutdownPromise) {
+            serverCompilation?.stop(signal);
+            clientCompilation?.stop();
+        }
     });
 }
