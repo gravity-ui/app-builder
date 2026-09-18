@@ -2,27 +2,26 @@ import {EventEmitter} from 'node:events';
 import {setImmediate} from 'node:timers/promises';
 import {jest} from '@jest/globals';
 
+import {deferredPromise, shouldCompileTarget} from '../../common/utils.js';
 import type {NormalizedServiceConfig} from '../../common/models/index.js';
 
 const monitor = new EventEmitter();
+const signals = new EventEmitter();
 const nodemon = jest.fn((_options: unknown) => monitor);
 const stopServer = jest.fn<() => Promise<void>>();
 const stopClient = jest.fn<() => Promise<void>>();
+const onExit = jest.fn<(callback: () => void) => void>();
 let onServerMessage: (message: {type: string}) => void;
+let onCompilerExit: () => void;
 let onClientCompiled: () => void;
-let onProcessExit: (code: number, signal: NodeJS.Signals | null) => void;
 
 jest.unstable_mockModule('nodemon', () => ({default: nodemon}));
-jest.unstable_mockModule('signal-exit', () => ({
-    onExit: (callback: typeof onProcessExit) => {
-        onProcessExit = callback;
-    },
-}));
-jest.unstable_mockModule('@rspack/dev-server', () => ({RspackDevServer: class {}}));
+jest.unstable_mockModule('signal-exit', () => ({onExit}));
 jest.unstable_mockModule('../../common/utils.js', () => ({
+    deferredPromise,
+    shouldCompileTarget,
     createRunFolder: jest.fn(),
     getAppRunPath: () => '/nonexistent-app-builder-test/run',
-    shouldCompileTarget: (target: string | undefined, part: string) => !target || target === part,
 }));
 jest.unstable_mockModule('../../common/logger/index.js', () => ({
     default: {message: jest.fn(), warning: jest.fn(), success: jest.fn()},
@@ -30,6 +29,9 @@ jest.unstable_mockModule('../../common/logger/index.js', () => ({
 jest.unstable_mockModule('./server.js', () => ({
     watchServerCompilation: async () => ({
         stop: stopServer,
+        onExit: (callback: () => void) => {
+            onCompilerExit = callback;
+        },
         onMessage: (callback: typeof onServerMessage) => {
             onServerMessage = callback;
         },
@@ -44,159 +46,127 @@ jest.unstable_mockModule('./client.js', () => ({
 
 const {default: dev} = await import('./index.js');
 const config = {server: {outputPath: '/app/server'}} as NormalizedServiceConfig;
-let signalListeners: Map<NodeJS.Signals, NodeJS.SignalsListener[]>;
 
 beforeEach(() => {
-    signalListeners = new Map(
-        (['SIGINT', 'SIGTERM'] as const).map((signal) => [signal, process.listeners(signal)]),
-    );
+    jest.replaceProperty(process, 'env', {...process.env});
+    jest.spyOn(process, 'on').mockImplementation((event, listener) => {
+        signals.on(event, listener);
+        return process;
+    });
     jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
     stopServer.mockResolvedValue(undefined);
     stopClient.mockResolvedValue(undefined);
 });
-
 afterEach(() => {
-    for (const [signal, previous] of signalListeners) {
-        for (const listener of process.listeners(signal)) {
-            if (!previous.includes(listener)) {
-                process.removeListener(signal, listener);
-            }
-        }
-    }
     monitor.removeAllListeners();
+    signals.removeAllListeners();
     jest.clearAllMocks();
     jest.restoreAllMocks();
 });
 
-const startApplication = async () => {
+async function startApplication(start = true) {
     await dev(config);
     onServerMessage({type: 'Emitted'});
     onClientCompiled();
-    monitor.emit('start');
-};
+    if (start) monitor.emit('start');
+}
+async function expectExitCount(count: number) {
+    await setImmediate();
+    expect(process.exit).toHaveBeenCalledTimes(count);
+}
 
-describe('dev shutdown', () => {
-    it('passes Node options through the environment so nodemon can fork the server', async () => {
-        const previousOptions = process.env.NODE_OPTIONS;
-        process.env.NODE_OPTIONS = '--max-old-space-size=2048';
-        try {
-            await dev({...config, server: {...config.server, inspectBrk: 9229, port: 3000}});
+it('preserves Node flags and custom commands while replacing the default POSIX shell', async () => {
+    await startApplication();
+    const command = {raw: {executable: 'node'}};
+    monitor.emit('config:update', {command});
+    expect(command.raw.executable).toBe(process.platform === 'win32' ? 'node' : 'exec node');
+    expect(nodemon).toHaveBeenCalledWith(
+        expect.objectContaining({nodeArgs: ['--enable-source-maps']}),
+    );
+    command.raw.executable = 'node --max-old-space-size=384';
+    monitor.emit('config:update', {command});
+    expect(command.raw.executable).toBe('node --max-old-space-size=384');
+});
+
+it.each(['loading', 'running', 'waiting'])(
+    'prevents new starts while nodemon is %s',
+    async (state) => {
+        await startApplication(state === 'running');
+        const options = {runOnChangeOnly: state === 'waiting'};
+        const loaded = {options, lastStarted: 1, command: {raw: {executable: 'node'}}};
+        if (state !== 'loading') monitor.emit('config:update', loaded);
+        monitor.emit('quit');
+        if (state === 'loading') monitor.emit('config:update', loaded);
+        expect(options.runOnChangeOnly).toBe(true);
+        expect(loaded.lastStarted).toBe(0);
+        monitor.emit('exit');
+        await expectExitCount(1);
+    },
+);
+
+it('skips an already exited compiler', async () => {
+    await startApplication();
+    onCompilerExit();
+    monitor.emit('quit');
+    monitor.emit('exit');
+    await expectExitCount(1);
+    expect(stopServer).not.toHaveBeenCalled();
+});
+
+it.each([
+    ['SIGINT', false],
+    ['SIGTERM', false],
+    ['SIGINT', true],
+] as const)('waits for cleanup on %s (nodemon quits first: %s)', async (signal, nodemonFirst) => {
+    const clientStop = deferredPromise<void>();
+    stopClient.mockReturnValue(clientStop.promise);
+    await startApplication();
+    if (nodemonFirst) monitor.emit('quit');
+    signals.emit(signal);
+    signals.emit(signal);
+    monitor.emit('quit');
+    await expectExitCount(0);
+    expect(stopServer).toHaveBeenCalledWith(signal);
+    monitor.emit('exit');
+    await expectExitCount(0);
+    clientStop.resolve();
+    await expectExitCount(1);
+    expect(process.exit).toHaveBeenCalledWith(1);
+    onExit.mock.calls[0]?.[0]();
+    expect(stopServer).toHaveBeenCalledTimes(1);
+    expect(stopClient).toHaveBeenCalledTimes(1);
+});
+
+it.each([
+    ['exit', false],
+    ['crash', false],
+    ['exit', true],
+    ['crash', true],
+] as const)('handles %s followed by shutdown (restart: %s)', async (event, restart) => {
+    await startApplication();
+    monitor.emit(event);
+    await expectExitCount(0);
+    if (restart) monitor.emit('start');
+    monitor.emit('quit');
+    await expectExitCount(restart ? 0 : 1);
+    if (restart) {
+        monitor.emit('exit');
+        await expectExitCount(1);
+    }
+});
+
+it.each(['client-only', 'before compilation'])(
+    'can stop %s without starting nodemon',
+    async (scenario) => {
+        await dev({...config, target: scenario === 'client-only' ? 'client' : undefined});
+        signals.emit('SIGTERM');
+        if (scenario === 'before compilation') {
             onServerMessage({type: 'Emitted'});
             onClientCompiled();
-            expect(nodemon).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    env: {
-                        APP_PORT: '3000',
-                        NODE_OPTIONS:
-                            '--max-old-space-size=2048 --enable-source-maps --inspect-brk=:::9229',
-                    },
-                }),
-            );
-            expect(nodemon.mock.calls[0]?.[0]).not.toHaveProperty('nodeArgs');
-        } finally {
-            if (previousOptions === undefined) {
-                delete process.env.NODE_OPTIONS;
-            } else {
-                process.env.NODE_OPTIONS = previousOptions;
-            }
         }
-    });
-
-    it.each(['SIGINT', 'SIGTERM'] as const)(
-        'waits for the application and compilers before exiting on %s',
-        async (signal) => {
-            let finishClient: () => void = () => {};
-            stopClient.mockImplementation(
-                () =>
-                    new Promise<void>((resolve) => {
-                        finishClient = resolve;
-                    }),
-            );
-            await startApplication();
-
-            process.emit(signal);
-            monitor.emit('quit');
-            await setImmediate();
-
-            expect(process.exit).not.toHaveBeenCalled();
-            expect(stopServer).toHaveBeenCalledWith(signal);
-
-            monitor.emit('exit');
-            await setImmediate();
-
-            expect(stopServer).toHaveBeenCalledWith(signal);
-            expect(stopClient).toHaveBeenCalledTimes(1);
-            expect(process.exit).not.toHaveBeenCalled();
-
-            finishClient();
-            await setImmediate();
-
-            expect(process.exit).toHaveBeenCalledWith(1);
-            onProcessExit(1, null);
-            expect(stopServer).toHaveBeenCalledTimes(1);
-            expect(stopClient).toHaveBeenCalledTimes(1);
-        },
-    );
-
-    it('waits for nodemon quit cleanup when it receives the signal first', async () => {
-        await startApplication();
-        monitor.emit('quit');
-        process.emit('SIGINT');
-        process.emit('SIGINT');
-        await setImmediate();
-        expect(process.exit).not.toHaveBeenCalled();
-
-        monitor.emit('exit');
-        await setImmediate();
-        expect(stopServer).toHaveBeenCalledTimes(1);
-        expect(stopClient).toHaveBeenCalledTimes(1);
-        expect(process.exit).toHaveBeenCalledTimes(1);
-    });
-
-    it.each(['exit', 'crash'])('keeps watching after an application %s', async (event) => {
-        await startApplication();
-        monitor.emit(event);
-        await setImmediate();
-        expect(process.exit).not.toHaveBeenCalled();
-
-        monitor.emit('start');
-        monitor.emit('quit');
-        await setImmediate();
-        expect(process.exit).not.toHaveBeenCalled();
-
-        monitor.emit('exit');
-        await setImmediate();
-        expect(process.exit).toHaveBeenCalledTimes(1);
-    });
-
-    it.each(['exit', 'crash'])(
-        'can quit after the application has already emitted %s',
-        async (event) => {
-            await startApplication();
-            monitor.emit(event);
-            monitor.emit('quit');
-            await setImmediate();
-            expect(process.exit).toHaveBeenCalledTimes(1);
-        },
-    );
-
-    it('does not start the application if compilation finishes during shutdown', async () => {
-        await dev(config);
-        process.emit('SIGINT');
-        onServerMessage({type: 'Emitted'});
-        onClientCompiled();
-        await setImmediate();
+        await expectExitCount(1);
         expect(nodemon).not.toHaveBeenCalled();
-        expect(process.exit).toHaveBeenCalledTimes(1);
-    });
-
-    it('stops a client-only dev server without waiting for nodemon', async () => {
-        await dev({...config, target: 'client'});
-        process.emit('SIGTERM');
-        await setImmediate();
-        expect(nodemon).not.toHaveBeenCalled();
-        expect(stopServer).not.toHaveBeenCalled();
+        expect(stopServer).toHaveBeenCalledTimes(scenario === 'client-only' ? 0 : 1);
         expect(stopClient).toHaveBeenCalledTimes(1);
-        expect(process.exit).toHaveBeenCalledTimes(1);
-    });
-});
+    },
+);
