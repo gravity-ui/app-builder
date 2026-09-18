@@ -176,6 +176,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
             'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization',
         },
         ...devServer,
+        setupExitSignals: false,
     };
 
     const listenOn = options.port || options.ipc;
