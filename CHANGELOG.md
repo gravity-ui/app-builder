@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.53.2](https://github.com/gravity-ui/app-builder/compare/v0.53.1...v0.53.2) (2026-09-22)
+
+
+### Bug Fixes
+
+* stop application servers when dev exits ([#364](https://github.com/gravity-ui/app-builder/issues/364)) ([9ee6793](https://github.com/gravity-ui/app-builder/commit/9ee6793688c9b4b2b37fd710cea0378a7e6f7c62))
+
 ## [0.53.1](https://github.com/gravity-ui/app-builder/compare/v0.53.0...v0.53.1) (2026-09-17)
 
 
