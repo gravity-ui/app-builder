@@ -3,20 +3,23 @@ import {createRequire} from 'node:module';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import MiniCSSExtractPlugin from 'mini-css-extract-plugin';
 import OptimizeCSSAssetsPlugin from 'css-minimizer-webpack-plugin';
+import {rspack} from '@rspack/core';
 
 import {
     WebpackMode,
     configureModuleRules,
     configureOptimization,
     configureResolve,
+    configureRspackOptimization,
 } from './config.js';
 import {getProjectConfig, normalizeConfig} from '../config.js';
 import {isLibraryConfig} from '../models/index.js';
 import paths from '../paths.js';
 
 import type {HelperOptions} from './config.js';
-import type {ClientCommonConfig, ClientWebpackConfig} from '../models/index.js';
+import type {ClientCommonConfig, ClientRspackConfig, ClientWebpackConfig} from '../models/index.js';
 import type * as Webpack from 'webpack';
+import type * as Rspack from '@rspack/core';
 import {getNormalizedWorkerOption} from './utils.js';
 
 const require = createRequire(import.meta.url);
@@ -41,23 +44,12 @@ export async function configureServiceWebpackConfig(
             }),
         };
     } else if (serviceConfig.client.bundler === 'rspack') {
-        const {
-            rspack: _,
-            bundler: __,
-            detectCircularDependencies: ___,
-            ...rest
-        } = serviceConfig.client;
-
-        options = rest;
+        throw new Error(
+            'Rspack project config cannot be used by the Webpack Storybook builder. Use configureServiceRspackConfig instead.',
+        );
     } else {
         options = serviceConfig.client;
     }
-
-    options = {
-        ...options,
-        // TODO support rspack for storybook
-        bundler: 'webpack',
-    };
 
     const webpackConfig = await configureWebpackConfigForStorybook(
         mode,
@@ -107,6 +99,86 @@ export async function configureServiceWebpackConfig(
     };
 }
 
+/**
+ * Applies the service Rspack settings to the config created by Storybook's Rsbuild builder.
+ *
+ * @param mode Storybook build mode.
+ * @param storybookConfig Rspack config created by the Storybook builder.
+ * @returns The Storybook config extended with app-builder settings.
+ */
+export async function configureServiceRspackConfig(
+    mode: Mode,
+    storybookConfig: Rspack.Configuration,
+): Promise<Rspack.Configuration> {
+    const serviceConfig = await getProjectConfig(mode === WebpackMode.Prod ? 'build' : 'dev', {
+        storybook: true,
+    });
+
+    let options: ClientCommonConfig & ClientRspackConfig;
+    if (isLibraryConfig(serviceConfig)) {
+        const libBabelPlugins = serviceConfig.lib?.babelPlugins || [];
+        options = {
+            bundler: 'rspack',
+            includes: ['src'],
+            babel: (babelConfig) => ({
+                ...babelConfig,
+                plugins: [...(babelConfig.plugins || []), ...libBabelPlugins],
+            }),
+        };
+    } else if (serviceConfig.client.bundler === 'rspack') {
+        options = serviceConfig.client;
+    } else {
+        throw new Error(
+            'Webpack project config cannot be used by the Rspack Storybook builder. Use configureServiceWebpackConfig instead.',
+        );
+    }
+
+    const rspackConfig = await configureRspackConfigForStorybook(
+        mode,
+        options,
+        storybookConfig.module?.rules,
+    );
+
+    let devtool = storybookConfig.devtool;
+    if (mode === WebpackMode.Prod && devtool) {
+        devtool = 'source-map';
+    }
+
+    return {
+        ...storybookConfig,
+        devtool,
+        plugins: [...(storybookConfig.plugins ?? []), ...rspackConfig.plugins],
+        resolve: {
+            ...storybookConfig.resolve,
+            ...rspackConfig.resolve,
+            alias: {
+                ...storybookConfig.resolve?.alias,
+                ...rspackConfig.resolve.alias,
+            },
+            modules: [
+                ...(storybookConfig.resolve?.modules || []),
+                ...(rspackConfig.resolve.modules || []),
+            ],
+            extensions: [
+                ...(storybookConfig.resolve?.extensions ?? []),
+                ...(rspackConfig.resolve.extensions || []),
+            ],
+            fallback: {
+                ...storybookConfig.resolve?.fallback,
+                ...rspackConfig.resolve.fallback,
+            },
+        },
+        module: {
+            ...storybookConfig.module,
+            rules: rspackConfig.module.rules,
+        },
+        optimization: {
+            ...storybookConfig.optimization,
+            ...rspackConfig.optimization,
+        },
+    };
+}
+
 type ModuleRule = NonNullable<NonNullable<Webpack.Configuration['module']>['rules']>[number];
 export async function configureWebpackConfigForStorybook(
     mode: Mode,
@@ -119,7 +191,6 @@ export async function configureWebpackConfigForStorybook(
     const config = await normalizeConfig({
         client: {
             ...userConfig,
-            // TODO support rspack for storybook
             bundler: 'webpack',
             includes: (userConfig.includes ?? []).concat(['.storybook']),
         },
@@ -150,6 +221,54 @@ export async function configureWebpackConfigForStorybook(
         plugins: configurePlugins(helperOptions),
         optimization: {
             minimizer: configureOptimization(helperOptions).minimizer,
+        },
+    };
+}
+
+type RspackModuleRule = NonNullable<NonNullable<Rspack.Configuration['module']>['rules']>[number];
+
+export async function configureRspackConfigForStorybook(
+    mode: Mode,
+    userConfig: ClientCommonConfig & ClientRspackConfig = {bundler: 'rspack'},
+    storybookModuleRules: RspackModuleRule[] = [],
+) {
+    const isEnvDevelopment = mode === WebpackMode.Dev;
+    const isEnvProduction = mode === WebpackMode.Prod;
+
+    const config = await normalizeConfig({
+        client: {
+            ...userConfig,
+            bundler: 'rspack',
+            ssr: undefined,
+            includes: (userConfig.includes ?? []).concat(['.storybook']),
+        },
+    });
+
+    const helperOptions: HelperOptions = {
+        isEnvDevelopment,
+        isEnvProduction,
+        config: config.client,
+        configType: mode,
+        buildDirectory: config.client.outputPath || paths.appBuild,
+        entriesDirectory: paths.appEntry,
+        isSsr: false,
+        webWorkerHandle: getNormalizedWorkerOption(config.client),
+    };
+    const additionalRules = storybookModuleRules.filter(
+        (rule) => rule !== '...',
+    ) as unknown as NonNullable<Webpack.RuleSetRule['oneOf']>;
+
+    return {
+        module: {
+            rules: (await configureModuleRules(
+                helperOptions,
+                additionalRules,
+            )) as Rspack.RuleSetRules,
+        },
+        resolve: configureResolve(helperOptions) as NonNullable<Rspack.Configuration['resolve']>,
+        plugins: configureRspackPlugins(helperOptions),
+        optimization: {
+            minimizer: configureRspackOptimization(helperOptions).minimizer,
         },
     };
 }
@@ -205,6 +324,38 @@ function configurePlugins({isEnvDevelopment, isEnvProduction, config}: HelperOpt
                 },
             }),
         );
+    }
+
+    return plugins;
+}
+
+function configureRspackPlugins({config}: HelperOptions) {
+    const plugins: NonNullable<Rspack.Configuration['plugins']> = [];
+
+    if (config.definitions) {
+        const definitions = {...config.definitions} as unknown as Rspack.DefinePluginOptions;
+        plugins.push(new rspack.DefinePlugin(definitions));
+    }
+
+    if (config.monaco) {
+        const MonacoEditorWebpackPlugin = require('monaco-editor-webpack-plugin');
+        plugins.push(
+            new MonacoEditorWebpackPlugin({
+                ...config.monaco,
+                // currently, workers located on cdn are not working properly, so we are enforcing loading workers from
+                // service instead
+                publicPath: '/',
+            }) as unknown as Rspack.Plugin,
+        );
+    }
+
+    if (config.bundler === 'rspack' && config.detectCircularDependencies) {
+        const options: Rspack.CircularDependencyRspackPluginOptions =
+            typeof config.detectCircularDependencies === 'object'
+                ? config.detectCircularDependencies
+                : {exclude: /node_modules/};
+
+        plugins.push(new rspack.CircularDependencyRspackPlugin(options));
     }
 
     return plugins;
