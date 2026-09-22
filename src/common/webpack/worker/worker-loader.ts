@@ -15,8 +15,6 @@ interface Cache {
 }
 
 export const pitch: Webpack.PitchLoaderDefinitionFunction = function (request) {
-    this.cacheable(false);
-
     if (!this._compiler || !this._compilation) {
         throw new Error('Something went wrong');
     }
@@ -83,6 +81,17 @@ export const pitch: Webpack.PitchLoaderDefinitionFunction = function (request) {
     workerCompiler.compile((err, compilation) => {
         if (compilation) {
             workerCompiler.parentCompilation?.children.push(compilation);
+            // The module is cacheable, so the bundler must know which files the worker bundle
+            // depends on to rebuild it when any of them changes.
+            for (const dependency of compilation.fileDependencies) {
+                this.addDependency(dependency);
+            }
+            for (const dependency of compilation.contextDependencies) {
+                this.addContextDependency(dependency);
+            }
+            for (const dependency of compilation.missingDependencies) {
+                this.addMissingDependency(dependency);
+            }
         }
 
         if (err) {
@@ -143,23 +152,24 @@ export const pitch: Webpack.PitchLoaderDefinitionFunction = function (request) {
                 }
             }
 
-            const parentCompilation = workerCompiler.parentCompilation;
-            if (parentCompilation) {
-                for (const [assetName, asset] of Object.entries(compilation.assets)) {
-                    if ([filename, mapFile, licenseFile].includes(assetName)) {
-                        continue;
-                    }
-
-                    if (parentCompilation.getAsset(assetName)) {
-                        continue;
-                    }
-
-                    parentCompilation.emitAsset(
-                        assetName,
-                        asset,
-                        compilation.getAsset(assetName)?.info,
-                    );
+            // Emit the worker's chunks through the loader context rather than straight into
+            // the parent compilation: assets emitted this way are stored with the module and
+            // re-emitted when it is restored from cache instead of being rebuilt.
+            for (const [assetName, asset] of Object.entries(compilation.assets)) {
+                if ([filename, mapFile, licenseFile].includes(assetName)) {
+                    continue;
                 }
+
+                if (workerCompiler.parentCompilation?.getAsset(assetName)) {
+                    continue;
+                }
+
+                this.emitFile(
+                    assetName,
+                    asset.source(),
+                    undefined,
+                    compilation.getAsset(assetName)?.info,
+                );
             }
             return cache.store<Cache>(
                 cacheIdent,
