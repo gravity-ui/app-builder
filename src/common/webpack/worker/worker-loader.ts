@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import * as path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -8,11 +9,6 @@ import paths from '../../paths.js';
 const pluginId = 'APP_BUILDER_WORKER_LOADER';
 
 const publicPath = fileURLToPath(new URL('./public-path.worker.js', import.meta.url));
-
-interface Cache {
-    content?: string | Buffer;
-    map?: string;
-}
 
 export const pitch: Webpack.PitchLoaderDefinitionFunction = function (request) {
     if (!this._compiler || !this._compilation) {
@@ -30,16 +26,18 @@ export const pitch: Webpack.PitchLoaderDefinitionFunction = function (request) {
 
     const isEnvProduction = compilerOptions.mode === 'production';
     const filename = 'worker.js';
+    const workerPath = path.relative(paths.app, this.resource);
+    const workerId = createHash('sha256').update(workerPath).digest('hex').slice(0, 8);
     const chunkFilename = isEnvProduction
-        ? 'js/[name].[contenthash:8].worker.js'
-        : 'js/[name].worker.js';
+        ? `js/[name].[contenthash:8].${workerId}.worker.js`
+        : `js/[name].${workerId}.worker.js`;
 
     const workerOptions = {
         filename,
         chunkFilename,
         publicPath: compilerOptions.output.publicPath,
         globalObject: 'self',
-        devtoolNamespace: path.resolve('/', path.relative(paths.app, this.resource)),
+        devtoolNamespace: path.resolve('/', workerPath),
     };
 
     const workerCompiler = this._compilation.createChildCompiler(
@@ -81,8 +79,6 @@ export const pitch: Webpack.PitchLoaderDefinitionFunction = function (request) {
     workerCompiler.compile((err, compilation) => {
         if (compilation) {
             workerCompiler.parentCompilation?.children.push(compilation);
-            // The module is cacheable, so the bundler must know which files the worker bundle
-            // depends on to rebuild it when any of them changes.
             for (const dependency of compilation.fileDependencies) {
                 this.addDependency(dependency);
             }
@@ -114,76 +110,44 @@ export const pitch: Webpack.PitchLoaderDefinitionFunction = function (request) {
             return cb(new Error('Child compilation failed:\n' + errorDetails));
         }
 
-        const cache = workerCompiler.getCache(pluginId);
-        const cacheIdent = request;
-        const objectToHash = compilation.assets[filename];
-        if (!objectToHash) {
+        let content = compilation.assets[filename]?.source().toString();
+        if (content === undefined) {
             return cb(new Error(`Asset ${filename} not found in compilation`));
         }
-        const cacheETag = cache.getLazyHashedEtag(objectToHash);
 
-        return cache.get<Cache>(cacheIdent, cacheETag, (getCacheError, cacheContent) => {
-            if (getCacheError) {
-                return cb(getCacheError);
-            }
-
-            if (cacheContent) {
-                return cb(null, cacheContent.content, cacheContent.map);
-            }
-
-            let content = compilation.assets[filename]?.source().toString();
-            const mapFile = `${filename}.map`;
-            let map = compilation.assets[mapFile]?.source();
-            if (map) {
-                const sourceMap = JSON.parse(map.toString());
-                if (Array.isArray(sourceMap.sources)) {
-                    sourceMap.sources = sourceMap.sources.map((pathname: string) =>
-                        pathname.replace(/webpack:\/\/[^/]+\//, 'webpack://'),
-                    );
-                }
-                map = JSON.stringify(sourceMap);
-            }
-
-            const licenseFile = `${filename}.LICENSE.txt`;
-            const license = compilation.assets[licenseFile]?.source().toString();
-            if (license && content) {
-                if (content.startsWith('/*')) {
-                    content = content.replace(/^\/\*.*?\*\//, license);
-                }
-            }
-
-            // Emit the worker's chunks through the loader context rather than straight into
-            // the parent compilation: assets emitted this way are stored with the module and
-            // re-emitted when it is restored from cache instead of being rebuilt.
-            for (const [assetName, asset] of Object.entries(compilation.assets)) {
-                if ([filename, mapFile, licenseFile].includes(assetName)) {
-                    continue;
-                }
-
-                if (workerCompiler.parentCompilation?.getAsset(assetName)) {
-                    continue;
-                }
-
-                this.emitFile(
-                    assetName,
-                    asset.source(),
-                    undefined,
-                    compilation.getAsset(assetName)?.info,
+        const mapFile = `${filename}.map`;
+        let map = compilation.assets[mapFile]?.source();
+        if (map) {
+            const sourceMap = JSON.parse(map.toString());
+            if (Array.isArray(sourceMap.sources)) {
+                sourceMap.sources = sourceMap.sources.map((pathname: string) =>
+                    pathname.replace(/webpack:\/\/[^/]+\//, 'webpack://'),
                 );
             }
-            return cache.store<Cache>(
-                cacheIdent,
-                cacheETag,
-                {content, map: map?.toString()},
-                (storeCacheError) => {
-                    if (storeCacheError) {
-                        return cb(storeCacheError);
-                    }
+            map = JSON.stringify(sourceMap);
+        }
 
-                    return cb(null, content, map?.toString());
-                },
+        const licenseFile = `${filename}.LICENSE.txt`;
+        const license = compilation.assets[licenseFile]?.source().toString();
+        if (license && content.startsWith('/*')) {
+            content = content.replace(/^\/\*.*?\*\//, () => license);
+        }
+
+        // Unlike parentCompilation.emitAsset, emitFile stores the asset with the module, so it survives a restore from cache.
+        for (const [assetName, asset] of Object.entries(compilation.assets)) {
+            if ([filename, mapFile, licenseFile].includes(assetName)) {
+                continue;
+            }
+
+            this.emitFile(
+                assetName,
+                asset.source(),
+                undefined,
+                compilation.getAsset(assetName)?.info,
             );
-        });
+        }
+
+        return cb(null, content, map?.toString());
     });
 };
 
