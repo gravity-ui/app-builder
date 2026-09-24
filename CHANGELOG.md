@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.53.3](https://github.com/gravity-ui/app-builder/compare/v0.53.2...v0.53.3) (2026-09-24)
+
+
+### Bug Fixes
+
+* make the worker loader cacheable ([#366](https://github.com/gravity-ui/app-builder/issues/366)) ([66c81b1](https://github.com/gravity-ui/app-builder/commit/66c81b1e1d93f598172373e03b96331f96d806af))
+
 ## [0.53.2](https://github.com/gravity-ui/app-builder/compare/v0.53.1...v0.53.2) (2026-09-22)
 
 
