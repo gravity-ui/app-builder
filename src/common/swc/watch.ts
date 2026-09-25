@@ -49,8 +49,7 @@ export async function watch(
             outputPath,
             stripLeadingPaths: sourceOptions.stripLeadingPaths,
         };
-        const copied = await copyFiles(copyOptions);
-        logger.message(`Copied ${copied} files`);
+        await copyFiles(copyOptions, logger);
         watchCopiedFiles(copyOptions, logger);
     }
 

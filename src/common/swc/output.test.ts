@@ -67,7 +67,7 @@ describe('SWC server output', () => {
             outputPath,
             stripLeadingPaths: sourceOptions.stripLeadingPaths,
         };
-        await copyFiles(copyOptions);
+        await copyFiles(copyOptions, {message: jest.fn()} as never);
         return copyOptions;
     }
 
