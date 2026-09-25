@@ -1,14 +1,14 @@
 import type {Logger} from '../logger/index.js';
-// @ts-ignore @swc/cli is not typed
-import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils.js';
-import type {GetSwcOptionsParams} from './utils.js';
+import {copyFiles, watchCopiedFiles} from './copy.js';
+import {getSwcCliSourceOptions, getSwcOptions, importSwcDir} from './utils.js';
+import type {GetSwcOptionsParams, SwcOutputOptions} from './utils.js';
 
-type SwcWatchOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
-    outputPath: string;
-    logger: Logger;
-    onAfterFilesEmitted?: () => void;
-};
+type SwcWatchOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> &
+    SwcOutputOptions & {
+        outputPath: string;
+        logger: Logger;
+        onAfterFilesEmitted?: () => void;
+    };
 
 export async function watch(
     projectPath: string,
@@ -19,6 +19,8 @@ export async function watch(
         additionalPaths,
         exclude,
         publicPath,
+        rootDir,
+        copyExtensions,
     }: SwcWatchOptions,
 ) {
     logger.message('Start compilation in watch mode');
@@ -29,15 +31,28 @@ export async function watch(
         publicPath,
     });
 
+    const swcDir = await importSwcDir(rootDir);
+    const sourceOptions = getSwcCliSourceOptions(directoriesToCompile, rootDir);
     const cliOptions = {
-        filenames: directoriesToCompile,
+        ...sourceOptions,
         outDir: outputPath,
         watch: true,
-        extensions: EXTENSIONS_TO_COMPILE,
-        stripLeadingPaths: true,
         sync: false,
         logWatchCompilation: true,
     };
+
+    if (copyExtensions?.length) {
+        const copyOptions = {
+            directories: sourceOptions.filenames,
+            extensions: copyExtensions,
+            exclude: swcOptions.exclude,
+            outputPath,
+            stripLeadingPaths: sourceOptions.stripLeadingPaths,
+        };
+        const copied = await copyFiles(copyOptions);
+        logger.message(`Copied ${copied} files`);
+        watchCopiedFiles(copyOptions, logger);
+    }
 
     const callbacks = {
         onSuccess: (result: any) => {

@@ -177,6 +177,12 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
             inspect: undefined,
             inspectBrk: undefined,
             compiler: serverConfig.compiler || 'typescript',
+            swcOptions: serverConfig.swcOptions?.rootDir
+                ? {
+                      ...serverConfig.swcOptions,
+                      rootDir: path.resolve(paths.app, serverConfig.swcOptions.rootDir),
+                  }
+                : serverConfig.swcOptions,
             outputPath: path.resolve(
                 paths.appDist,
                 serverConfig.outputPath ? serverConfig.outputPath : 'server',
