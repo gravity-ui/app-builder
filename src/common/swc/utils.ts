@@ -10,11 +10,19 @@ export interface SwcOutputOptions {
     copyExtensions?: string[];
 }
 
+function getPathInRootDir(directory: string, rootDir: string) {
+    const relativePath = path.relative(rootDir, directory);
+    if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`)) {
+        throw new Error(`${directory} is outside server.swcOptions.rootDir ${rootDir}`);
+    }
+    return relativePath || '.';
+}
+
 export function getSwcCliSourceOptions(directoriesToCompile: string[], rootDir?: string) {
     return {
         // Relative to rootDir, the working directory by then: a symlinked rootDir would not match its real path.
         filenames: rootDir
-            ? directoriesToCompile.map((directory) => path.relative(rootDir, directory))
+            ? directoriesToCompile.map((directory) => getPathInRootDir(directory, rootDir))
             : directoriesToCompile,
         extensions: EXTENSIONS_TO_COMPILE,
         stripLeadingPaths: !rootDir,
@@ -94,7 +102,11 @@ export function getSwcOptions({
     // SWC don't compile referenced files like tsc, so we need collect all directories to compile.
     const paths = swcOptions.jsc.paths || {};
     const directoriesToCompile = [
-        ...new Set([projectPath, ...resolvePaths(paths, projectPath), ...(additionalPaths || [])]),
+        ...new Set([
+            projectPath,
+            ...resolvePaths(paths, projectPath),
+            ...(additionalPaths || []).map((additionalPath) => path.resolve(additionalPath)),
+        ]),
     ];
 
     return {
