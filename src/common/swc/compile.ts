@@ -41,14 +41,16 @@ export async function compile({
     };
 
     if (copyExtensions?.length) {
-        const copied = await copyFiles({
-            directories: sourceOptions.filenames,
-            extensions: copyExtensions,
-            exclude: swcOptions.exclude,
-            outputPath,
-            stripLeadingPaths: sourceOptions.stripLeadingPaths,
-        });
-        logger.message(`Copied ${copied} files`);
+        await copyFiles(
+            {
+                directories: sourceOptions.filenames,
+                extensions: copyExtensions,
+                exclude: swcOptions.exclude,
+                outputPath,
+                stripLeadingPaths: sourceOptions.stripLeadingPaths,
+            },
+            logger,
+        );
     }
 
     return new Promise((resolve, reject) => {
