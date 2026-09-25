@@ -34,13 +34,10 @@ async function copyFile(file: string, dest: string) {
     await fs.promises.copyFile(file, dest);
 }
 
-export async function copyFiles({
-    directories,
-    extensions,
-    exclude,
-    outputPath,
-    stripLeadingPaths,
-}: CopyFilesOptions) {
+export async function copyFiles(
+    {directories, extensions, exclude, outputPath, stripLeadingPaths}: CopyFilesOptions,
+    logger: Logger,
+) {
     const files = await fastGlob(
         directories.flatMap((directory) =>
             extensions.map(
@@ -53,7 +50,7 @@ export async function copyFiles({
     await Promise.all(
         filesToCopy.map((file) => copyFile(file, getDest(file, outputPath, stripLeadingPaths))),
     );
-    return filesToCopy.length;
+    logger.message(`Copied ${filesToCopy.length} files`);
 }
 
 export function watchCopiedFiles(
@@ -71,14 +68,14 @@ export function watchCopiedFiles(
             }
             const dest = getDest(file, outputPath, stripLeadingPaths);
             try {
-                if (fs.existsSync(file)) {
-                    await copyFile(file, dest);
-                    logger.message(`Successfully copied ${file}`);
-                } else {
-                    await fs.promises.rm(dest, {force: true});
-                }
+                await copyFile(file, dest);
+                logger.message(`Successfully copied ${file}`);
             } catch (error) {
-                logger.error(`Failed to copy ${file}: ${error}`);
+                if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+                    await fs.promises.rm(dest, {force: true});
+                } else {
+                    logger.error(`Failed to copy ${file}: ${error}`);
+                }
             }
         }),
     );
