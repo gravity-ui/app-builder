@@ -189,6 +189,7 @@ All server settings are used only in dev mode:
   - `exclude` (`string | string[]`) — regular expressions of files to skip.
   - `rootDir` (`string`) — keep compiled files at their path relative to this directory, as `tsc` does with `rootDir`.
     Set it when the server imports code outside `src/server` through tsconfig `paths`: by default only the first path segment is stripped, and relative imports between such directories break.
+    Every compiled directory must be inside it, and `exclude` patterns are then matched against paths relative to it.
   - `copyExtensions` (`string[]`) — extensions of files copied to the output as is, e.g. `['.json']` for imported JSON modules.
 - `outputPath` (`string`) — custom output path for compiled server code relative to `dist` directory.
   Default: `server`. Use this when your `server` entrypoint changed from `dist/server` to a different location (e.g., `package/src/server` for path `dist/package/src/server` in monorepo setups).
