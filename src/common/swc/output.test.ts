@@ -95,4 +95,11 @@ describe('SWC server output', () => {
             watchers.forEach((watcher) => watcher.close());
         }
     });
+
+    it('rejects directories outside rootDir and keeps rootDir itself', () => {
+        expect(
+            getSwcCliSourceOptions(['/app/src', '/app/src/server'], '/app/src').filenames,
+        ).toEqual(['.', 'server']);
+        expect(() => getSwcCliSourceOptions(['/app/lib'], '/app/src')).toThrow('/app/lib');
+    });
 });

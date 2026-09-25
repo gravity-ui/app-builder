@@ -59,7 +59,7 @@ export function watchCopiedFiles(
 ) {
     return directories.map((directory) =>
         fs.watch(directory, {recursive: true}, async (_event, filename) => {
-            if (!filename || !extensions.includes(path.extname(filename))) {
+            if (!filename || !extensions.some((extension) => filename.endsWith(extension))) {
                 return;
             }
             const file = path.join(directory, filename);
