@@ -66,6 +66,8 @@ await watch(
         },
         additionalPaths: ${JSON.stringify(config.server.swcOptions?.additionalPaths)},
         exclude: ${JSON.stringify(config.server.swcOptions?.exclude)},
+        rootDir: ${JSON.stringify(config.server.swcOptions?.rootDir)},
+        copyExtensions: ${JSON.stringify(config.server.swcOptions?.copyExtensions)},
         publicPath: ${JSON.stringify(config.client.browserPublicPath)},
     }
 );
