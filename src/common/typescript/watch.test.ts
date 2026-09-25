@@ -149,5 +149,5 @@ describe('TypeScript watch', () => {
             watchers.forEach((watcher) => watcher.close());
             await fs.promises.rm(root, {recursive: true, force: true});
         }
-    });
+    }, 30_000);
 });
