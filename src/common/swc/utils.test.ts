@@ -31,13 +31,16 @@ describe('getSwcOptions', () => {
         await fs.promises.rm(projectPath, {recursive: true, force: true});
     });
 
-    async function getClassFieldsMode(compilerOptions: Record<string, unknown>) {
+    async function getOptions(compilerOptions: Record<string, unknown>) {
         await fs.promises.writeFile(
             path.join(projectPath, 'tsconfig.json'),
             JSON.stringify({compilerOptions: {module: 'commonjs', ...compilerOptions}}),
         );
-        const {swcOptions} = getSwcOptions({projectPath, publicPath: '/build/'});
-        return swcOptions.jsc?.transform?.useDefineForClassFields;
+        return getSwcOptions({projectPath, publicPath: '/build/'}).swcOptions;
+    }
+
+    async function getClassFieldsMode(compilerOptions: Record<string, unknown>) {
+        return (await getOptions(compilerOptions)).jsc?.transform?.useDefineForClassFields;
     }
 
     it('assigns class fields like TypeScript for targets without native class fields', async () => {
@@ -56,12 +59,9 @@ describe('getSwcOptions', () => {
     });
 
     it('keeps fields set by a base constructor', async () => {
-        await getClassFieldsMode({target: 'es2019'});
-        const {swcOptions} = getSwcOptions({projectPath, publicPath: '/build/'});
+        const swcOptions = await getOptions({target: 'es2019'});
         const {code} = transformSync(SOURCE, {
             ...swcOptions,
-            exclude: undefined,
-            sourceMaps: false,
             filename: path.join(projectPath, 'child.ts'),
         });
         const context = {exports: {} as {Child: new () => {value: string}}, require: () => ({})};
