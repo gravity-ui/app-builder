@@ -1,9 +1,27 @@
 import path from 'path';
+import {getTsconfig} from 'get-tsconfig';
 import {convert} from 'tsconfig-to-swcconfig';
 
 const DEFAULT_EXCLUDE = ['node_modules'];
 
 export const EXTENSIONS_TO_COMPILE = ['.js', '.ts', '.mts', '.mjs', '.cjs'];
+
+const FIRST_TARGET_WITH_CLASS_FIELDS = 2022;
+
+// tsconfig-to-swcconfig drops useDefineForClassFields, and swc defaults to define semantics on every target.
+function getUseDefineForClassFields(projectPath: string, filename: string, target?: string) {
+    const explicit = getTsconfig(projectPath, filename)?.config.compilerOptions
+        ?.useDefineForClassFields;
+    if (explicit !== undefined) {
+        return explicit;
+    }
+
+    const normalizedTarget = target?.toLowerCase();
+    return (
+        normalizedTarget === 'esnext' ||
+        Number(normalizedTarget?.replace(/^es/, '')) >= FIRST_TARGET_WITH_CLASS_FIELDS
+    );
+}
 
 function resolvePaths(paths: Record<string, string[]>, baseUrl: string) {
     const entries = [];
@@ -43,6 +61,11 @@ export function getSwcOptions({
         baseUrl: projectPath,
         transform: {
             ...swcOptions.jsc?.transform,
+            useDefineForClassFields: getUseDefineForClassFields(
+                projectPath,
+                filename,
+                swcOptions.jsc?.target,
+            ),
             optimizer: {
                 ...swcOptions.jsc?.transform?.optimizer,
                 globals: {
