@@ -12,7 +12,9 @@ describe('SWC server output', () => {
     let root: string;
 
     beforeEach(async () => {
-        root = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'app-builder-swc-output-'));
+        root = fs.realpathSync(
+            await fs.promises.mkdtemp(path.join(os.tmpdir(), 'app-builder-swc-output-')),
+        );
         const files: Record<string, string> = {
             'src/server/tsconfig.json': JSON.stringify({
                 compilerOptions: {
@@ -110,6 +112,30 @@ describe('SWC server output', () => {
         await expect(
             getIgnoredGlobs(targets, ['/fixtures/'], path.join(root, 'dist')),
         ).resolves.toHaveLength(4);
+    });
+
+    it('copies a JSON file used directly as a paths target', async () => {
+        const file = path.join(root, 'src/server/data.json');
+        const outputPath = path.join(root, 'dist');
+        process.chdir(path.join(root, 'src'));
+        await copyFiles(
+            {
+                filenames: [
+                    file,
+                    path.join(root, 'src/server/index.ts'),
+                    path.join(root, 'missing.json'),
+                ],
+                extensions: ['.json'],
+                ignore: [],
+                outputPath,
+                stripLeadingPaths: false,
+            },
+            {message: jest.fn()} as never,
+        );
+        expect(
+            JSON.parse(fs.readFileSync(path.join(outputPath, 'server/data.json'), 'utf-8')),
+        ).toEqual({count: 2});
+        expect(fs.existsSync(path.join(outputPath, 'server/index.ts'))).toBe(false);
     });
 
     it('rejects directories outside rootDir and keeps rootDir itself', () => {
