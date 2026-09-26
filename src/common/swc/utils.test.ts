@@ -52,6 +52,10 @@ describe('getSwcOptions', () => {
         await expect(getClassFieldsMode({target: 'ESNext'})).resolves.toBe(true);
     });
 
+    it('keeps the swc default without a target', async () => {
+        await expect(getClassFieldsMode({})).resolves.toBeUndefined();
+    });
+
     it('respects an explicit useDefineForClassFields', async () => {
         await expect(
             getClassFieldsMode({target: 'es2019', useDefineForClassFields: true}),
