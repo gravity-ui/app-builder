@@ -52,8 +52,18 @@ describe('getSwcOptions', () => {
         await expect(getClassFieldsMode({target: 'ESNext'})).resolves.toBe(true);
     });
 
-    it('keeps the swc default without a target', async () => {
-        await expect(getClassFieldsMode({})).resolves.toBeUndefined();
+    it('assigns class fields without a target and TypeScript 5', async () => {
+        await expect(getClassFieldsMode({})).resolves.toBe(false);
+    });
+
+    it('defines class fields without a target and TypeScript 6, whose default target has them', async () => {
+        const typescriptPath = path.join(projectPath, 'node_modules/typescript');
+        await fs.promises.mkdir(typescriptPath, {recursive: true});
+        await fs.promises.writeFile(
+            path.join(typescriptPath, 'package.json'),
+            JSON.stringify({name: 'typescript', version: '6.0.3'}),
+        );
+        await expect(getClassFieldsMode({})).resolves.toBe(true);
     });
 
     it('respects an explicit useDefineForClassFields', async () => {
