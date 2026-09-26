@@ -1,11 +1,12 @@
 import type {Logger} from '../logger/index.js';
 import {elapsedTime} from '../logger/pretty-time.js';
+import type {ServerConfig} from '../models/index.js';
 import {copyFiles} from './copy.js';
-import {getSwcCliSourceOptions, getSwcOptions, importSwcDir} from './utils.js';
-import type {GetSwcOptionsParams, SwcOutputOptions} from './utils.js';
+import {getSwcOptions, loadSwcCli} from './utils.js';
+import type {GetSwcOptionsParams} from './utils.js';
 
-type SwcCompileOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> &
-    SwcOutputOptions & {
+type SwcCompileOptions = NonNullable<ServerConfig['swcOptions']> &
+    Pick<GetSwcOptionsParams, 'publicPath'> & {
         projectPath: string;
         outputPath: string;
         logger: Logger;
@@ -31,8 +32,7 @@ export async function compile({
         publicPath,
     });
 
-    const swcDir = await importSwcDir(rootDir);
-    const sourceOptions = getSwcCliSourceOptions(directoriesToCompile, rootDir);
+    const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, rootDir);
     const cliOptions = {
         ...sourceOptions,
         outDir: outputPath,
@@ -42,13 +42,7 @@ export async function compile({
 
     if (copyExtensions?.length) {
         await copyFiles(
-            {
-                directories: sourceOptions.filenames,
-                extensions: copyExtensions,
-                exclude: swcOptions.exclude,
-                outputPath,
-                stripLeadingPaths: sourceOptions.stripLeadingPaths,
-            },
+            {...sourceOptions, extensions: copyExtensions, exclude: swcOptions.exclude, outputPath},
             logger,
         );
     }

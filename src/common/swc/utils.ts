@@ -5,11 +5,6 @@ const DEFAULT_EXCLUDE = ['node_modules'];
 
 export const EXTENSIONS_TO_COMPILE = ['.js', '.ts', '.mts', '.mjs', '.cjs'];
 
-export interface SwcOutputOptions {
-    rootDir?: string;
-    copyExtensions?: string[];
-}
-
 function getPathInRootDir(directory: string, rootDir: string) {
     const relativePath = path.relative(rootDir, directory);
     if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`)) {
@@ -29,14 +24,14 @@ export function getSwcCliSourceOptions(directoriesToCompile: string[], rootDir?:
     };
 }
 
-export async function importSwcDir(rootDir?: string) {
+export async function loadSwcCli(directoriesToCompile: string[], rootDir?: string) {
     if (rootDir) {
         // @swc/cli maps sources to outputs relative to the working directory it sees on load.
         process.chdir(rootDir);
     }
     // @ts-ignore @swc/cli is not typed
     const {swcDir} = await import('@swc/cli');
-    return swcDir;
+    return {swcDir, sourceOptions: getSwcCliSourceOptions(directoriesToCompile, rootDir)};
 }
 
 function resolvePaths(paths: Record<string, string[]>, baseUrl: string) {
