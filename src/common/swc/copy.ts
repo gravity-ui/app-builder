@@ -31,14 +31,24 @@ export async function copyFiles(
     {filenames, extensions, exclude, ignore, outputPath, stripLeadingPaths}: CopyFilesOptions,
     logger: Logger,
 ) {
-    const files = await fastGlob(
-        filenames.flatMap((directory) =>
-            extensions.map(
-                (extension) => `${fastGlob.convertPathToPattern(directory)}/**/*${extension}`,
-            ),
-        ),
-        {ignore: ['**/node_modules/**', ...ignore]},
+    const patterns = await Promise.all(
+        filenames.map(async (filename) => {
+            const stats = await fs.stat(filename).catch((error: NodeJS.ErrnoException) => {
+                if (error.code === 'ENOENT') {
+                    return undefined;
+                }
+                throw error;
+            });
+            const pattern = fastGlob.convertPathToPattern(filename);
+            if (stats?.isDirectory()) {
+                return extensions.map((extension) => `${pattern}/**/*${extension}`);
+            }
+            return stats?.isFile() && extensions.some((extension) => filename.endsWith(extension))
+                ? [pattern]
+                : [];
+        }),
     );
+    const files = await fastGlob(patterns.flat(), {ignore: ['**/node_modules/**', ...ignore]});
     const filesToCopy = files.filter((file) => !isExcluded(file, exclude));
     await Promise.all(
         filesToCopy.map((file) => fs.copy(file, getDest(file, outputPath, stripLeadingPaths))),
