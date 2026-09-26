@@ -64,8 +64,7 @@ await watch(
         onAfterFilesEmitted: () => {
             process.send({type: 'Emitted'});
         },
-        additionalPaths: ${JSON.stringify(config.server.swcOptions?.additionalPaths)},
-        exclude: ${JSON.stringify(config.server.swcOptions?.exclude)},
+        ...${JSON.stringify(config.server.swcOptions ?? {})},
         publicPath: ${JSON.stringify(config.client.browserPublicPath)},
     }
 );

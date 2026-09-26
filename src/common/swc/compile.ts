@@ -1,15 +1,16 @@
 import type {Logger} from '../logger/index.js';
 import {elapsedTime} from '../logger/pretty-time.js';
-// @ts-ignore @swc/cli is not typed
-import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils.js';
+import type {ServerConfig} from '../models/index.js';
+import {copyFiles} from './copy.js';
+import {getIgnoredGlobs, getSwcOptions, loadSwcCli} from './utils.js';
 import type {GetSwcOptionsParams} from './utils.js';
 
-type SwcCompileOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
-    projectPath: string;
-    outputPath: string;
-    logger: Logger;
-};
+type SwcCompileOptions = NonNullable<ServerConfig['swcOptions']> &
+    Pick<GetSwcOptionsParams, 'publicPath'> & {
+        projectPath: string;
+        outputPath: string;
+        logger: Logger;
+    };
 
 export async function compile({
     projectPath,
@@ -18,6 +19,8 @@ export async function compile({
     additionalPaths,
     exclude,
     publicPath,
+    rootDir,
+    copyExtensions,
 }: SwcCompileOptions): Promise<void> {
     const start = process.hrtime.bigint();
     logger.message('Start compilation');
@@ -29,14 +32,28 @@ export async function compile({
         publicPath,
     });
 
+    const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, rootDir);
+    const ignore = await getIgnoredGlobs(sourceOptions.filenames, swcOptions.exclude, outputPath);
     const cliOptions = {
-        filenames: directoriesToCompile,
+        ...sourceOptions,
+        ignore,
         outDir: outputPath,
         watch: false,
-        extensions: EXTENSIONS_TO_COMPILE,
-        stripLeadingPaths: true,
         sync: false,
     };
+
+    if (copyExtensions?.length) {
+        await copyFiles(
+            {
+                ...sourceOptions,
+                extensions: copyExtensions,
+                exclude: swcOptions.exclude,
+                ignore,
+                outputPath,
+            },
+            logger,
+        );
+    }
 
     return new Promise((resolve, reject) => {
         const callbacks = {

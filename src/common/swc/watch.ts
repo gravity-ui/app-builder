@@ -1,14 +1,15 @@
 import type {Logger} from '../logger/index.js';
-// @ts-ignore @swc/cli is not typed
-import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils.js';
+import type {ServerConfig} from '../models/index.js';
+import {copyFiles, watchCopiedFiles} from './copy.js';
+import {getIgnoredGlobs, getSwcOptions, loadSwcCli} from './utils.js';
 import type {GetSwcOptionsParams} from './utils.js';
 
-type SwcWatchOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
-    outputPath: string;
-    logger: Logger;
-    onAfterFilesEmitted?: () => void;
-};
+type SwcWatchOptions = NonNullable<ServerConfig['swcOptions']> &
+    Pick<GetSwcOptionsParams, 'publicPath'> & {
+        outputPath: string;
+        logger: Logger;
+        onAfterFilesEmitted?: () => void;
+    };
 
 export async function watch(
     projectPath: string,
@@ -19,6 +20,8 @@ export async function watch(
         additionalPaths,
         exclude,
         publicPath,
+        rootDir,
+        copyExtensions,
     }: SwcWatchOptions,
 ) {
     logger.message('Start compilation in watch mode');
@@ -29,15 +32,28 @@ export async function watch(
         publicPath,
     });
 
+    const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, rootDir);
+    const ignore = await getIgnoredGlobs(sourceOptions.filenames, swcOptions.exclude, outputPath);
     const cliOptions = {
-        filenames: directoriesToCompile,
+        ...sourceOptions,
+        ignore,
         outDir: outputPath,
         watch: true,
-        extensions: EXTENSIONS_TO_COMPILE,
-        stripLeadingPaths: true,
         sync: false,
         logWatchCompilation: true,
     };
+
+    if (copyExtensions?.length) {
+        const copyOptions = {
+            ...sourceOptions,
+            extensions: copyExtensions,
+            exclude: swcOptions.exclude,
+            ignore,
+            outputPath,
+        };
+        await copyFiles(copyOptions, logger);
+        watchCopiedFiles(copyOptions, logger);
+    }
 
     const callbacks = {
         onSuccess: (result: any) => {

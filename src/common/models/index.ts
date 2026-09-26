@@ -512,6 +512,18 @@ export interface ServerConfig {
     swcOptions?: {
         additionalPaths?: string[];
         exclude?: string | string[];
+        /**
+         * Keep compiled files at their path relative to this directory, as tsc does with `rootDir`.
+         * Needed when the server imports code outside `src/server` through tsconfig `paths`:
+         * by default only the first path segment is stripped, which breaks the relative imports.
+         * Relative to the project root.
+         * @example '..'
+         */
+        rootDir?: string;
+        /**
+         * Extensions of files copied to the output as is, e.g. `['.json']` for imported JSON modules.
+         */
+        copyExtensions?: string[];
     };
 
     /**
