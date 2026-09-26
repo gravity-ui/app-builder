@@ -111,6 +111,7 @@
     "babel-plugin-tsconfig-paths-module-resolver": "^1.0.4",
     "browserslist": "^4.24.0",
     "chalk": "^4.1.2",
+    "chokidar": "^5.0.0",
     "circular-dependency-plugin": "^5.2.2",
     "clean-webpack-plugin": "^4.0.0",
     "common-tags": "^1.8.2",

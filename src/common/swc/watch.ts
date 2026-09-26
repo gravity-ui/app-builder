@@ -1,10 +1,11 @@
 import type {Logger} from '../logger/index.js';
+import type {ServerConfig} from '../models/index.js';
 import {copyFiles, watchCopiedFiles} from './copy.js';
-import {getSwcCliSourceOptions, getSwcOptions, importSwcDir} from './utils.js';
-import type {GetSwcOptionsParams, SwcOutputOptions} from './utils.js';
+import {getSwcOptions, loadSwcCli} from './utils.js';
+import type {GetSwcOptionsParams} from './utils.js';
 
-type SwcWatchOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> &
-    SwcOutputOptions & {
+type SwcWatchOptions = NonNullable<ServerConfig['swcOptions']> &
+    Pick<GetSwcOptionsParams, 'publicPath'> & {
         outputPath: string;
         logger: Logger;
         onAfterFilesEmitted?: () => void;
@@ -31,8 +32,7 @@ export async function watch(
         publicPath,
     });
 
-    const swcDir = await importSwcDir(rootDir);
-    const sourceOptions = getSwcCliSourceOptions(directoriesToCompile, rootDir);
+    const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, rootDir);
     const cliOptions = {
         ...sourceOptions,
         outDir: outputPath,
@@ -43,11 +43,10 @@ export async function watch(
 
     if (copyExtensions?.length) {
         const copyOptions = {
-            directories: sourceOptions.filenames,
+            ...sourceOptions,
             extensions: copyExtensions,
             exclude: swcOptions.exclude,
             outputPath,
-            stripLeadingPaths: sourceOptions.stripLeadingPaths,
         };
         await copyFiles(copyOptions, logger);
         watchCopiedFiles(copyOptions, logger);
