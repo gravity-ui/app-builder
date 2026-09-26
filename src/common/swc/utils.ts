@@ -1,4 +1,6 @@
+import fs from 'fs';
 import path from 'path';
+import fastGlob from 'fast-glob';
 import {convert} from 'tsconfig-to-swcconfig';
 
 const DEFAULT_EXCLUDE = ['node_modules'];
@@ -10,7 +12,51 @@ function getPathInRootDir(directory: string, rootDir: string) {
     if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`)) {
         throw new Error(`${directory} is outside server.swcOptions.rootDir ${rootDir}`);
     }
-    return relativePath || '.';
+    // Not '.': the @swc/cli watcher skips every path whose name starts with a dot.
+    return relativePath || process.cwd();
+}
+
+export function isExcluded(file: string, exclude: string | string[] = []) {
+    const relativePath = path.relative(process.cwd(), file) + (file.endsWith('/') ? '/' : '');
+    // eslint-disable-next-line security/detect-non-literal-regexp
+    return [exclude].flat().some((pattern) => new RegExp(pattern).test(relativePath));
+}
+
+async function findExcludedDirectories(
+    directory: string,
+    exclude: string | string[],
+): Promise<string[]> {
+    const entries = await fs.promises.readdir(directory, {withFileTypes: true});
+    const found = await Promise.all(
+        entries
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => {
+                const child = path.join(directory, entry.name);
+                return isExcluded(`${child}/`, exclude)
+                    ? [child]
+                    : findExcludedDirectories(child, exclude);
+            }),
+    );
+    return found.flat();
+}
+
+// Globs for @swc/cli: without them it walks and watches the excluded trees, and it cannot take a regular expression.
+export async function getIgnoredGlobs(
+    filenames: string[],
+    exclude: string | string[] = [],
+    outputPath: string,
+) {
+    const directories = [
+        ...(
+            await Promise.all(filenames.map((dir) => findExcludedDirectories(dir, exclude)))
+        ).flat(),
+        path.relative(process.cwd(), outputPath),
+        outputPath,
+    ];
+    return directories.flatMap((directory) => {
+        const pattern = fastGlob.convertPathToPattern(directory);
+        return [pattern, `${pattern}/**`];
+    });
 }
 
 export function getSwcCliSourceOptions(directoriesToCompile: string[], rootDir?: string) {

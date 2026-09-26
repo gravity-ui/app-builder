@@ -2,7 +2,7 @@ import type {Logger} from '../logger/index.js';
 import {elapsedTime} from '../logger/pretty-time.js';
 import type {ServerConfig} from '../models/index.js';
 import {copyFiles} from './copy.js';
-import {getSwcOptions, loadSwcCli} from './utils.js';
+import {getIgnoredGlobs, getSwcOptions, loadSwcCli} from './utils.js';
 import type {GetSwcOptionsParams} from './utils.js';
 
 type SwcCompileOptions = NonNullable<ServerConfig['swcOptions']> &
@@ -33,8 +33,10 @@ export async function compile({
     });
 
     const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, rootDir);
+    const ignore = await getIgnoredGlobs(sourceOptions.filenames, swcOptions.exclude, outputPath);
     const cliOptions = {
         ...sourceOptions,
+        ignore,
         outDir: outputPath,
         watch: false,
         sync: false,
@@ -42,7 +44,13 @@ export async function compile({
 
     if (copyExtensions?.length) {
         await copyFiles(
-            {...sourceOptions, extensions: copyExtensions, exclude: swcOptions.exclude, outputPath},
+            {
+                ...sourceOptions,
+                extensions: copyExtensions,
+                exclude: swcOptions.exclude,
+                ignore,
+                outputPath,
+            },
             logger,
         );
     }
