@@ -23,9 +23,14 @@ function hasNativeClassFieldsByDefault(projectPath: string) {
     }
 }
 
-function hasNativeClassFields(projectPath: string, target?: string) {
+// Without a target, node16/node18/node20/nodenext imply ES2022 or later in tsc
+function impliesNativeClassFields(module?: string) {
+    return Boolean(module && module.toLowerCase().startsWith('node'));
+}
+
+function hasNativeClassFields(projectPath: string, {target, module}: {target?: string; module?: string}) {
     if (!target) {
-        return hasNativeClassFieldsByDefault(projectPath);
+        return impliesNativeClassFields(module) || hasNativeClassFieldsByDefault(projectPath);
     }
     const normalizedTarget = target.toLowerCase();
     return (
@@ -76,7 +81,7 @@ export function getSwcOptions({
             // TODO: tsconfig-to-swcconfig 2 drops this option; v3 maps it but needs Node 22 and @swc/core 1.16.2
             useDefineForClassFields:
                 compilerOptions.useDefineForClassFields ??
-                hasNativeClassFields(projectPath, compilerOptions.target),
+                hasNativeClassFields(projectPath, compilerOptions),
             optimizer: {
                 ...swcOptions.jsc?.transform?.optimizer,
                 globals: {
