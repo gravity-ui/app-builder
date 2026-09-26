@@ -56,6 +56,11 @@ describe('getSwcOptions', () => {
         await expect(getClassFieldsMode({})).resolves.toBe(false);
     });
 
+    it('defines class fields without a target when a Node module setting implies ES2022', async () => {
+        await expect(getClassFieldsMode({module: 'nodenext'})).resolves.toBe(true);
+        await expect(getClassFieldsMode({module: 'node16'})).resolves.toBe(true);
+    });
+
     it('defines class fields without a target and TypeScript 6, whose default target has them', async () => {
         const typescriptPath = path.join(projectPath, 'node_modules/typescript');
         await fs.promises.mkdir(typescriptPath, {recursive: true});
