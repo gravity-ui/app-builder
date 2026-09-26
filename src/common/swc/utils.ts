@@ -51,7 +51,7 @@ export function getSwcOptions({
         baseUrl: projectPath,
         transform: {
             ...swcOptions.jsc?.transform,
-            // tsconfig-to-swcconfig drops this option, and swc defaults to define semantics on every target
+            // TODO: tsconfig-to-swcconfig 2 drops this option; v3 maps it but needs Node 22 and @swc/core 1.16.2
             useDefineForClassFields:
                 compilerOptions.useDefineForClassFields ??
                 hasNativeClassFields(swcOptions.jsc?.target),
