@@ -1,10 +1,11 @@
+import {once} from 'node:events';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import {jest} from '@jest/globals';
 
 import {copyFiles, watchCopiedFiles} from './copy.js';
-import {getSwcCliSourceOptions, getSwcOptions, importSwcDir} from './utils.js';
+import {getSwcCliSourceOptions, getSwcOptions, loadSwcCli} from './utils.js';
 
 describe('SWC server output', () => {
     const cwd = process.cwd();
@@ -49,8 +50,7 @@ describe('SWC server output', () => {
             exclude: ['/fixtures/'],
             publicPath: '/build/',
         });
-        const swcDir = await importSwcDir(rootDir);
-        const sourceOptions = getSwcCliSourceOptions(directoriesToCompile, rootDir);
+        const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, rootDir);
         const outputPath = path.join(root, 'dist');
         await new Promise((resolve, reject) => {
             swcDir({
@@ -61,11 +61,10 @@ describe('SWC server output', () => {
             });
         });
         const copyOptions = {
-            directories: sourceOptions.filenames,
+            ...sourceOptions,
             extensions: ['.json'],
             exclude: swcOptions.exclude,
             outputPath,
-            stripLeadingPaths: sourceOptions.stripLeadingPaths,
         };
         await copyFiles(copyOptions, {message: jest.fn()} as never);
         return copyOptions;
@@ -83,16 +82,19 @@ describe('SWC server output', () => {
         expect(fs.existsSync(path.join(root, 'dist/server/styles.css'))).toBe(false);
 
         const logger = {message: jest.fn(), error: jest.fn()};
-        const watchers = watchCopiedFiles(copyOptions, logger as never);
+        const watcher = watchCopiedFiles(copyOptions, logger as never);
         try {
+            await once(watcher, 'ready');
+            await fs.promises.writeFile(path.join(root, 'src/server/fixtures/added.json'), '{}');
             await fs.promises.writeFile(path.join(root, 'src/server/data.json'), '{"count": 3}');
             const dest = path.join(root, 'dist/server/data.json');
             for (let i = 0; i < 100 && !fs.readFileSync(dest, 'utf-8').includes('3'); i++) {
                 await new Promise((resolve) => setTimeout(resolve, 20));
             }
             expect(JSON.parse(fs.readFileSync(dest, 'utf-8'))).toEqual({count: 3});
+            expect(fs.existsSync(path.join(root, 'dist/server/fixtures/added.json'))).toBe(false);
         } finally {
-            watchers.forEach((watcher) => watcher.close());
+            await watcher.close();
         }
     });
 

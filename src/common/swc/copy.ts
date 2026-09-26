@@ -1,11 +1,12 @@
-import fs from 'node:fs';
 import path from 'node:path';
+import chokidar from 'chokidar';
 import fastGlob from 'fast-glob';
+import fs from 'fs-extra';
 
 import type {Logger} from '../logger/index.js';
 
 export interface CopyFilesOptions {
-    directories: string[];
+    filenames: string[];
     extensions: string[];
     exclude?: string | string[];
     outputPath: string;
@@ -29,17 +30,12 @@ function isExcluded(file: string, exclude: CopyFilesOptions['exclude'] = []) {
     return [exclude].flat().some((pattern) => new RegExp(pattern).test(file));
 }
 
-async function copyFile(file: string, dest: string) {
-    await fs.promises.mkdir(path.dirname(dest), {recursive: true});
-    await fs.promises.copyFile(file, dest);
-}
-
 export async function copyFiles(
-    {directories, extensions, exclude, outputPath, stripLeadingPaths}: CopyFilesOptions,
+    {filenames, extensions, exclude, outputPath, stripLeadingPaths}: CopyFilesOptions,
     logger: Logger,
 ) {
     const files = await fastGlob(
-        directories.flatMap((directory) =>
+        filenames.flatMap((directory) =>
             extensions.map(
                 (extension) => `${fastGlob.convertPathToPattern(directory)}/**/*${extension}`,
             ),
@@ -48,35 +44,33 @@ export async function copyFiles(
     );
     const filesToCopy = files.filter((file) => !isExcluded(file, exclude));
     await Promise.all(
-        filesToCopy.map((file) => copyFile(file, getDest(file, outputPath, stripLeadingPaths))),
+        filesToCopy.map((file) => fs.copy(file, getDest(file, outputPath, stripLeadingPaths))),
     );
     logger.message(`Copied ${filesToCopy.length} files`);
 }
 
 export function watchCopiedFiles(
-    {directories, extensions, exclude, outputPath, stripLeadingPaths}: CopyFilesOptions,
+    {filenames, extensions, exclude, outputPath, stripLeadingPaths}: CopyFilesOptions,
     logger: Logger,
 ) {
-    return directories.map((directory) =>
-        fs.watch(directory, {recursive: true}, async (_event, filename) => {
-            if (!filename || !extensions.some((extension) => filename.endsWith(extension))) {
-                return;
-            }
-            const file = path.join(directory, filename);
-            if (isExcluded(file, exclude)) {
-                return;
-            }
-            const dest = getDest(file, outputPath, stripLeadingPaths);
-            try {
-                await copyFile(file, dest);
-                logger.message(`Successfully copied ${file}`);
-            } catch (error) {
-                if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-                    await fs.promises.rm(dest, {force: true});
-                } else {
-                    logger.error(`Failed to copy ${file}: ${error}`);
-                }
-            }
-        }),
-    );
+    const copy = async (file: string) => {
+        try {
+            await fs.copy(file, getDest(file, outputPath, stripLeadingPaths));
+            logger.message(`Successfully copied ${file}`);
+        } catch (error) {
+            logger.error(`Failed to copy ${file}: ${error}`);
+        }
+    };
+    return chokidar
+        .watch(filenames, {
+            ignoreInitial: true,
+            ignored: (file, stats) =>
+                stats?.isDirectory()
+                    ? isExcluded(`${file}/`, exclude)
+                    : isExcluded(file, exclude) ||
+                      Boolean(stats && !extensions.some((extension) => file.endsWith(extension))),
+        })
+        .on('add', copy)
+        .on('change', copy)
+        .on('unlink', (file) => fs.rm(getDest(file, outputPath, stripLeadingPaths), {force: true}));
 }
