@@ -176,6 +176,9 @@ importers:
       get-port:
         specifier: ^7.1.0
         version: 7.2.0
+      get-tsconfig:
+        specifier: ^4.13.7
+        version: 4.13.7
       mime-types:
         specifier: ^2.1.35
         version: 2.1.35
