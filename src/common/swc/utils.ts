@@ -28,7 +28,10 @@ function impliesNativeClassFields(module?: string) {
     return Boolean(module && module.toLowerCase().startsWith('node'));
 }
 
-function hasNativeClassFields(projectPath: string, {target, module}: {target?: string; module?: string}) {
+function hasNativeClassFields(
+    projectPath: string,
+    {target, module}: {target?: string; module?: string},
+) {
     if (!target) {
         return impliesNativeClassFields(module) || hasNativeClassFieldsByDefault(projectPath);
     }
