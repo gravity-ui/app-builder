@@ -1,3 +1,4 @@
+import {createRequire} from 'module';
 import path from 'path';
 import {getTsconfig} from 'get-tsconfig';
 import {convertTsConfig} from 'tsconfig-to-swcconfig';
@@ -8,10 +9,23 @@ export const EXTENSIONS_TO_COMPILE = ['.js', '.ts', '.mts', '.mjs', '.cjs'];
 
 const FIRST_TARGET_WITH_CLASS_FIELDS = 2022;
 
-// Without a target the default depends on the TypeScript version, so swc keeps its own default.
-function hasNativeClassFields(target?: string) {
+const FIRST_TYPESCRIPT_WITH_ES2022_DEFAULT_TARGET = 6;
+
+// Without a target, tsc uses its own default: ES5 before TypeScript 6, the latest standard since.
+function hasNativeClassFieldsByDefault(projectPath: string) {
+    try {
+        const {version} = createRequire(path.join(projectPath, 'package.json'))(
+            'typescript/package.json',
+        );
+        return Number(version.split('.')[0]) >= FIRST_TYPESCRIPT_WITH_ES2022_DEFAULT_TARGET;
+    } catch {
+        return false;
+    }
+}
+
+function hasNativeClassFields(projectPath: string, target?: string) {
     if (!target) {
-        return undefined;
+        return hasNativeClassFieldsByDefault(projectPath);
     }
     const normalizedTarget = target.toLowerCase();
     return (
@@ -62,7 +76,7 @@ export function getSwcOptions({
             // TODO: tsconfig-to-swcconfig 2 drops this option; v3 maps it but needs Node 22 and @swc/core 1.16.2
             useDefineForClassFields:
                 compilerOptions.useDefineForClassFields ??
-                hasNativeClassFields(compilerOptions.target),
+                hasNativeClassFields(projectPath, compilerOptions.target),
             optimizer: {
                 ...swcOptions.jsc?.transform?.optimizer,
                 globals: {
