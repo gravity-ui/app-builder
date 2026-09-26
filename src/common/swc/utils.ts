@@ -7,8 +7,16 @@ const DEFAULT_EXCLUDE = ['node_modules'];
 
 export const EXTENSIONS_TO_COMPILE = ['.js', '.ts', '.mts', '.mjs', '.cjs'];
 
+function getRealPath(filePath: string) {
+    try {
+        return fs.realpathSync(filePath);
+    } catch {
+        return filePath;
+    }
+}
+
 function getPathInRootDir(directory: string, rootDir: string) {
-    const relativePath = path.relative(rootDir, directory);
+    const relativePath = path.relative(getRealPath(rootDir), getRealPath(directory));
     if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`)) {
         throw new Error(`${directory} is outside server.swcOptions.rootDir ${rootDir}`);
     }
@@ -26,7 +34,8 @@ async function findExcludedDirectories(
     directory: string,
     exclude: string | string[],
 ): Promise<string[]> {
-    const entries = await fs.promises.readdir(directory, {withFileTypes: true});
+    // A tsconfig paths target can be a file or not exist
+    const entries = await fs.promises.readdir(directory, {withFileTypes: true}).catch(() => []);
     const found = await Promise.all(
         entries
             .filter((entry) => entry.isDirectory())

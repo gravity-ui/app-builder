@@ -105,6 +105,13 @@ describe('SWC server output', () => {
         }
     });
 
+    it('accepts file and missing targets when looking for excluded directories', async () => {
+        const targets = [path.join(root, 'src/server/index.ts'), path.join(root, 'missing')];
+        await expect(
+            getIgnoredGlobs(targets, ['/fixtures/'], path.join(root, 'dist')),
+        ).resolves.toHaveLength(4);
+    });
+
     it('rejects directories outside rootDir and keeps rootDir itself', () => {
         expect(
             getSwcCliSourceOptions(['/app/src', '/app/src/server'], '/app/src').filenames,
