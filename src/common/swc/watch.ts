@@ -1,7 +1,7 @@
 import type {Logger} from '../logger/index.js';
 import type {ServerConfig} from '../models/index.js';
 import {copyFiles, watchCopiedFiles} from './copy.js';
-import {getSwcOptions, loadSwcCli} from './utils.js';
+import {getIgnoredGlobs, getSwcOptions, loadSwcCli} from './utils.js';
 import type {GetSwcOptionsParams} from './utils.js';
 
 type SwcWatchOptions = NonNullable<ServerConfig['swcOptions']> &
@@ -33,8 +33,10 @@ export async function watch(
     });
 
     const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, rootDir);
+    const ignore = await getIgnoredGlobs(sourceOptions.filenames, swcOptions.exclude, outputPath);
     const cliOptions = {
         ...sourceOptions,
+        ignore,
         outDir: outputPath,
         watch: true,
         sync: false,
@@ -46,6 +48,7 @@ export async function watch(
             ...sourceOptions,
             extensions: copyExtensions,
             exclude: swcOptions.exclude,
+            ignore,
             outputPath,
         };
         await copyFiles(copyOptions, logger);
