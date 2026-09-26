@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import {jest} from '@jest/globals';
 
 import {copyFiles, watchCopiedFiles} from './copy.js';
-import {getSwcCliSourceOptions, getSwcOptions, loadSwcCli} from './utils.js';
+import {getIgnoredGlobs, getSwcCliSourceOptions, getSwcOptions, loadSwcCli} from './utils.js';
 
 describe('SWC server output', () => {
     const cwd = process.cwd();
@@ -52,10 +52,15 @@ describe('SWC server output', () => {
         });
         const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, rootDir);
         const outputPath = path.join(root, 'dist');
+        const ignore = await getIgnoredGlobs(
+            sourceOptions.filenames,
+            swcOptions.exclude,
+            outputPath,
+        );
         await new Promise((resolve, reject) => {
             swcDir({
                 // The worker pool of the async mode outlives the test.
-                cliOptions: {...sourceOptions, outDir: outputPath, sync: true},
+                cliOptions: {...sourceOptions, ignore, outDir: outputPath, sync: true},
                 swcOptions,
                 callbacks: {onSuccess: resolve, onFail: reject},
             });
@@ -64,6 +69,7 @@ describe('SWC server output', () => {
             ...sourceOptions,
             extensions: ['.json'],
             exclude: swcOptions.exclude,
+            ignore,
             outputPath,
         };
         await copyFiles(copyOptions, {message: jest.fn()} as never);
@@ -80,6 +86,7 @@ describe('SWC server output', () => {
         expect(fs.existsSync(path.join(root, 'dist/server/data.json'))).toBe(true);
         expect(fs.existsSync(path.join(root, 'dist/server/fixtures/skipped.json'))).toBe(false);
         expect(fs.existsSync(path.join(root, 'dist/server/styles.css'))).toBe(false);
+        expect(copyOptions.ignore).toContain('server/fixtures/**');
 
         const logger = {message: jest.fn(), error: jest.fn()};
         const watcher = watchCopiedFiles(copyOptions, logger as never);
@@ -101,7 +108,7 @@ describe('SWC server output', () => {
     it('rejects directories outside rootDir and keeps rootDir itself', () => {
         expect(
             getSwcCliSourceOptions(['/app/src', '/app/src/server'], '/app/src').filenames,
-        ).toEqual(['.', 'server']);
+        ).toEqual([process.cwd(), 'server']);
         expect(() => getSwcCliSourceOptions(['/app/lib'], '/app/src')).toThrow('/app/lib');
     });
 });
