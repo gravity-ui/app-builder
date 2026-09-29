@@ -189,9 +189,9 @@ All server settings are used only in dev mode:
   - `exclude` (`string | string[]`) — regular expressions of source files to skip during compilation. SWC can pass absolute filenames to these expressions in watch mode; use `ignore` for consistent build/watch exclusions and copied files.
   - `rootDir` (`string`) — keep compiled files at their path relative to this directory, as `tsc` does with `rootDir`.
     Set it when the server imports code outside `src/server` through tsconfig `paths`: by default only the first path segment is stripped, and relative imports between such directories break.
-    Every compiled directory must be inside it.
+    Every compiled directory must be inside it. Setting `rootDir` changes SWC’s working directory; a `.swcrc` above it may no longer be discovered.
   - `copyFiles` (`boolean`) — copy all noncompiled files beside the compiled code, including JSON and CSS. Default is `false`. In watch mode, added and modified files are copied and deleted files are removed.
-  - `ignore` (`string[]`) — glob patterns passed to SWC to skip compilation, copying, and watching, e.g. `['**/fixtures/**', '**/tsconfig*.json']`. Patterns match SWC source paths, relative to `rootDir` when set. Prefer `**/` patterns to also match absolute source paths when `rootDir` is omitted.
+  - `ignore` (`string[]`) — glob patterns passed to SWC to skip compilation, copying, and watching, e.g. `['**/fixtures/**', '**/tsconfig*.json']`. Patterns are relative to `rootDir` when set, or the project directory otherwise. Absolute patterns, parent traversal (`..`), and leading negation (`!`) are not supported.
 - `outputPath` (`string`) — custom output path for compiled server code relative to `dist` directory.
   Default: `server`. Use this when your `server` entrypoint changed from `dist/server` to a different location (e.g., `package/src/server` for path `dist/package/src/server` in monorepo setups).
 

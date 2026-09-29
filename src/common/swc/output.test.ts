@@ -6,7 +6,7 @@ import * as os from 'node:os';
 import path from 'node:path';
 import {jest} from '@jest/globals';
 
-import {getSwcCliSourceOptions, getSwcOptions, loadSwcCli} from './utils.js';
+import {getIgnoredGlobs, getSwcCliSourceOptions, getSwcOptions, loadSwcCli} from './utils.js';
 
 const require = createRequire(path.join(process.cwd(), 'package.json'));
 
@@ -60,14 +60,14 @@ describe('SWC server output', () => {
         directFile = false,
         rootIsSource = false,
         legacyPaths = false,
-        absoluteIgnore = false,
+        ignorePattern,
     }: {
         copyFiles: boolean;
         watch?: boolean;
         directFile?: boolean;
         rootIsSource?: boolean;
         legacyPaths?: boolean;
-        absoluteIgnore?: boolean;
+        ignorePattern?: string;
     }) {
         process.chdir(root);
         const additionalPaths = [];
@@ -92,11 +92,7 @@ describe('SWC server output', () => {
             {
                 rootDir,
                 outputPath,
-                ignore: [
-                    absoluteIgnore ? path.join(root, 'src/server/ignored.json') : ignoredFile,
-                    '**/tsconfig*.json',
-                    '**/fixtures/**',
-                ],
+                ignore: [ignorePattern ?? ignoredFile, '**/tsconfig*.json', '**/fixtures/**'],
             },
         );
         const cliOptions = {
@@ -332,29 +328,52 @@ describe('SWC server output', () => {
         }
     });
 
-    it('honors absolute ignores for direct files and watch updates', async () => {
-        const run = await start({copyFiles: true, watch: true, absoluteIgnore: true});
-        try {
-            await waitFor(() => run.messages.some((message) => message.type === 'ready'));
-            const ignored = path.join(run.outputPath, 'server/ignored.json');
-            expect(fs.existsSync(ignored)).toBe(false);
-            await fs.promises.writeFile(
-                path.join(root, 'src/server/ignored.json'),
-                '{"changed":true}',
+    it.each(['relative', 'parentheses', 'dot-relative'])(
+        'honors %s ignores for direct files and watch updates',
+        async (kind) => {
+            if (kind === 'parentheses') {
+                const renamed = `${root}(test)`;
+                await fs.promises.rename(root, renamed);
+                root = renamed;
+            }
+            const patterns: Record<string, string> = {
+                relative: 'server/ignored.json',
+                parentheses: 'server/ignored.json',
+                'dot-relative': './server/ignored.json',
+            };
+            const run = await start({copyFiles: true, watch: true, ignorePattern: patterns[kind]});
+            try {
+                await waitFor(() => run.messages.some((message) => message.type === 'ready'));
+                const ignored = path.join(run.outputPath, 'server/ignored.json');
+                expect(fs.existsSync(ignored)).toBe(false);
+                await fs.promises.writeFile(
+                    path.join(root, 'src/server/ignored.json'),
+                    '{"changed":true}',
+                );
+                await fs.promises.writeFile(path.join(root, 'src/server/data.json'), '{"count":5}');
+                await waitFor(() =>
+                    fs
+                        .readFileSync(path.join(run.outputPath, 'server/data.json'), 'utf8')
+                        .includes('5'),
+                );
+                expect(fs.existsSync(ignored)).toBe(false);
+                expect(run.errors()).toBe('');
+            } finally {
+                run.child.kill();
+                await run.exited;
+            }
+        },
+        10000,
+    );
+
+    it.each(['/app/**', 'C:/app/**', '../outside/**', 'src/../outside/**', '!src/**', ''])(
+        'rejects unsupported ignore %j',
+        (pattern) => {
+            expect(() => getIgnoredGlobs(path.join(root, 'dist'), [pattern])).toThrow(
+                'relative globs without negation or parent traversal',
             );
-            await fs.promises.writeFile(path.join(root, 'src/server/data.json'), '{"count":5}');
-            await waitFor(() =>
-                fs
-                    .readFileSync(path.join(run.outputPath, 'server/data.json'), 'utf8')
-                    .includes('5'),
-            );
-            expect(fs.existsSync(ignored)).toBe(false);
-            expect(run.errors()).toBe('');
-        } finally {
-            run.child.kill();
-            await run.exited;
-        }
-    }, 10000);
+        },
+    );
 
     it('rejects a rootDir source on another Windows drive', () => {
         const relative = jest.spyOn(path, 'relative').mockImplementation(path.win32.relative);

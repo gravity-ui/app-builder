@@ -55,11 +55,24 @@ function directoryGlobs(directory: string) {
 export function getIgnoredGlobs(outputPath: string, ignoredGlobs: string[] = []) {
     const cwdPattern = fastGlob.convertPathToPattern(process.cwd());
     const ignore = [
-        ...ignoredGlobs.flatMap((pattern) =>
-            path.isAbsolute(pattern)
-                ? [pattern, path.relative(cwdPattern, pattern).split(path.sep).join('/')]
-                : [pattern, `${cwdPattern}/${pattern}`],
-        ),
+        ...ignoredGlobs.flatMap((pattern) => {
+            const normalized = pattern
+                .split(path.sep)
+                .join('/')
+                .replace(/^(\.\/)+/, '');
+            if (
+                !normalized ||
+                path.posix.isAbsolute(normalized) ||
+                path.win32.isAbsolute(normalized) ||
+                normalized.startsWith('!') ||
+                normalized.split('/').includes('..')
+            ) {
+                throw new Error(
+                    `server.swcOptions.ignore must contain relative globs without negation or parent traversal: ${pattern}`,
+                );
+            }
+            return [normalized, `${cwdPattern}/${normalized}`];
+        }),
         ...directoryGlobs(outputPath),
     ];
     return [...new Set(ignore)];
