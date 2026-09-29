@@ -43,42 +43,70 @@ describe('getSwcOptions', () => {
         return (await getOptions(compilerOptions)).jsc?.transform?.useDefineForClassFields;
     }
 
-    it('assigns class fields like TypeScript for targets without native class fields', async () => {
-        await expect(getClassFieldsMode({target: 'es2019'})).resolves.toBe(false);
+    it.each([
+        {},
+        {target: 'es5'},
+        {target: 'es2019'},
+        {target: 'es2022'},
+        {target: 'ESNext'},
+        {module: 'node16'},
+        {module: 'node18'},
+        {module: 'node20'},
+        {module: 'nodenext'},
+    ])('preserves define semantics when the setting is omitted: %j', async (compilerOptions) => {
+        await expect(getClassFieldsMode(compilerOptions)).resolves.toBe(true);
     });
 
-    it('defines class fields like TypeScript for ES2022 and later', async () => {
-        await expect(getClassFieldsMode({target: 'es2022'})).resolves.toBe(true);
-        await expect(getClassFieldsMode({target: 'ESNext'})).resolves.toBe(true);
-    });
+    it.each([
+        ['es2019', true],
+        ['es2019', false],
+        ['es2022', true],
+        ['es2022', false],
+    ] as const)(
+        'uses the expected own-property behavior for %s with define semantics: %s',
+        async (target, useDefineForClassFields) => {
+            const swcOptions = await getOptions({target, useDefineForClassFields});
+            const {code} = transformSync('export class Model { value?: string; }', {
+                ...swcOptions,
+                filename: path.join(projectPath, 'model.ts'),
+            });
+            const context = {
+                exports: {} as {Model: new () => {value?: string}},
+                require: () => ({}),
+            };
+            vm.runInNewContext(code, context);
 
-    it('assigns class fields without a target and TypeScript 5', async () => {
-        await expect(getClassFieldsMode({})).resolves.toBe(false);
-    });
+            expect(Object.prototype.hasOwnProperty.call(new context.exports.Model(), 'value')).toBe(
+                useDefineForClassFields,
+            );
+        },
+    );
 
-    it('defines class fields without a target when a Node module setting implies ES2022', async () => {
-        await expect(getClassFieldsMode({module: 'nodenext'})).resolves.toBe(true);
-        await expect(getClassFieldsMode({module: 'node16'})).resolves.toBe(true);
-    });
+    it.each([undefined, true])(
+        'resolves an inherited false setting with local override: %s',
+        async (useDefineForClassFields) => {
+            await fs.promises.writeFile(
+                path.join(projectPath, 'base.json'),
+                JSON.stringify({compilerOptions: {useDefineForClassFields: false}}),
+            );
+            await fs.promises.writeFile(
+                path.join(projectPath, 'tsconfig.json'),
+                JSON.stringify({
+                    extends: './base.json',
+                    compilerOptions: {target: 'es2022', useDefineForClassFields},
+                }),
+            );
 
-    it('defines class fields without a target and TypeScript 6, whose default target has them', async () => {
-        const typescriptPath = path.join(projectPath, 'node_modules/typescript');
-        await fs.promises.mkdir(typescriptPath, {recursive: true});
-        await fs.promises.writeFile(
-            path.join(typescriptPath, 'package.json'),
-            JSON.stringify({name: 'typescript', version: '6.0.3'}),
-        );
-        await expect(getClassFieldsMode({})).resolves.toBe(true);
-    });
+            const {swcOptions} = getSwcOptions({projectPath, publicPath: '/build/'});
 
-    it('respects an explicit useDefineForClassFields', async () => {
-        await expect(
-            getClassFieldsMode({target: 'es2019', useDefineForClassFields: true}),
-        ).resolves.toBe(true);
-    });
+            expect(swcOptions.jsc?.transform?.useDefineForClassFields).toBe(
+                useDefineForClassFields ?? false,
+            );
+        },
+    );
 
     it('keeps fields set by a base constructor', async () => {
-        const swcOptions = await getOptions({target: 'es2019'});
+        const swcOptions = await getOptions({target: 'es2019', useDefineForClassFields: false});
         const {code} = transformSync(SOURCE, {
             ...swcOptions,
             filename: path.join(projectPath, 'child.ts'),
