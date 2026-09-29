@@ -30,19 +30,6 @@ function getPathInRootDir(directory: string, rootDir: string) {
     return relativePath || process.cwd();
 }
 
-export function isExcluded(file: string, exclude: string | string[] = []) {
-    const relativePath = path.relative(process.cwd(), file) + (file.endsWith('/') ? '/' : '');
-    return [exclude].flat().some((pattern) => {
-        try {
-            // eslint-disable-next-line security/detect-non-literal-regexp
-            return new RegExp(pattern).test(relativePath);
-        } catch {
-            // SWC accepts Rust regex syntax that JavaScript cannot use for directory pruning.
-            return false;
-        }
-    });
-}
-
 function isIgnored(file: string, ignore: string[]) {
     const normalized = file.split(path.sep).join('/');
     return ignore.some((pattern) => minimatch(normalized, pattern));
@@ -56,12 +43,7 @@ function directoryGlobs(directory: string) {
     });
 }
 
-export async function getIgnoredGlobs(
-    filenames: string[],
-    exclude: string | string[] = [],
-    outputPath: string,
-    ignoredGlobs: string[] = [],
-) {
+export function getIgnoredGlobs(outputPath: string, ignoredGlobs: string[] = []) {
     const cwdPattern = fastGlob.convertPathToPattern(process.cwd());
     const ignore = [
         ...ignoredGlobs.flatMap((pattern) =>
@@ -69,38 +51,6 @@ export async function getIgnoredGlobs(
         ),
         ...directoryGlobs(outputPath),
     ];
-    const pending = filenames.map((file) => path.resolve(file));
-    const seen = new Set<string>();
-    while (pending.length) {
-        const batch = pending.splice(-8).filter((directory) => {
-            if (
-                seen.has(directory) ||
-                isIgnored(directory, ignore) ||
-                isIgnored(`${directory}/`, ignore)
-            ) {
-                return false;
-            }
-            seen.add(directory);
-            return true;
-        });
-        const children = await Promise.all(
-            batch.map(async (directory) => {
-                const entries = await fs.promises
-                    .readdir(directory, {withFileTypes: true})
-                    .catch(() => []);
-                return entries
-                    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
-                    .map((entry) => path.join(directory, entry.name));
-            }),
-        );
-        for (const child of children.flat()) {
-            if (isExcluded(`${child}/`, exclude)) {
-                ignore.push(...directoryGlobs(child));
-            } else if (!isIgnored(child, ignore) && !isIgnored(`${child}/`, ignore)) {
-                pending.push(child);
-            }
-        }
-    }
     return [...new Set(ignore)];
 }
 
@@ -120,12 +70,10 @@ export async function loadSwcCli(
     {
         rootDir,
         outputPath,
-        exclude,
         ignore: ignoredGlobs,
     }: {
         rootDir?: string;
         outputPath: string;
-        exclude?: string | string[];
         ignore?: string[];
     },
 ) {
@@ -139,12 +87,7 @@ export async function loadSwcCli(
     // @ts-ignore @swc/cli is not typed
     const {swcDir} = await import('@swc/cli');
     const sourceOptions = getSwcCliSourceOptions(sourceDirectories, rootDir);
-    const ignore = await getIgnoredGlobs(
-        sourceOptions.filenames,
-        exclude,
-        outputPath,
-        ignoredGlobs,
-    );
+    const ignore = getIgnoredGlobs(outputPath, ignoredGlobs);
     return {
         swcDir,
         sourceOptions: {

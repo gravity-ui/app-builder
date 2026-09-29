@@ -186,7 +186,7 @@ All server settings are used only in dev mode:
   Default is `'typescript'`. Set to `'swc'` for faster compilation with SWC.
 - `swcOptions` — options of the `'swc'` compiler:
   - `additionalPaths` (`string[]`) — extra directories to compile.
-  - `exclude` (`string | string[]`) — regular expressions of source files to skip during compilation. Matching directories are also skipped during traversal and watching. SWC can pass absolute filenames to these expressions in watch mode; use `ignore` for consistent build/watch exclusions and copied files.
+  - `exclude` (`string | string[]`) — regular expressions of source files to skip during compilation. SWC can pass absolute filenames to these expressions in watch mode; use `ignore` for consistent build/watch exclusions and copied files.
   - `rootDir` (`string`) — keep compiled files at their path relative to this directory, as `tsc` does with `rootDir`.
     Set it when the server imports code outside `src/server` through tsconfig `paths`: by default only the first path segment is stripped, and relative imports between such directories break.
     Every compiled directory must be inside it.
