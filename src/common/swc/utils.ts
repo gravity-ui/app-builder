@@ -1,5 +1,6 @@
 import path from 'path';
-import {convert} from 'tsconfig-to-swcconfig';
+import {getTsconfig} from 'get-tsconfig';
+import {convertTsConfig} from 'tsconfig-to-swcconfig';
 
 const DEFAULT_EXCLUDE = ['node_modules'];
 
@@ -35,7 +36,8 @@ export function getSwcOptions({
     exclude,
     publicPath,
 }: GetSwcOptionsParams) {
-    const swcOptions = convert(filename, projectPath);
+    const compilerOptions = getTsconfig(projectPath, filename)?.config.compilerOptions ?? {};
+    const swcOptions = convertTsConfig(compilerOptions, undefined, projectPath);
     swcOptions.exclude = swcOptions.exclude || [];
     swcOptions.jsc = {
         ...swcOptions.jsc,
@@ -43,6 +45,8 @@ export function getSwcOptions({
         baseUrl: projectPath,
         transform: {
             ...swcOptions.jsc?.transform,
+            // TODO: tsconfig-to-swcconfig 2 drops this option; v3 maps it but needs Node 22 and @swc/core 1.16.2
+            useDefineForClassFields: compilerOptions.useDefineForClassFields ?? true,
             optimizer: {
                 ...swcOptions.jsc?.transform?.optimizer,
                 globals: {
