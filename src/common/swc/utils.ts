@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import fastGlob from 'fast-glob';
 import {getTsconfig} from 'get-tsconfig';
+import {minimatch} from 'minimatch';
 import {convertTsConfig} from 'tsconfig-to-swcconfig';
 
 const DEFAULT_EXCLUDE = ['node_modules'];
@@ -18,7 +19,11 @@ function getRealPath(filePath: string) {
 
 function getPathInRootDir(directory: string, rootDir: string) {
     const relativePath = path.relative(getRealPath(rootDir), getRealPath(directory));
-    if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`)) {
+    if (
+        relativePath === '..' ||
+        relativePath.startsWith(`..${path.sep}`) ||
+        path.isAbsolute(relativePath)
+    ) {
         throw new Error(`${directory} is outside server.swcOptions.rootDir ${rootDir}`);
     }
     // Not '.': the @swc/cli watcher skips every path whose name starts with a dot.
@@ -27,46 +32,76 @@ function getPathInRootDir(directory: string, rootDir: string) {
 
 export function isExcluded(file: string, exclude: string | string[] = []) {
     const relativePath = path.relative(process.cwd(), file) + (file.endsWith('/') ? '/' : '');
-    // eslint-disable-next-line security/detect-non-literal-regexp
-    return [exclude].flat().some((pattern) => new RegExp(pattern).test(relativePath));
+    return [exclude].flat().some((pattern) => {
+        try {
+            // eslint-disable-next-line security/detect-non-literal-regexp
+            return new RegExp(pattern).test(relativePath);
+        } catch {
+            // SWC accepts Rust regex syntax that JavaScript cannot use for directory pruning.
+            return false;
+        }
+    });
 }
 
-async function findExcludedDirectories(
-    directory: string,
-    exclude: string | string[],
-): Promise<string[]> {
-    // A tsconfig paths target can be a file or not exist
-    const entries = await fs.promises.readdir(directory, {withFileTypes: true}).catch(() => []);
-    const found = await Promise.all(
-        entries
-            .filter((entry) => entry.isDirectory())
-            .map((entry) => {
-                const child = path.join(directory, entry.name);
-                return isExcluded(`${child}/`, exclude)
-                    ? [child]
-                    : findExcludedDirectories(child, exclude);
-            }),
-    );
-    return found.flat();
+function isIgnored(file: string, ignore: string[]) {
+    const normalized = file.split(path.sep).join('/');
+    return ignore.some((pattern) => minimatch(normalized, pattern));
 }
 
-// Globs for @swc/cli: without them it walks and watches the excluded trees, and it cannot take a regular expression.
+function directoryGlobs(directory: string) {
+    const relative = path.relative(process.cwd(), directory);
+    return [relative, path.resolve(directory)].flatMap((entry) => {
+        const pattern = fastGlob.convertPathToPattern(entry);
+        return [pattern, `${pattern}/**`];
+    });
+}
+
 export async function getIgnoredGlobs(
     filenames: string[],
     exclude: string | string[] = [],
     outputPath: string,
+    ignoredGlobs: string[] = [],
 ) {
-    const directories = [
-        ...(
-            await Promise.all(filenames.map((dir) => findExcludedDirectories(dir, exclude)))
-        ).flat(),
-        path.relative(process.cwd(), outputPath),
-        outputPath,
+    const cwdPattern = fastGlob.convertPathToPattern(process.cwd());
+    const ignore = [
+        ...ignoredGlobs.flatMap((pattern) =>
+            path.isAbsolute(pattern) ? [pattern] : [pattern, `${cwdPattern}/${pattern}`],
+        ),
+        ...directoryGlobs(outputPath),
     ];
-    return directories.flatMap((directory) => {
-        const pattern = fastGlob.convertPathToPattern(directory);
-        return [pattern, `${pattern}/**`];
-    });
+    const pending = filenames.map((file) => path.resolve(file));
+    const seen = new Set<string>();
+    while (pending.length) {
+        const batch = pending.splice(-8).filter((directory) => {
+            if (
+                seen.has(directory) ||
+                isIgnored(directory, ignore) ||
+                isIgnored(`${directory}/`, ignore)
+            ) {
+                return false;
+            }
+            seen.add(directory);
+            return true;
+        });
+        const children = await Promise.all(
+            batch.map(async (directory) => {
+                const entries = await fs.promises
+                    .readdir(directory, {withFileTypes: true})
+                    .catch(() => []);
+                return entries
+                    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+                    .map((entry) => path.join(directory, entry.name));
+            }),
+        );
+        for (const child of children.flat()) {
+            if (isExcluded(`${child}/`, exclude)) {
+                ignore.push(...directoryGlobs(child));
+            } else if (!isIgnored(child, ignore) && !isIgnored(`${child}/`, ignore)) {
+                pending.push(child);
+            }
+        }
+    }
+    return [...new Set(ignore)];
 }
 
 export function getSwcCliSourceOptions(directoriesToCompile: string[], rootDir?: string) {
@@ -80,14 +115,45 @@ export function getSwcCliSourceOptions(directoriesToCompile: string[], rootDir?:
     };
 }
 
-export async function loadSwcCli(directoriesToCompile: string[], rootDir?: string) {
+export async function loadSwcCli(
+    directoriesToCompile: string[],
+    {
+        rootDir,
+        outputPath,
+        exclude,
+        ignore: ignoredGlobs,
+    }: {
+        rootDir?: string;
+        outputPath: string;
+        exclude?: string | string[];
+        ignore?: string[];
+    },
+) {
+    const sourceDirectories = rootDir
+        ? directoriesToCompile.map((directory) => path.resolve(directory))
+        : directoriesToCompile;
     if (rootDir) {
         // @swc/cli maps sources to outputs relative to the working directory it sees on load.
         process.chdir(rootDir);
     }
     // @ts-ignore @swc/cli is not typed
     const {swcDir} = await import('@swc/cli');
-    return {swcDir, sourceOptions: getSwcCliSourceOptions(directoriesToCompile, rootDir)};
+    const sourceOptions = getSwcCliSourceOptions(sourceDirectories, rootDir);
+    const ignore = await getIgnoredGlobs(
+        sourceOptions.filenames,
+        exclude,
+        outputPath,
+        ignoredGlobs,
+    );
+    return {
+        swcDir,
+        sourceOptions: {
+            ...sourceOptions,
+            // SWC 0.8.1 skips glob filtering for explicitly named file inputs.
+            filenames: sourceOptions.filenames.filter((filename) => !isIgnored(filename, ignore)),
+            ignore,
+        },
+    };
 }
 
 function resolvePaths(paths: Record<string, string[]>, baseUrl: string) {
@@ -156,11 +222,7 @@ export function getSwcOptions({
     // SWC don't compile referenced files like tsc, so we need collect all directories to compile.
     const paths = swcOptions.jsc.paths || {};
     const directoriesToCompile = [
-        ...new Set([
-            projectPath,
-            ...resolvePaths(paths, projectPath),
-            ...(additionalPaths || []).map((additionalPath) => path.resolve(additionalPath)),
-        ]),
+        ...new Set([projectPath, ...resolvePaths(paths, projectPath), ...(additionalPaths || [])]),
     ];
 
     return {

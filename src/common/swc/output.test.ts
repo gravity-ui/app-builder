@@ -1,11 +1,14 @@
+import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import * as fs from 'node:fs';
+import {createRequire} from 'node:module';
 import * as os from 'node:os';
-import * as path from 'node:path';
+import path from 'node:path';
 import {jest} from '@jest/globals';
 
-import {copyFiles, watchCopiedFiles} from './copy.js';
 import {getIgnoredGlobs, getSwcCliSourceOptions, getSwcOptions, loadSwcCli} from './utils.js';
+
+const require = createRequire(path.join(process.cwd(), 'package.json'));
 
 describe('SWC server output', () => {
     const cwd = process.cwd();
@@ -21,7 +24,7 @@ describe('SWC server output', () => {
                     module: 'commonjs',
                     target: 'es2019',
                     esModuleInterop: true,
-                    paths: {'shared/*': ['../shared/*']},
+                    paths: {'shared/*': ['../shared/*'], ignored: ['./ignored.json']},
                 },
             }),
             'src/server/index.ts': [
@@ -32,7 +35,12 @@ describe('SWC server output', () => {
             'src/server/data.json': JSON.stringify({count: 2}),
             'src/server/fixtures/skipped.json': '{}',
             'src/server/styles.css': 'body {}',
+            'src/server/ignored.json': '{}',
             'src/shared/value.ts': 'export const value = 1;',
+            'extras/skip.ts': 'export const value = 1;',
+            'extras/keep.ts': 'export const value = 1;',
+            'src/server/dist/old.json': '{}',
+            'src/server/.cache/old.json': '{}',
         };
         for (const [file, content] of Object.entries(files)) {
             await fs.promises.mkdir(path.dirname(path.join(root, file)), {recursive: true});
@@ -45,65 +53,253 @@ describe('SWC server output', () => {
         await fs.promises.rm(root, {recursive: true, force: true});
     });
 
-    async function build() {
-        const rootDir = path.join(root, 'src');
+    async function start({
+        copyFiles,
+        watch = false,
+        directFile = false,
+        rootIsSource = false,
+        legacyPaths = false,
+    }: {
+        copyFiles: boolean;
+        watch?: boolean;
+        directFile?: boolean;
+        rootIsSource?: boolean;
+        legacyPaths?: boolean;
+    }) {
+        process.chdir(root);
+        const additionalPaths = [];
+        if (legacyPaths) {
+            additionalPaths.push('extras');
+        } else if (!rootIsSource) {
+            additionalPaths.push('src/shared');
+        }
         const {swcOptions, directoriesToCompile} = getSwcOptions({
             projectPath: path.join(root, 'src/server'),
-            exclude: ['/fixtures/'],
+            exclude: ['/fixtures/', ...(legacyPaths ? ['^extras/skip[.]ts$'] : [])],
+            additionalPaths,
             publicPath: '/build/',
         });
-        const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, rootDir);
-        const outputPath = path.join(root, 'dist');
-        const ignore = await getIgnoredGlobs(
-            sourceOptions.filenames,
-            swcOptions.exclude,
-            outputPath,
+        const rootDir = legacyPaths
+            ? undefined
+            : path.join(root, rootIsSource ? 'src/server' : 'src');
+        const outputPath = path.join(root, 'src/server/dist');
+        const {sourceOptions} = await loadSwcCli(
+            directFile ? [path.join(root, 'src/server/data.json')] : directoriesToCompile,
+            {
+                rootDir,
+                outputPath,
+                exclude: swcOptions.exclude,
+                ignore: [rootIsSource ? 'ignored.json' : '**/ignored.json', '**/tsconfig*.json'],
+            },
         );
-        await new Promise((resolve, reject) => {
-            swcDir({
-                // The worker pool of the async mode outlives the test.
-                cliOptions: {...sourceOptions, ignore, outDir: outputPath, sync: true},
-                swcOptions,
-                callbacks: {onSuccess: resolve, onFail: reject},
-            });
-        });
-        const copyOptions = {
+        const cliOptions = {
             ...sourceOptions,
-            extensions: ['.json'],
-            exclude: swcOptions.exclude,
-            ignore,
-            outputPath,
+            outDir: outputPath,
+            copyFiles,
+            watch,
+            sync: true,
         };
-        await copyFiles(copyOptions, {message: jest.fn()} as never);
-        return copyOptions;
+        const child = spawn(
+            process.execPath,
+            [
+                '-e',
+                `const {swcDir} = require(${JSON.stringify(require.resolve('@swc/cli'))});
+                swcDir({
+                    cliOptions: ${JSON.stringify(cliOptions)},
+                    swcOptions: ${JSON.stringify(swcOptions)},
+                    callbacks: {
+                        onSuccess: result => process.send({type: 'success', ...result}),
+                        onWatchReady: () => process.send({type: 'ready'}),
+                        onFail: result => { console.error(result); process.exit(1); },
+                    },
+                }).then(() => { if (!${watch}) process.disconnect(); }).catch(error => {
+                    console.error(error); process.exit(1);
+                });`,
+            ],
+            {
+                cwd: rootDir ?? root,
+                stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+                timeout: watch ? 9000 : 4000,
+            },
+        );
+        let errors = '';
+        child.stderr?.on('data', (data) => {
+            errors += data;
+        });
+        const messages: {type: string; filename?: string; copied?: number}[] = [];
+        child.on('message', (message) => messages.push(message as (typeof messages)[number]));
+        const exited = once(child, 'exit');
+        return {child, messages, exited, errors: () => errors, outputPath};
     }
 
-    // One test: @swc/cli reads the working directory once per process.
-    it('keeps the layout under rootDir and copies listed extensions', async () => {
-        const copyOptions = await build();
-
-        const output = await fs.promises.readFile(path.join(root, 'dist/server/index.js'), 'utf-8');
-        expect(output).toContain('require("../shared/value")');
-        expect(fs.existsSync(path.join(root, 'dist/shared/value.js'))).toBe(true);
-        expect(fs.existsSync(path.join(root, 'dist/server/data.json'))).toBe(true);
-        expect(fs.existsSync(path.join(root, 'dist/server/fixtures/skipped.json'))).toBe(false);
-        expect(fs.existsSync(path.join(root, 'dist/server/styles.css'))).toBe(false);
-        expect(copyOptions.ignore).toContain('server/fixtures/**');
-
-        const logger = {message: jest.fn(), error: jest.fn()};
-        const watcher = watchCopiedFiles(copyOptions, logger as never);
-        try {
-            await once(watcher, 'ready');
-            await fs.promises.writeFile(path.join(root, 'src/server/fixtures/added.json'), '{}');
-            await fs.promises.writeFile(path.join(root, 'src/server/data.json'), '{"count": 3}');
-            const dest = path.join(root, 'dist/server/data.json');
-            for (let i = 0; i < 100 && !fs.readFileSync(dest, 'utf-8').includes('3'); i++) {
-                await new Promise((resolve) => setTimeout(resolve, 20));
+    async function waitFor(check: () => boolean) {
+        for (let i = 0; i < 150; i++) {
+            if (check()) {
+                return;
             }
-            expect(JSON.parse(fs.readFileSync(dest, 'utf-8'))).toEqual({count: 3});
-            expect(fs.existsSync(path.join(root, 'dist/server/fixtures/added.json'))).toBe(false);
+            await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+        expect(check()).toBe(true);
+    }
+
+    it.each([false, true])('keeps the layout with copyFiles: %s', async (copyFiles) => {
+        const run = await start({copyFiles});
+        try {
+            expect(await run.exited).toEqual([0, null]);
+            expect(run.errors()).toBe('');
+            const output = fs.readFileSync(path.join(run.outputPath, 'server/index.js'), 'utf8');
+            expect(output).toContain('require("../shared/value")');
+            expect(fs.existsSync(path.join(run.outputPath, 'shared/value.js'))).toBe(true);
+            expect(fs.existsSync(path.join(run.outputPath, 'server/data.json'))).toBe(copyFiles);
+            expect(fs.existsSync(path.join(run.outputPath, 'server/styles.css'))).toBe(copyFiles);
+            for (const file of [
+                'fixtures/skipped.json',
+                'ignored.json',
+                'tsconfig.json',
+                'dist/old.json',
+            ]) {
+                expect(fs.existsSync(path.join(run.outputPath, 'server', file))).toBe(false);
+            }
         } finally {
-            await watcher.close();
+            if (run.child.exitCode === null) {
+                run.child.kill();
+                await run.exited;
+            }
+        }
+    });
+
+    it('copies a file used directly as a paths target', async () => {
+        const run = await start({copyFiles: true, directFile: true});
+        try {
+            expect(await run.exited).toEqual([0, null]);
+            expect(
+                JSON.parse(fs.readFileSync(path.join(run.outputPath, 'server/data.json'), 'utf8')),
+            ).toEqual({count: 2});
+        } finally {
+            if (run.child.exitCode === null) {
+                run.child.kill();
+                await run.exited;
+            }
+        }
+    });
+
+    it('copies additions and updates, removes deletions, and ignores assets in watch mode', async () => {
+        const run = await start({copyFiles: true, watch: true});
+        try {
+            await waitFor(() => run.messages.some((message) => message.type === 'ready'));
+            const source = path.join(root, 'src/server');
+            const output = path.join(run.outputPath, 'server');
+            await fs.promises.writeFile(path.join(source, 'ignored.json'), '{"changed":true}');
+            await fs.promises.writeFile(path.join(source, 'fixtures/added.json'), '{}');
+            await fs.promises.writeFile(path.join(source, 'data.json'), '{"count":3}');
+            await waitFor(() =>
+                fs.readFileSync(path.join(output, 'data.json'), 'utf8').includes('3'),
+            );
+            await waitFor(() =>
+                run.messages.some(
+                    (message) => message.copied === 1 && message.filename?.endsWith('data.json'),
+                ),
+            );
+            await fs.promises.writeFile(path.join(source, 'added.json'), '{}');
+            await waitFor(() => fs.existsSync(path.join(output, 'added.json')));
+            await fs.promises.unlink(path.join(source, 'added.json'));
+            await waitFor(() => !fs.existsSync(path.join(output, 'added.json')));
+            expect(fs.existsSync(path.join(output, 'ignored.json'))).toBe(false);
+            expect(fs.existsSync(path.join(output, 'fixtures/added.json'))).toBe(false);
+            expect(fs.existsSync(path.join(output, 'dist'))).toBe(false);
+            expect(run.errors()).toBe('');
+        } finally {
+            run.child.kill();
+            await run.exited;
+        }
+    }, 10000);
+
+    it('keeps relative ignores effective when watching rootDir itself', async () => {
+        await fs.promises.writeFile(
+            path.join(root, 'src/server/tsconfig.json'),
+            JSON.stringify({compilerOptions: {module: 'commonjs', target: 'es2019'}}),
+        );
+        const run = await start({copyFiles: true, watch: true, rootIsSource: true});
+        try {
+            await waitFor(() => run.messages.some((message) => message.type === 'ready'));
+            const ignoredOutput = path.join(run.outputPath, 'ignored.json');
+            expect(fs.existsSync(ignoredOutput)).toBe(false);
+            await fs.promises.writeFile(
+                path.join(root, 'src/server/ignored.json'),
+                '{"changed":true}',
+            );
+            await fs.promises.writeFile(path.join(root, 'src/server/data.json'), '{"count":3}');
+            await waitFor(() =>
+                fs.readFileSync(path.join(run.outputPath, 'data.json'), 'utf8').includes('3'),
+            );
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            expect(fs.existsSync(ignoredOutput)).toBe(false);
+            expect(fs.existsSync(path.join(run.outputPath, 'dist'))).toBe(false);
+            expect(run.errors()).toBe('');
+        } finally {
+            run.child.kill();
+            await run.exited;
+        }
+    }, 10000);
+
+    it('preserves anchored exclusions for relative additionalPaths in watch mode', async () => {
+        const run = await start({copyFiles: false, watch: true, legacyPaths: true});
+        try {
+            await waitFor(() => run.messages.some((message) => message.type === 'ready'));
+            const skipped = path.join(run.outputPath, 'skip.js');
+            const kept = path.join(run.outputPath, 'keep.js');
+            expect(fs.existsSync(skipped)).toBe(false);
+            expect(fs.existsSync(kept)).toBe(true);
+            await fs.promises.writeFile(
+                path.join(root, 'extras/skip.ts'),
+                'export const value = 2;',
+            );
+            await fs.promises.writeFile(
+                path.join(root, 'extras/keep.ts'),
+                'export const value = 2;',
+            );
+            await waitFor(() => fs.readFileSync(kept, 'utf8').includes('value = 2'));
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            expect(fs.existsSync(skipped)).toBe(false);
+            expect(run.errors()).toBe('');
+        } finally {
+            run.child.kill();
+            await run.exited;
+        }
+    }, 10000);
+
+    it('prunes output, hidden, and ignored directories before scanning', async () => {
+        const readdir = jest.spyOn(fs.promises, 'readdir');
+        try {
+            const server = path.join(root, 'src/server');
+            await getIgnoredGlobs([server], [], path.join(server, 'dist'), ['**/fixtures/**']);
+            const visited = readdir.mock.calls.map(([directory]) => String(directory));
+            for (const directory of ['dist', '.cache', 'fixtures']) {
+                expect(visited).not.toContain(path.join(server, directory));
+            }
+        } finally {
+            readdir.mockRestore();
+        }
+    });
+
+    it('leaves SWC-specific regexes to the compiler', async () => {
+        await expect(
+            getIgnoredGlobs(
+                [path.join(root, 'src/server')],
+                ['(?i)fixtures'],
+                path.join(root, 'dist'),
+            ),
+        ).resolves.toBeDefined();
+    });
+
+    it('rejects a rootDir source on another Windows drive', () => {
+        const relative = jest.spyOn(path, 'relative').mockImplementation(path.win32.relative);
+        const isAbsolute = jest.spyOn(path, 'isAbsolute').mockImplementation(path.win32.isAbsolute);
+        try {
+            expect(() => getSwcCliSourceOptions(['D:\\shared'], 'C:\\app\\src')).toThrow('outside');
+        } finally {
+            relative.mockRestore();
+            isAbsolute.mockRestore();
         }
     });
 
@@ -112,30 +308,6 @@ describe('SWC server output', () => {
         await expect(
             getIgnoredGlobs(targets, ['/fixtures/'], path.join(root, 'dist')),
         ).resolves.toHaveLength(4);
-    });
-
-    it('copies a JSON file used directly as a paths target', async () => {
-        const file = path.join(root, 'src/server/data.json');
-        const outputPath = path.join(root, 'dist');
-        process.chdir(path.join(root, 'src'));
-        await copyFiles(
-            {
-                filenames: [
-                    file,
-                    path.join(root, 'src/server/index.ts'),
-                    path.join(root, 'missing.json'),
-                ],
-                extensions: ['.json'],
-                ignore: [],
-                outputPath,
-                stripLeadingPaths: false,
-            },
-            {message: jest.fn()} as never,
-        );
-        expect(
-            JSON.parse(fs.readFileSync(path.join(outputPath, 'server/data.json'), 'utf-8')),
-        ).toEqual({count: 2});
-        expect(fs.existsSync(path.join(outputPath, 'server/index.ts'))).toBe(false);
     });
 
     it('rejects directories outside rootDir and keeps rootDir itself', () => {
