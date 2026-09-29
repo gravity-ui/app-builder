@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.53.4](https://github.com/gravity-ui/app-builder/compare/v0.53.3...v0.53.4) (2026-09-29)
+
+
+### Bug Fixes
+
+* rewrite path aliases on TypeScript watch rebuilds ([#368](https://github.com/gravity-ui/app-builder/issues/368)) ([3aadb47](https://github.com/gravity-ui/app-builder/commit/3aadb4748478fcb8d8ad766dcbc9a7933da4e06e))
+
 ## [0.53.3](https://github.com/gravity-ui/app-builder/compare/v0.53.2...v0.53.3) (2026-09-24)
 
 
