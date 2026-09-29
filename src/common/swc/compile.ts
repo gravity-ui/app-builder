@@ -35,6 +35,7 @@ export async function compile({
     const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, {
         rootDir,
         outputPath,
+        exclude: swcOptions.exclude,
         ignore: ignoredGlobs,
     });
     const cliOptions = {
