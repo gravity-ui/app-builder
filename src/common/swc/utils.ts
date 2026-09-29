@@ -17,16 +17,25 @@ function getRealPath(filePath: string) {
     }
 }
 
-function getPathInRootDir(directory: string, rootDir: string) {
-    const relativePath = path.relative(getRealPath(rootDir), getRealPath(directory));
-    if (
+function isOutsideRoot(relativePath: string) {
+    return (
         relativePath === '..' ||
         relativePath.startsWith(`..${path.sep}`) ||
         path.isAbsolute(relativePath)
-    ) {
+    );
+}
+
+function getPathInRootDir(directory: string, rootDir: string) {
+    const realRoot = getRealPath(rootDir);
+    const realRelativePath = path.relative(realRoot, getRealPath(directory));
+    if (isOutsideRoot(realRelativePath)) {
         throw new Error(`${directory} is outside server.swcOptions.rootDir ${rootDir}`);
     }
-    // Not '.': the @swc/cli watcher skips every path whose name starts with a dot.
+    const relativePath =
+        [path.relative(rootDir, directory), path.relative(realRoot, directory)].find(
+            (candidate) => !isOutsideRoot(candidate),
+        ) ?? realRelativePath;
+    // The @swc/cli watcher skips paths whose basename starts with a dot.
     return relativePath || process.cwd();
 }
 
@@ -47,7 +56,9 @@ export function getIgnoredGlobs(outputPath: string, ignoredGlobs: string[] = [])
     const cwdPattern = fastGlob.convertPathToPattern(process.cwd());
     const ignore = [
         ...ignoredGlobs.flatMap((pattern) =>
-            path.isAbsolute(pattern) ? [pattern] : [pattern, `${cwdPattern}/${pattern}`],
+            path.isAbsolute(pattern)
+                ? [pattern, path.relative(cwdPattern, pattern).split(path.sep).join('/')]
+                : [pattern, `${cwdPattern}/${pattern}`],
         ),
         ...directoryGlobs(outputPath),
     ];
@@ -56,7 +67,6 @@ export function getIgnoredGlobs(outputPath: string, ignoredGlobs: string[] = [])
 
 export function getSwcCliSourceOptions(directoriesToCompile: string[], rootDir?: string) {
     return {
-        // Relative to rootDir, the working directory by then: a symlinked rootDir would not match its real path.
         filenames: rootDir
             ? directoriesToCompile.map((directory) => getPathInRootDir(directory, rootDir))
             : directoriesToCompile,

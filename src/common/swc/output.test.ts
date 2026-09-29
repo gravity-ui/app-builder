@@ -60,12 +60,14 @@ describe('SWC server output', () => {
         directFile = false,
         rootIsSource = false,
         legacyPaths = false,
+        absoluteIgnore = false,
     }: {
         copyFiles: boolean;
         watch?: boolean;
         directFile?: boolean;
         rootIsSource?: boolean;
         legacyPaths?: boolean;
+        absoluteIgnore?: boolean;
     }) {
         process.chdir(root);
         const additionalPaths = [];
@@ -84,13 +86,14 @@ describe('SWC server output', () => {
             ? undefined
             : path.join(root, rootIsSource ? 'src/server' : 'src');
         const outputPath = path.join(root, 'src/server/dist');
+        const ignoredFile = rootIsSource ? 'ignored.json' : '**/ignored.json';
         const {sourceOptions} = await loadSwcCli(
             directFile ? [path.join(root, 'src/server/data.json')] : directoriesToCompile,
             {
                 rootDir,
                 outputPath,
                 ignore: [
-                    rootIsSource ? 'ignored.json' : '**/ignored.json',
+                    absoluteIgnore ? path.join(root, 'src/server/ignored.json') : ignoredFile,
                     '**/tsconfig*.json',
                     '**/fixtures/**',
                 ],
@@ -101,7 +104,8 @@ describe('SWC server output', () => {
             outDir: outputPath,
             copyFiles,
             watch,
-            sync: true,
+            sync: false,
+            workers: 2,
         };
         const child = spawn(
             process.execPath,
@@ -295,6 +299,56 @@ describe('SWC server output', () => {
             await waitFor(() => fs.readFileSync(kept, 'utf8').includes('value = 2'));
             await new Promise((resolve) => setTimeout(resolve, 100));
             expect(fs.existsSync(skipped)).toBe(false);
+            expect(run.errors()).toBe('');
+        } finally {
+            run.child.kill();
+            await run.exited;
+        }
+    }, 10000);
+
+    it('preserves logical source paths inside a symlinked rootDir', async () => {
+        const source = path.join(root, 'src');
+        const alias = path.join(root, 'alias');
+        await fs.promises.rename(path.join(source, 'server'), path.join(source, 'backend'));
+        await fs.promises.symlink(path.join(source, 'backend'), path.join(source, 'server'));
+        await fs.promises.symlink(source, alias);
+        expect(getSwcCliSourceOptions([path.join(source, 'server')], alias).filenames).toEqual([
+            'server',
+        ]);
+        expect(getSwcCliSourceOptions([path.join(alias, 'server')], alias).filenames).toEqual([
+            'server',
+        ]);
+        const run = await start({copyFiles: true});
+        try {
+            expect(await run.exited).toEqual([0, null]);
+            expect(fs.existsSync(path.join(run.outputPath, 'server/index.js'))).toBe(true);
+            expect(fs.existsSync(path.join(run.outputPath, 'backend/index.js'))).toBe(false);
+            expect(run.errors()).toBe('');
+        } finally {
+            if (run.child.exitCode === null) {
+                run.child.kill();
+                await run.exited;
+            }
+        }
+    });
+
+    it('honors absolute ignores for direct files and watch updates', async () => {
+        const run = await start({copyFiles: true, watch: true, absoluteIgnore: true});
+        try {
+            await waitFor(() => run.messages.some((message) => message.type === 'ready'));
+            const ignored = path.join(run.outputPath, 'server/ignored.json');
+            expect(fs.existsSync(ignored)).toBe(false);
+            await fs.promises.writeFile(
+                path.join(root, 'src/server/ignored.json'),
+                '{"changed":true}',
+            );
+            await fs.promises.writeFile(path.join(root, 'src/server/data.json'), '{"count":5}');
+            await waitFor(() =>
+                fs
+                    .readFileSync(path.join(run.outputPath, 'server/data.json'), 'utf8')
+                    .includes('5'),
+            );
+            expect(fs.existsSync(ignored)).toBe(false);
             expect(run.errors()).toBe('');
         } finally {
             run.child.kill();
