@@ -1,8 +1,7 @@
 import type {Logger} from '../logger/index.js';
 import {elapsedTime} from '../logger/pretty-time.js';
 import type {ServerConfig} from '../models/index.js';
-import {copyFiles} from './copy.js';
-import {getIgnoredGlobs, getSwcOptions, loadSwcCli} from './utils.js';
+import {getSwcOptions, loadSwcCli} from './utils.js';
 import type {GetSwcOptionsParams} from './utils.js';
 
 type SwcCompileOptions = NonNullable<ServerConfig['swcOptions']> &
@@ -20,7 +19,8 @@ export async function compile({
     exclude,
     publicPath,
     rootDir,
-    copyExtensions,
+    copyFiles,
+    ignore: ignoredGlobs = [],
 }: SwcCompileOptions): Promise<void> {
     const start = process.hrtime.bigint();
     logger.message('Start compilation');
@@ -32,28 +32,19 @@ export async function compile({
         publicPath,
     });
 
-    const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, rootDir);
-    const ignore = await getIgnoredGlobs(sourceOptions.filenames, swcOptions.exclude, outputPath);
+    const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, {
+        rootDir,
+        outputPath,
+        exclude: swcOptions.exclude,
+        ignore: ignoredGlobs,
+    });
     const cliOptions = {
         ...sourceOptions,
-        ignore,
+        copyFiles: copyFiles ?? false,
         outDir: outputPath,
         watch: false,
         sync: false,
     };
-
-    if (copyExtensions?.length) {
-        await copyFiles(
-            {
-                ...sourceOptions,
-                extensions: copyExtensions,
-                exclude: swcOptions.exclude,
-                ignore,
-                outputPath,
-            },
-            logger,
-        );
-    }
 
     return new Promise((resolve, reject) => {
         const callbacks = {

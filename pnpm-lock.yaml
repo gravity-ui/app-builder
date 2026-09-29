@@ -185,6 +185,9 @@ importers:
       mime-types:
         specifier: ^2.1.35
         version: 2.1.35
+      minimatch:
+        specifier: ^9.0.9
+        version: 9.0.9
       mini-css-extract-plugin:
         specifier: ^2.9.1
         version: 2.10.2(webpack@5.95.0(@swc/core@1.16.1))
