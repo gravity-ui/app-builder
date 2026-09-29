@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.53.5](https://github.com/gravity-ui/app-builder/compare/v0.53.4...v0.53.5) (2026-09-29)
+
+
+### Bug Fixes
+
+* respect explicit class field settings in the SWC server compiler ([#369](https://github.com/gravity-ui/app-builder/issues/369)) ([a19d1b8](https://github.com/gravity-ui/app-builder/commit/a19d1b8438957c2d6a6b3c3d6c36e976febf5bb6))
+
 ## [0.53.4](https://github.com/gravity-ui/app-builder/compare/v0.53.3...v0.53.4) (2026-09-29)
 
 
