@@ -40,8 +40,20 @@ function getPathInRootDir(directory: string, rootDir: string) {
 }
 
 function isIgnored(file: string, ignore: string[]) {
-    const normalized = file.split(path.sep).join('/');
-    return ignore.some((pattern) => minimatch(normalized, pattern));
+    let current = path.posix.normalize(file.split(path.sep).join('/'));
+    while (current) {
+        for (const pattern of ignore) {
+            if (minimatch(current, pattern)) {
+                return true;
+            }
+        }
+        const parent = path.posix.dirname(current);
+        if (parent === current) {
+            break;
+        }
+        current = parent;
+    }
+    return false;
 }
 
 function directoryGlobs(directory: string) {
@@ -71,7 +83,8 @@ export function getIgnoredGlobs(outputPath: string, ignoredGlobs: string[] = [])
                     `server.swcOptions.ignore must contain relative globs without negation or parent traversal: ${pattern}`,
                 );
             }
-            return [normalized, `${cwdPattern}/${normalized}`];
+            const relativePattern = normalized.replace(/\/+$/, '');
+            return [relativePattern, `${cwdPattern}/${relativePattern}`];
         }),
         ...directoryGlobs(outputPath),
     ];

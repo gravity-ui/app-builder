@@ -24,7 +24,11 @@ describe('SWC server output', () => {
                     module: 'commonjs',
                     target: 'es2019',
                     esModuleInterop: true,
-                    paths: {'shared/*': ['../shared/*'], ignored: ['./ignored.json']},
+                    paths: {
+                        'shared/*': ['../shared/*'],
+                        ignored: ['./ignored.json'],
+                        fixture: ['./fixtures/skipped.json'],
+                    },
                 },
             }),
             'src/server/index.ts': [
@@ -61,6 +65,7 @@ describe('SWC server output', () => {
         rootIsSource = false,
         legacyPaths = false,
         ignorePattern,
+        fixturesPattern = '**/fixtures/**',
     }: {
         copyFiles: boolean;
         watch?: boolean;
@@ -68,6 +73,7 @@ describe('SWC server output', () => {
         rootIsSource?: boolean;
         legacyPaths?: boolean;
         ignorePattern?: string;
+        fixturesPattern?: string;
     }) {
         process.chdir(root);
         const additionalPaths = [];
@@ -92,7 +98,7 @@ describe('SWC server output', () => {
             {
                 rootDir,
                 outputPath,
-                ignore: [ignorePattern ?? ignoredFile, '**/tsconfig*.json', '**/fixtures/**'],
+                ignore: [ignorePattern ?? ignoredFile, '**/tsconfig*.json', fixturesPattern],
             },
         );
         const cliOptions = {
@@ -357,6 +363,37 @@ describe('SWC server output', () => {
                         .includes('5'),
                 );
                 expect(fs.existsSync(ignored)).toBe(false);
+                expect(run.errors()).toBe('');
+            } finally {
+                run.child.kill();
+                await run.exited;
+            }
+        },
+        10000,
+    );
+
+    it.each(['**/fixtures', 'server/fixtures/'])(
+        'excludes directory %s with an explicit file alias during build and watch',
+        async (fixturesPattern) => {
+            const run = await start({copyFiles: true, watch: true, fixturesPattern});
+            try {
+                await waitFor(() => run.messages.some((message) => message.type === 'ready'));
+                const output = path.join(run.outputPath, 'server');
+                expect(fs.existsSync(path.join(output, 'fixtures'))).toBe(false);
+                await fs.promises.writeFile(
+                    path.join(root, 'src/server/fixtures/skipped.json'),
+                    '{"changed":true}',
+                );
+                await fs.promises.writeFile(
+                    path.join(root, 'src/server/fixtures/added.ts'),
+                    'export const value = 1;',
+                );
+                await fs.promises.writeFile(path.join(root, 'src/server/data.json'), '{"count":5}');
+                await waitFor(() =>
+                    fs.readFileSync(path.join(output, 'data.json'), 'utf8').includes('5'),
+                );
+                await new Promise((resolve) => setTimeout(resolve, 100));
+                expect(fs.existsSync(path.join(output, 'fixtures'))).toBe(false);
                 expect(run.errors()).toBe('');
             } finally {
                 run.child.kill();
