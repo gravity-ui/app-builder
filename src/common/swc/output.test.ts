@@ -6,9 +6,14 @@ import * as os from 'node:os';
 import path from 'node:path';
 import {jest} from '@jest/globals';
 
+import {Logger} from '../logger/index.js';
+import {compile} from './compile.js';
 import {getIgnoredGlobs, getSwcCliSourceOptions, getSwcOptions, loadSwcCli} from './utils.js';
 
 const require = createRequire(path.join(process.cwd(), 'package.json'));
+jest.unstable_mockModule('@swc/cli', () => ({
+    swcDir: async () => {},
+}));
 
 describe('SWC server output', () => {
     const cwd = process.cwd();
@@ -38,7 +43,6 @@ describe('SWC server output', () => {
             ].join('\n'),
             'src/server/data.json': JSON.stringify({count: 2}),
             'src/server/fixtures/skipped.json': '{}',
-            'src/server/regex-only/keep.ts': 'export const value = 1;',
             'src/server/styles.css': 'body {}',
             'src/server/ignored.json': '{}',
             'src/shared/value.ts': 'export const value = 1;',
@@ -82,9 +86,10 @@ describe('SWC server output', () => {
         } else if (!rootIsSource) {
             additionalPaths.push('src/shared');
         }
+        const exclude = legacyPaths ? ['^extras/skip[.]ts$'] : undefined;
         const {swcOptions, directoriesToCompile} = getSwcOptions({
             projectPath: path.join(root, 'src/server'),
-            exclude: ['/regex-only/$', ...(legacyPaths ? ['^extras/skip[.]ts$'] : [])],
+            exclude,
             additionalPaths,
             publicPath: '/build/',
         });
@@ -98,6 +103,7 @@ describe('SWC server output', () => {
             {
                 rootDir,
                 outputPath,
+                exclude,
                 ignore: [ignorePattern ?? ignoredFile, '**/tsconfig*.json', fixturesPattern],
             },
         );
@@ -167,6 +173,7 @@ describe('SWC server output', () => {
                 'ignored.json',
                 'tsconfig.json',
                 'dist/old.json',
+                '.cache/old.json',
             ]) {
                 expect(fs.existsSync(path.join(run.outputPath, 'server', file))).toBe(false);
             }
@@ -178,35 +185,19 @@ describe('SWC server output', () => {
         }
     });
 
-    it.each([false, true])(
-        'leaves directory-only regex exclusions to SWC with watch: %s',
-        async (watch) => {
-            const run = await start({copyFiles: true, watch});
-            try {
-                if (watch) {
-                    await waitFor(() => run.messages.some((message) => message.type === 'ready'));
-                } else {
-                    expect(await run.exited).toEqual([0, null]);
-                }
-                const output = path.join(run.outputPath, 'server/regex-only/keep.js');
-                expect(fs.readFileSync(output, 'utf8')).toContain('value = 1');
-                if (watch) {
-                    await fs.promises.writeFile(
-                        path.join(root, 'src/server/regex-only/keep.ts'),
-                        'export const value = 2;',
-                    );
-                    await waitFor(() => fs.readFileSync(output, 'utf8').includes('value = 2'));
-                }
-                expect(run.errors()).toBe('');
-            } finally {
-                if (run.child.exitCode === null) {
-                    run.child.kill();
-                    await run.exited;
-                }
-            }
-        },
-        10000,
-    );
+    it('rejects a build without compiled server files', async () => {
+        process.chdir(root);
+        await expect(
+            compile({
+                projectPath: path.join(root, 'src/server'),
+                outputPath: path.join(root, 'dist'),
+                rootDir: path.join(root, 'src'),
+                ignore: ['**'],
+                publicPath: '/build/',
+                logger: new Logger('test'),
+            }),
+        ).rejects.toThrow('No server files were compiled');
+    });
 
     it('copies a file used directly as a paths target', async () => {
         const run = await start({copyFiles: true, directFile: true});
@@ -411,6 +402,16 @@ describe('SWC server output', () => {
             );
         },
     );
+
+    it('rejects regex exclusions with rootDir', async () => {
+        await expect(
+            loadSwcCli([path.join(root, 'src/server')], {
+                rootDir: path.join(root, 'src'),
+                outputPath: path.join(root, 'dist'),
+                exclude: '^server/skip[.]ts$',
+            }),
+        ).rejects.toThrow('exclude cannot be combined with rootDir');
+    });
 
     it('rejects a rootDir source on another Windows drive', () => {
         const relative = jest.spyOn(path, 'relative').mockImplementation(path.win32.relative);

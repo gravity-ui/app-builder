@@ -24,10 +24,10 @@ const [{Logger}, {compile}] = await Promise.all([
 
 const logger = new Logger('server', ${config.verbose});
 await compile({
+    ...${JSON.stringify(config.server.swcOptions ?? {})},
     logger,
     outputPath: ${JSON.stringify(paths.appDist)},
     projectPath: ${JSON.stringify(paths.appServer)},
-    ...${JSON.stringify(config.server.swcOptions ?? {})},
     publicPath: ${JSON.stringify(config.client.browserPublicPath)},
 });
 })();`;

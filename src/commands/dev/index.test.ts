@@ -12,7 +12,7 @@ const stopServer = jest.fn<() => Promise<void>>();
 const stopClient = jest.fn<() => Promise<void>>();
 const onExit = jest.fn<(callback: () => void) => void>();
 let onServerMessage: (message: {type: string}) => void;
-let onCompilerExit: () => void;
+let onCompilerExit: (code: number | null) => void;
 let onClientCompiled: () => void;
 
 jest.unstable_mockModule('nodemon', () => ({default: nodemon}));
@@ -24,7 +24,7 @@ jest.unstable_mockModule('../../common/utils.js', () => ({
     getAppRunPath: () => '/nonexistent-app-builder-test/run',
 }));
 jest.unstable_mockModule('../../common/logger/index.js', () => ({
-    default: {message: jest.fn(), warning: jest.fn(), success: jest.fn()},
+    default: {message: jest.fn(), warning: jest.fn(), success: jest.fn(), error: jest.fn()},
 }));
 jest.unstable_mockModule('./server.js', () => ({
     watchServerCompilation: async () => ({
@@ -106,11 +106,19 @@ it.each(['loading', 'running', 'waiting'])(
 
 it('skips an already exited compiler', async () => {
     await startApplication();
-    onCompilerExit();
+    onCompilerExit(0);
     monitor.emit('quit');
     monitor.emit('exit');
     await expectExitCount(1);
     expect(stopServer).not.toHaveBeenCalled();
+});
+
+it('stops dev when the server compiler exits before emitting files', async () => {
+    await dev(config);
+    onCompilerExit(1);
+    await expectExitCount(1);
+    expect(nodemon).not.toHaveBeenCalled();
+    expect(stopClient).toHaveBeenCalledTimes(1);
 });
 
 it.each([

@@ -35,6 +35,7 @@ export async function compile({
     const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, {
         rootDir,
         outputPath,
+        exclude,
         ignore: ignoredGlobs,
     });
     const cliOptions = {
@@ -47,7 +48,11 @@ export async function compile({
 
     return new Promise((resolve, reject) => {
         const callbacks = {
-            onSuccess: (_result: any) => {
+            onSuccess: (result: any) => {
+                if (!result.compiled) {
+                    reject(new Error('No server files were compiled'));
+                    return;
+                }
                 logger.success(`Compiled successfully in ${elapsedTime(start)}`);
                 resolve();
             },
@@ -68,7 +73,7 @@ export async function compile({
                 cliOptions,
                 swcOptions,
                 callbacks,
-            });
+            }).then(() => reject(new Error('No server files were compiled')), reject);
         } catch (error) {
             logger.error(`Failed to start compilation: ${error}`);
             reject(error);

@@ -106,13 +106,20 @@ export async function loadSwcCli(
     {
         rootDir,
         outputPath,
+        exclude,
         ignore: ignoredGlobs,
     }: {
         rootDir?: string;
         outputPath: string;
+        exclude?: string | string[];
         ignore?: string[];
     },
 ) {
+    if (rootDir && (Array.isArray(exclude) ? exclude.length > 0 : Boolean(exclude))) {
+        throw new Error(
+            'server.swcOptions.exclude cannot be combined with rootDir; use ignore instead',
+        );
+    }
     const sourceDirectories = rootDir
         ? directoriesToCompile.map((directory) => path.resolve(directory))
         : directoriesToCompile;

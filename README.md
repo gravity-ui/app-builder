@@ -186,10 +186,10 @@ All server settings are used only in dev mode:
   Default is `'typescript'`. Set to `'swc'` for faster compilation with SWC.
 - `swcOptions` — options of the `'swc'` compiler:
   - `additionalPaths` (`string[]`) — extra directories to compile.
-  - `exclude` (`string | string[]`) — regular expressions of source files to skip during compilation. SWC can pass absolute filenames to these expressions in watch mode; use `ignore` for consistent build/watch exclusions and copied files.
+  - `exclude` (`string | string[]`) — regular expressions of source files to skip during compilation. SWC can pass absolute filenames to these expressions in watch mode. Cannot be combined with `rootDir`; use `ignore` for build/watch exclusions and copied files.
   - `rootDir` (`string`) — keep compiled files at their path relative to this directory, as `tsc` does with `rootDir`.
     Set it when the server imports code outside `src/server` through tsconfig `paths`: by default only the first path segment is stripped, and relative imports between such directories break.
-    Every compiled directory must be inside it. Setting `rootDir` changes SWC’s working directory; a `.swcrc` above it may no longer be discovered.
+    Every compiled directory must be inside it. Set `server.outputPath` if this moves the server entrypoint inside `dist`. Setting `rootDir` changes SWC’s working directory; a `.swcrc` above it may no longer be discovered.
   - `copyFiles` (`boolean`) — copy noncompiled files beside the compiled code, including JSON and CSS. Hidden files and directories are skipped. Default is `false`. In watch mode, added and modified files are copied and deleted files are removed.
   - `ignore` (`string[]`) — glob patterns passed to SWC to skip compilation, copying, and watching, e.g. `['**/fixtures/**', '**/tsconfig*.json']`. Patterns are relative to `rootDir` when set, or the project directory otherwise. Absolute patterns, parent traversal (`..`), and leading negation (`!`) are not supported.
 - `outputPath` (`string`) — custom output path for compiled server code relative to `dist` directory.

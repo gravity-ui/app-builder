@@ -35,6 +35,7 @@ export async function watch(
     const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, {
         rootDir,
         outputPath,
+        exclude,
         ignore: ignoredGlobs,
     });
     const cliOptions = {
@@ -46,8 +47,13 @@ export async function watch(
         logWatchCompilation: true,
     };
 
+    let compiled = false;
+    let failed = false;
     const callbacks = {
         onSuccess: (result: any) => {
+            if (result.compiled) {
+                compiled = true;
+            }
             if (result.filename) {
                 const action = result.copied ? 'copied' : 'compiled';
                 logger.message(`Successfully ${action} ${result.filename} in ${result.duration}ms`);
@@ -56,9 +62,12 @@ export async function watch(
                     `Successfully compiled ${result.compiled || 0} files and copied ${result.copied || 0} files in ${result.duration}ms`,
                 );
             }
-            onAfterFilesEmitted?.();
+            if (compiled) {
+                onAfterFilesEmitted?.();
+            }
         },
         onFail: (result: any) => {
+            failed = true;
             logger.error(`Compilation failed in ${result.duration}ms`);
             if (result.reasons) {
                 for (const [filename, error] of result.reasons) {
@@ -71,9 +80,12 @@ export async function watch(
         },
     };
 
-    swcDir({
+    await swcDir({
         cliOptions,
         swcOptions,
         callbacks,
     });
+    if (!compiled && !failed) {
+        throw new Error('No server files were compiled');
+    }
 }

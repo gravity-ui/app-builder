@@ -59,12 +59,12 @@ const logger = new Logger('server', ${config.verbose});
 await watch(
     ${JSON.stringify(paths.appServer)},
     {
+        ...${JSON.stringify(config.server.swcOptions ?? {})},
         outputPath: ${JSON.stringify(paths.appDist)},
         logger,
         onAfterFilesEmitted: () => {
             process.send({type: 'Emitted'});
         },
-        ...${JSON.stringify(config.server.swcOptions ?? {})},
         publicPath: ${JSON.stringify(config.client.browserPublicPath)},
     }
 );
