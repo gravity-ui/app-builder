@@ -4,6 +4,7 @@ import {pathToFileURL} from 'node:url';
 
 import {ControllableScript} from '../../../common/child-process/controllable-script.js';
 import paths from '../../../common/paths.js';
+import {pickSwcOptions} from '../../../common/swc/options.js';
 import {createRunFolder} from '../../../common/utils.js';
 
 import type {NormalizedServiceConfig} from '../../../common/models/index.js';
@@ -24,7 +25,7 @@ const [{Logger}, {compile}] = await Promise.all([
 
 const logger = new Logger('server', ${config.verbose});
 await compile({
-    ...${JSON.stringify(config.server.swcOptions ?? {})},
+    ...${JSON.stringify(pickSwcOptions(config.server.swcOptions))},
     logger,
     outputPath: ${JSON.stringify(paths.appDist)},
     projectPath: ${JSON.stringify(paths.appServer)},
