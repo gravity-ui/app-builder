@@ -25,14 +25,15 @@ export async function watch(
     }: SwcWatchOptions,
 ) {
     logger.message('Start compilation in watch mode');
-    const {swcOptions, directoriesToCompile} = getSwcOptions({
+    const {swcOptions: projectSwcOptions, directoriesToCompile} = getSwcOptions({
         projectPath,
         additionalPaths,
         exclude,
         publicPath,
     });
 
-    const {swcDir, sourceOptions} = await loadSwcCli(directoriesToCompile, {
+    const {swcDir, sourceOptions, swcOptions} = await loadSwcCli(directoriesToCompile, {
+        swcOptions: projectSwcOptions,
         rootDir,
         outputPath,
         exclude,

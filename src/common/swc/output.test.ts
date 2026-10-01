@@ -86,7 +86,7 @@ describe('SWC server output', () => {
             additionalPaths.push('src/shared');
         }
         const exclude = legacyPaths ? ['^extras/skip[.]ts$'] : undefined;
-        const {swcOptions, directoriesToCompile} = getSwcOptions({
+        const {swcOptions: projectSwcOptions, directoriesToCompile} = getSwcOptions({
             projectPath: path.join(root, 'src/server'),
             exclude,
             additionalPaths,
@@ -97,7 +97,8 @@ describe('SWC server output', () => {
             : path.join(root, rootIsSource ? 'src/server' : 'src');
         const outputPath = path.join(root, 'src/server/dist');
         const ignoredFile = rootIsSource ? 'ignored.json' : '**/ignored.json';
-        const {sourceOptions} = await loadSwcCli(directoriesToCompile, {
+        const {sourceOptions, swcOptions} = await loadSwcCli(directoriesToCompile, {
+            swcOptions: projectSwcOptions,
             rootDir,
             outputPath,
             exclude,
@@ -157,7 +158,7 @@ describe('SWC server output', () => {
     it.each([false, true])('keeps the layout with copyFiles: %s', async (copyFiles) => {
         const run = await start({copyFiles});
         try {
-            expect(run.sourceOptions.filenames).toContain('server/data.json');
+            expect(run.sourceOptions.filenames).toContain(path.join(root, 'src/server/data.json'));
             expect(await run.exited).toEqual([0, null]);
             expect(run.errors()).toBe('');
             const output = fs.readFileSync(path.join(run.outputPath, 'server/index.js'), 'utf8');
@@ -184,6 +185,74 @@ describe('SWC server output', () => {
                 await run.exited;
             }
         }
+    });
+
+    it('skips declaration files from tsconfig paths', async () => {
+        const store = path.join(root, 'store/node_modules/@example/tools');
+        await fs.promises.mkdir(path.join(store, 'types/schemas'), {recursive: true});
+        await fs.promises.writeFile(
+            path.join(store, 'types/schemas/index.d.ts'),
+            'export type Schema = {name: string};',
+        );
+        const modules = path.join(root, 'src/shared/node_modules/@example');
+        await fs.promises.mkdir(modules, {recursive: true});
+        await fs.promises.symlink(store, path.join(modules, 'tools'));
+        await fs.promises.writeFile(
+            path.join(root, 'src/server/tsconfig.json'),
+            JSON.stringify({
+                compilerOptions: {
+                    module: 'commonjs',
+                    paths: {
+                        'shared/*': ['../shared/*'],
+                        '@example/tools/schemas': [
+                            '../shared/node_modules/@example/tools/types/schemas/index.d.ts',
+                        ],
+                    },
+                },
+            }),
+        );
+        await fs.promises.writeFile(
+            path.join(root, 'src/server/index.ts'),
+            [
+                "import type {Schema} from '@example/tools/schemas';",
+                "import {value} from 'shared/value';",
+                'export const schema: Schema = {name: String(value)};',
+            ].join('\n'),
+        );
+        const run = await start({copyFiles: false});
+        expect(await run.exited).toEqual([0, null]);
+        expect(run.errors()).toBe('');
+        expect(fs.existsSync(path.join(run.outputPath, 'server/index.js'))).toBe(true);
+    });
+
+    it('skips ignored inputs before checking that they are inside rootDir', async () => {
+        const external = path.join(root, 'external');
+        await fs.promises.mkdir(external);
+        await fs.promises.writeFile(path.join(external, 'file.ts'), 'export const value = 1;');
+        await fs.promises.symlink(external, path.join(root, 'src/excluded'));
+        process.chdir(root);
+        const load = (ignore: string[]) =>
+            loadSwcCli([path.join(root, 'src/server'), path.join(root, 'src/excluded/file.ts')], {
+                swcOptions: {},
+                rootDir: path.join(root, 'src'),
+                outputPath: path.join(root, 'dist'),
+                ignore,
+            });
+        const {sourceOptions} = await load(['excluded/**']);
+        expect(sourceOptions.filenames).toEqual([path.join(root, 'src/server')]);
+        process.chdir(root);
+        await expect(load([])).rejects.toThrow('is outside server.swcOptions.rootDir');
+    });
+
+    it('keeps the project directory as the SWC config root', async () => {
+        process.chdir(root);
+        const {swcOptions} = await loadSwcCli([path.join(root, 'src/server')], {
+            swcOptions: {minify: true},
+            rootDir: path.join(root, 'src'),
+            outputPath: path.join(root, 'dist'),
+        });
+        expect(process.cwd()).toBe(path.join(root, 'src'));
+        expect(swcOptions).toMatchObject({minify: true, root});
     });
 
     it('rejects a build without compiled server files', async () => {
@@ -320,10 +389,10 @@ describe('SWC server output', () => {
         await fs.promises.symlink(path.join(source, 'backend'), path.join(source, 'server'));
         await fs.promises.symlink(source, alias);
         expect(getSwcCliSourceOptions([path.join(source, 'server')], alias).filenames).toEqual([
-            'server',
+            path.join(source, 'server'),
         ]);
         expect(getSwcCliSourceOptions([path.join(alias, 'server')], alias).filenames).toEqual([
-            'server',
+            path.join(source, 'server'),
         ]);
         const run = await start({copyFiles: true});
         try {
@@ -351,6 +420,7 @@ describe('SWC server output', () => {
     it('rejects regex exclusions with rootDir', async () => {
         await expect(
             loadSwcCli([path.join(root, 'src/server')], {
+                swcOptions: {},
                 rootDir: path.join(root, 'src'),
                 outputPath: path.join(root, 'dist'),
                 exclude: '^server/skip[.]ts$',
@@ -372,7 +442,7 @@ describe('SWC server output', () => {
     it('rejects directories outside rootDir and keeps rootDir itself', () => {
         expect(
             getSwcCliSourceOptions(['/app/src', '/app/src/server'], '/app/src').filenames,
-        ).toEqual([process.cwd(), 'server']);
+        ).toEqual(['/app/src', '/app/src/server']);
         expect(() => getSwcCliSourceOptions(['/app/lib'], '/app/src')).toThrow('/app/lib');
     });
 });
