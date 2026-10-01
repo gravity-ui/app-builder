@@ -512,6 +512,9 @@ export interface ServerConfig {
     swcOptions?: {
         additionalPaths?: string[];
         exclude?: string | string[];
+        rootDir?: string;
+        copyFiles?: boolean;
+        ignore?: string[];
     };
 
     /**

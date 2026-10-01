@@ -5,6 +5,7 @@ import {rimraf} from 'rimraf';
 
 import {ControllableScript} from '../../common/child-process/controllable-script.js';
 import paths from '../../common/paths.js';
+import {pickSwcOptions} from '../../common/swc/options.js';
 
 import type {NormalizedServiceConfig} from '../../common/models/index.js';
 
@@ -59,13 +60,12 @@ const logger = new Logger('server', ${config.verbose});
 await watch(
     ${JSON.stringify(paths.appServer)},
     {
+        ...${JSON.stringify(pickSwcOptions(config.server.swcOptions))},
         outputPath: ${JSON.stringify(paths.appDist)},
         logger,
         onAfterFilesEmitted: () => {
             process.send({type: 'Emitted'});
         },
-        additionalPaths: ${JSON.stringify(config.server.swcOptions?.additionalPaths)},
-        exclude: ${JSON.stringify(config.server.swcOptions?.exclude)},
         publicPath: ${JSON.stringify(config.client.browserPublicPath)},
     }
 );

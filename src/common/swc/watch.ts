@@ -1,14 +1,14 @@
 import type {Logger} from '../logger/index.js';
-// @ts-ignore @swc/cli is not typed
-import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils.js';
+import type {ServerConfig} from '../models/index.js';
+import {getSwcOptions, loadSwcCli} from './utils.js';
 import type {GetSwcOptionsParams} from './utils.js';
 
-type SwcWatchOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
-    outputPath: string;
-    logger: Logger;
-    onAfterFilesEmitted?: () => void;
-};
+type SwcWatchOptions = NonNullable<ServerConfig['swcOptions']> &
+    Pick<GetSwcOptionsParams, 'publicPath'> & {
+        outputPath: string;
+        logger: Logger;
+        onAfterFilesEmitted?: () => void;
+    };
 
 export async function watch(
     projectPath: string,
@@ -19,38 +19,56 @@ export async function watch(
         additionalPaths,
         exclude,
         publicPath,
+        rootDir,
+        copyFiles,
+        ignore: ignoredGlobs = [],
     }: SwcWatchOptions,
 ) {
     logger.message('Start compilation in watch mode');
-    const {swcOptions, directoriesToCompile} = getSwcOptions({
+    const {swcOptions: projectSwcOptions, directoriesToCompile} = getSwcOptions({
         projectPath,
         additionalPaths,
         exclude,
         publicPath,
     });
 
+    const {swcDir, sourceOptions, swcOptions} = await loadSwcCli(directoriesToCompile, {
+        swcOptions: projectSwcOptions,
+        rootDir,
+        outputPath,
+        exclude,
+        ignore: ignoredGlobs,
+    });
     const cliOptions = {
-        filenames: directoriesToCompile,
+        ...sourceOptions,
+        copyFiles: copyFiles ?? false,
         outDir: outputPath,
         watch: true,
-        extensions: EXTENSIONS_TO_COMPILE,
-        stripLeadingPaths: true,
         sync: false,
         logWatchCompilation: true,
     };
 
+    let compiled = false;
+    let failed = false;
     const callbacks = {
         onSuccess: (result: any) => {
+            if (result.compiled) {
+                compiled = true;
+            }
             if (result.filename) {
-                logger.message(`Successfully compiled ${result.filename} in ${result.duration}ms`);
+                const action = result.copied ? 'copied' : 'compiled';
+                logger.message(`Successfully ${action} ${result.filename} in ${result.duration}ms`);
             } else {
                 logger.message(
-                    `Successfully compiled ${result.compiled || 0} files in ${result.duration}ms`,
+                    `Successfully compiled ${result.compiled || 0} files and copied ${result.copied || 0} files in ${result.duration}ms`,
                 );
             }
-            onAfterFilesEmitted?.();
+            if (compiled) {
+                onAfterFilesEmitted?.();
+            }
         },
         onFail: (result: any) => {
+            failed = true;
             logger.error(`Compilation failed in ${result.duration}ms`);
             if (result.reasons) {
                 for (const [filename, error] of result.reasons) {
@@ -63,9 +81,12 @@ export async function watch(
         },
     };
 
-    swcDir({
+    await swcDir({
         cliOptions,
         swcOptions,
         callbacks,
     });
+    if (!compiled && !failed) {
+        throw new Error('No server files were compiled');
+    }
 }

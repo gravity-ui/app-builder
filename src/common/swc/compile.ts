@@ -1,15 +1,15 @@
 import type {Logger} from '../logger/index.js';
 import {elapsedTime} from '../logger/pretty-time.js';
-// @ts-ignore @swc/cli is not typed
-import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils.js';
+import type {ServerConfig} from '../models/index.js';
+import {getSwcOptions, loadSwcCli} from './utils.js';
 import type {GetSwcOptionsParams} from './utils.js';
 
-type SwcCompileOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
-    projectPath: string;
-    outputPath: string;
-    logger: Logger;
-};
+type SwcCompileOptions = NonNullable<ServerConfig['swcOptions']> &
+    Pick<GetSwcOptionsParams, 'publicPath'> & {
+        projectPath: string;
+        outputPath: string;
+        logger: Logger;
+    };
 
 export async function compile({
     projectPath,
@@ -18,29 +18,42 @@ export async function compile({
     additionalPaths,
     exclude,
     publicPath,
+    rootDir,
+    copyFiles,
+    ignore: ignoredGlobs = [],
 }: SwcCompileOptions): Promise<void> {
     const start = process.hrtime.bigint();
     logger.message('Start compilation');
 
-    const {swcOptions, directoriesToCompile} = getSwcOptions({
+    const {swcOptions: projectSwcOptions, directoriesToCompile} = getSwcOptions({
         projectPath,
         additionalPaths,
         exclude,
         publicPath,
     });
 
+    const {swcDir, sourceOptions, swcOptions} = await loadSwcCli(directoriesToCompile, {
+        swcOptions: projectSwcOptions,
+        rootDir,
+        outputPath,
+        exclude,
+        ignore: ignoredGlobs,
+    });
     const cliOptions = {
-        filenames: directoriesToCompile,
+        ...sourceOptions,
+        copyFiles: copyFiles ?? false,
         outDir: outputPath,
         watch: false,
-        extensions: EXTENSIONS_TO_COMPILE,
-        stripLeadingPaths: true,
         sync: false,
     };
 
     return new Promise((resolve, reject) => {
         const callbacks = {
-            onSuccess: (_result: any) => {
+            onSuccess: (result: any) => {
+                if (!result.compiled) {
+                    reject(new Error('No server files were compiled'));
+                    return;
+                }
                 logger.success(`Compiled successfully in ${elapsedTime(start)}`);
                 resolve();
             },
@@ -61,7 +74,7 @@ export async function compile({
                 cliOptions,
                 swcOptions,
                 callbacks,
-            });
+            }).then(() => reject(new Error('No server files were compiled')), reject);
         } catch (error) {
             logger.error(`Failed to start compilation: ${error}`);
             reject(error);
