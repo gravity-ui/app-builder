@@ -184,6 +184,9 @@ All server settings are used only in dev mode:
   If specified `true`, try to listen on `9229`.
 - `compiler` (`'typescript' | 'swc'`) — choose TypeScript compiler for server code compilation.
   Default is `'typescript'`. Set to `'swc'` for faster compilation with SWC.
+- `swcOptions.rootDir` (`string`) — same as `rootDir` in tsconfig: compiled files keep their path relative to it, so the output matches `tsc`. Needed when tsconfig `paths` point outside the project directory. Relative to the project directory; it must contain the project directory and all compiled sources. Set `server.outputPath` to the new location of the server entrypoint.
+- `swcOptions.copyFiles` (`boolean`) — copy files that SWC does not compile (e.g. imported JSON) to the output, as `tsc` does with `resolveJsonModule`.
+- `swcOptions.ignore` (`string[]`) — globs of files to skip in compilation, copying and watching, relative to the project directory. `**` does not cross `..`, so match directories outside the project with patterns like `../other/tests/**`.
 - `outputPath` (`string`) — custom output path for compiled server code relative to `dist` directory.
   Default: `server`. Use this when your `server` entrypoint changed from `dist/server` to a different location (e.g., `package/src/server` for path `dist/package/src/server` in monorepo setups).
 

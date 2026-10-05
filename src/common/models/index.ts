@@ -512,6 +512,12 @@ export interface ServerConfig {
     swcOptions?: {
         additionalPaths?: string[];
         exclude?: string | string[];
+        /** Same as tsc `rootDir`: output keeps paths relative to it. Relative to the project directory. */
+        rootDir?: string;
+        /** Copy non-compiled files (e.g. imported JSON) to the output, as tsc does with `resolveJsonModule`. */
+        copyFiles?: boolean;
+        /** Globs of files to skip in compilation, copying and watching. Relative to the project directory. */
+        ignore?: string[];
     };
 
     /**

@@ -21,6 +21,37 @@ function resolvePaths(paths: Record<string, string[]>, baseUrl: string) {
     return entries;
 }
 
+// SWC keeps output paths relative to cwd. With rootDir, shift outDir by cwd's place inside it to get tsc's layout.
+export function getOutputOptions(
+    outputPath: string,
+    directoriesToCompile: string[],
+    rootDir?: string,
+) {
+    if (!rootDir) {
+        return {outDir: outputPath, stripLeadingPaths: true};
+    }
+    const root = path.resolve(rootDir);
+    for (const dir of [process.cwd(), ...directoriesToCompile]) {
+        const relative = path.relative(root, path.resolve(dir));
+        if (
+            relative === '..' ||
+            relative.startsWith(`..${path.sep}`) ||
+            path.isAbsolute(relative)
+        ) {
+            throw new Error(`${dir} is outside server.swcOptions.rootDir ${root}`);
+        }
+    }
+    return {
+        outDir: path.join(outputPath, path.relative(root, process.cwd())),
+        stripLeadingPaths: false,
+    };
+}
+
+// @swc/cli matches ignore globs against cwd-relative paths when globbing and against absolute paths when watching.
+export function getIgnoreGlobs(ignore?: string[]) {
+    return ignore?.flatMap((pattern) => [pattern, path.resolve(pattern).split(path.sep).join('/')]);
+}
+
 export interface GetSwcOptionsParams {
     projectPath: string;
     filename?: string;

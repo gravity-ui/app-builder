@@ -2,10 +2,13 @@ import type {Logger} from '../logger/index.js';
 import {elapsedTime} from '../logger/pretty-time.js';
 // @ts-ignore @swc/cli is not typed
 import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils.js';
+import {EXTENSIONS_TO_COMPILE, getIgnoreGlobs, getOutputOptions, getSwcOptions} from './utils.js';
 import type {GetSwcOptionsParams} from './utils.js';
 
 type SwcCompileOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
+    rootDir?: string;
+    copyFiles?: boolean;
+    ignore?: string[];
     projectPath: string;
     outputPath: string;
     logger: Logger;
@@ -18,6 +21,9 @@ export async function compile({
     additionalPaths,
     exclude,
     publicPath,
+    rootDir,
+    copyFiles,
+    ignore,
 }: SwcCompileOptions): Promise<void> {
     const start = process.hrtime.bigint();
     logger.message('Start compilation');
@@ -31,10 +37,11 @@ export async function compile({
 
     const cliOptions = {
         filenames: directoriesToCompile,
-        outDir: outputPath,
+        ...getOutputOptions(outputPath, directoriesToCompile, rootDir),
+        copyFiles,
+        ignore: getIgnoreGlobs(ignore),
         watch: false,
         extensions: EXTENSIONS_TO_COMPILE,
-        stripLeadingPaths: true,
         sync: false,
     };
 

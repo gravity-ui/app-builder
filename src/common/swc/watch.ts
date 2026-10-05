@@ -1,10 +1,13 @@
 import type {Logger} from '../logger/index.js';
 // @ts-ignore @swc/cli is not typed
 import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils.js';
+import {EXTENSIONS_TO_COMPILE, getIgnoreGlobs, getOutputOptions, getSwcOptions} from './utils.js';
 import type {GetSwcOptionsParams} from './utils.js';
 
 type SwcWatchOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
+    rootDir?: string;
+    copyFiles?: boolean;
+    ignore?: string[];
     outputPath: string;
     logger: Logger;
     onAfterFilesEmitted?: () => void;
@@ -19,6 +22,9 @@ export async function watch(
         additionalPaths,
         exclude,
         publicPath,
+        rootDir,
+        copyFiles,
+        ignore,
     }: SwcWatchOptions,
 ) {
     logger.message('Start compilation in watch mode');
@@ -31,10 +37,11 @@ export async function watch(
 
     const cliOptions = {
         filenames: directoriesToCompile,
-        outDir: outputPath,
+        ...getOutputOptions(outputPath, directoriesToCompile, rootDir),
+        copyFiles,
+        ignore: getIgnoreGlobs(ignore),
         watch: true,
         extensions: EXTENSIONS_TO_COMPILE,
-        stripLeadingPaths: true,
         sync: false,
         logWatchCompilation: true,
     };
