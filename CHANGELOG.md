@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.54.0](https://github.com/gravity-ui/app-builder/compare/v0.53.5...v0.54.0) (2026-10-06)
+
+
+### Features
+
+* **swc:** add rootDir, copyFiles and ignore server options ([#376](https://github.com/gravity-ui/app-builder/issues/376)) ([d100aa3](https://github.com/gravity-ui/app-builder/commit/d100aa3e00d57c885be9929d6d21b7ae96a5e5c6))
+
 ## [0.53.5](https://github.com/gravity-ui/app-builder/compare/v0.53.4...v0.53.5) (2026-09-29)
 
 
