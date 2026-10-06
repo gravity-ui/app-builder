@@ -1,4 +1,6 @@
+import fs from 'fs';
 import path from 'path';
+import fastGlob from 'fast-glob';
 import {getTsconfig} from 'get-tsconfig';
 import {convertTsConfig} from 'tsconfig-to-swcconfig';
 
@@ -31,7 +33,7 @@ export function getOutputOptions(
         return {outDir: outputPath, stripLeadingPaths: true};
     }
     const root = path.resolve(rootDir);
-    for (const dir of [process.cwd(), ...directoriesToCompile]) {
+    for (const dir of [process.cwd(), ...directoriesToCompile.filter((d) => fs.existsSync(d))]) {
         const relative = path.relative(root, path.resolve(dir));
         if (
             relative === '..' ||
@@ -47,9 +49,19 @@ export function getOutputOptions(
     };
 }
 
-// @swc/cli matches ignore globs against cwd-relative paths when globbing and against absolute paths when watching.
-export function getIgnoreGlobs(ignore?: string[]) {
-    return ignore?.flatMap((pattern) => [pattern, path.resolve(pattern).split(path.sep).join('/')]);
+// @swc/cli matches ignore globs against cwd-relative paths when globbing and against absolute paths when
+// watching; absolute globs work in both. Package manifests and dependencies are never compiled or copied.
+export function getIgnoreGlobs(directoriesToCompile: string[], ignore: string[] = []) {
+    const cwd = fastGlob.convertPathToPattern(process.cwd());
+    return [
+        ...ignore.map((pattern) =>
+            path.posix.isAbsolute(pattern) ? pattern : path.posix.join(cwd, pattern),
+        ),
+        ...directoriesToCompile.flatMap((dir) => {
+            const base = fastGlob.convertPathToPattern(path.resolve(dir));
+            return [`${base}/**/node_modules/**`, `${base}/**/package.json`];
+        }),
+    ];
 }
 
 export interface GetSwcOptionsParams {

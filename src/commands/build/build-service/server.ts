@@ -27,11 +27,7 @@ await compile({
     logger,
     outputPath: ${JSON.stringify(paths.appDist)},
     projectPath: ${JSON.stringify(paths.appServer)},
-    additionalPaths: ${JSON.stringify(config.server.swcOptions?.additionalPaths)},
-    exclude: ${JSON.stringify(config.server.swcOptions?.exclude)},
-    rootDir: ${JSON.stringify(config.server.swcOptions?.rootDir)},
-    copyFiles: ${JSON.stringify(config.server.swcOptions?.copyFiles)},
-    ignore: ${JSON.stringify(config.server.swcOptions?.ignore)},
+    ...${JSON.stringify(config.server.swcOptions ?? {})},
     publicPath: ${JSON.stringify(config.client.browserPublicPath)},
 });
 })();`;

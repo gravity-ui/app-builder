@@ -169,17 +169,33 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
         client.verbose = userConfig.verbose;
 
         const serverConfig = typeof userConfig.server === 'object' ? userConfig.server : {};
+        const compiler = serverConfig.compiler || 'typescript';
+        const swcRootDir =
+            compiler === 'swc' && serverConfig.swcOptions?.rootDir
+                ? path.resolve(paths.app, serverConfig.swcOptions.rootDir)
+                : undefined;
+        const appInRootDir = swcRootDir && path.relative(swcRootDir, paths.app);
+        if (
+            appInRootDir &&
+            (appInRootDir.split(path.sep)[0] === '..' || path.isAbsolute(appInRootDir))
+        ) {
+            throw new Error(`server.swcOptions.rootDir ${swcRootDir} must contain ${paths.app}`);
+        }
         const server: NormalizedServerConfig = {
             ...serverConfig,
+            swcOptions: swcRootDir
+                ? {...serverConfig.swcOptions, rootDir: swcRootDir}
+                : serverConfig.swcOptions,
             watch: serverConfig.watch && remapPaths(serverConfig.watch),
             verbose: userConfig.verbose,
             port: undefined,
             inspect: undefined,
             inspectBrk: undefined,
-            compiler: serverConfig.compiler || 'typescript',
+            compiler,
             outputPath: path.resolve(
                 paths.appDist,
-                serverConfig.outputPath ? serverConfig.outputPath : 'server',
+                serverConfig.outputPath ||
+                    (swcRootDir ? path.relative(swcRootDir, paths.appServer) : 'server'),
             ),
         };
         if (mode === 'dev') {

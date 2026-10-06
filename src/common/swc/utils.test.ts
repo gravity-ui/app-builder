@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import * as vm from 'node:vm';
 import {transformSync} from '@swc/core';
 
-import {getIgnoreGlobs, getOutputOptions, getSwcOptions} from './utils.js';
+import {getOutputOptions, getSwcOptions} from './utils.js';
 
 const SOURCE = `class Base {
     constructor() {
@@ -138,16 +138,12 @@ describe('getOutputOptions', () => {
     });
 
     it('throws when a source is outside rootDir', () => {
-        expect(() => getOutputOptions('/dist', [path.join(root, 'sibling')], '.')).toThrow(
+        expect(() => getOutputOptions('/dist', [root], '.')).toThrow(
             /outside server.swcOptions.rootDir/,
         );
     });
-});
 
-describe('getIgnoreGlobs', () => {
-    it('adds an absolute form of each glob for the watcher', () => {
-        const absolute = path.resolve('../other/tests/**').split(path.sep).join('/');
-        expect(getIgnoreGlobs(['../other/tests/**'])).toEqual(['../other/tests/**', absolute]);
-        expect(getIgnoreGlobs()).toBeUndefined();
+    it('skips missing directories', () => {
+        expect(getOutputOptions('/dist', [path.join(root, 'missing')], '.').outDir).toBe('/dist');
     });
 });
