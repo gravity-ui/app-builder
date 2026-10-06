@@ -184,6 +184,9 @@ All server settings are used only in dev mode:
   If specified `true`, try to listen on `9229`.
 - `compiler` (`'typescript' | 'swc'`) — choose TypeScript compiler for server code compilation.
   Default is `'typescript'`. Set to `'swc'` for faster compilation with SWC.
+- `swcOptions.rootDir` (`string`) — like `rootDir` in tsconfig: compiled files keep their path relative to it, so the output matches `tsc`. Needed when tsconfig `paths` point outside the app. Relative to the app root (note that tsconfig `rootDir` is relative to the tsconfig file); it must contain the app root and all compiled directories. `outputPath` defaults to the server directory's path relative to `rootDir`. The application restarts only on changes in `outputPath`; add the output of other compiled directories to `watch`.
+- `swcOptions.copyFiles` (`boolean`) — copy every file SWC does not compile (JSON, but also e.g. `*.md` or `tsconfig.json`) from the compiled directories to the output; use `ignore` to skip unwanted ones. `package.json` and `node_modules` are never copied. Unlike `tsc`, files imported from outside the compiled directories (e.g. `../../package.json`) are not copied.
+- `swcOptions.ignore` (`string[]`) — globs of files to skip in compilation, copying and watching, relative to the app root. `**` does not cross `..`, so match directories outside the app with patterns like `../other/tests/**`. Applies to directories only: a tsconfig `paths` target that is a single file is always compiled.
 - `outputPath` (`string`) — custom output path for compiled server code relative to `dist` directory.
   Default: `server`. Use this when your `server` entrypoint changed from `dist/server` to a different location (e.g., `package/src/server` for path `dist/package/src/server` in monorepo setups).
 

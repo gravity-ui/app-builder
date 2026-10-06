@@ -512,6 +512,12 @@ export interface ServerConfig {
     swcOptions?: {
         additionalPaths?: string[];
         exclude?: string | string[];
+        /** Like tsc `rootDir`: output keeps paths relative to it. Relative to the app root. */
+        rootDir?: string;
+        /** Copy files SWC does not compile (e.g. imported JSON) to the output. */
+        copyFiles?: boolean;
+        /** Globs of files to skip in compilation, copying and watching. Relative to the app root. */
+        ignore?: string[];
     };
 
     /**

@@ -118,8 +118,12 @@ export default async function (config: NormalizedServiceConfig) {
     if (shouldCompileServer) {
         const {watchServerCompilation} = await import('./server.js');
         serverCompilation = await watchServerCompilation(config);
-        serverCompilation.onExit(() => {
+        serverCompilation.onExit((code) => {
             serverCompilation = undefined;
+            if (code && !serverCompiled && !shuttingDown) {
+                logger.error('Server compilation exited before emitting files');
+                shutdown('SIGTERM');
+            }
         });
         serverCompilation.onMessage((msg) => {
             if (typeof msg === 'object' && 'type' in msg && msg.type === 'Emitted') {

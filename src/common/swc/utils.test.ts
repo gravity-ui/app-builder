@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import * as vm from 'node:vm';
 import {transformSync} from '@swc/core';
 
-import {getSwcOptions} from './utils.js';
+import {getOutputOptions, getSwcOptions} from './utils.js';
 
 const SOURCE = `class Base {
     constructor() {
@@ -115,5 +115,35 @@ describe('getSwcOptions', () => {
         vm.runInNewContext(code, context);
 
         expect(new context.exports.Child().value).toBe('set by base');
+    });
+});
+
+describe('getOutputOptions', () => {
+    const cwd = process.cwd();
+    const root = path.dirname(cwd);
+
+    it('strips the leading path segment without rootDir', () => {
+        expect(getOutputOptions('/dist', [cwd])).toEqual({
+            outDir: '/dist',
+            stripLeadingPaths: true,
+        });
+    });
+
+    it('keeps paths relative to rootDir like tsc', () => {
+        const sibling = path.join(root, 'sibling/src');
+        expect(getOutputOptions('/dist', [cwd, sibling], '..')).toEqual({
+            outDir: path.join('/dist', path.basename(cwd)),
+            stripLeadingPaths: false,
+        });
+    });
+
+    it('throws when a source is outside rootDir', () => {
+        expect(() => getOutputOptions('/dist', [root], '.')).toThrow(
+            /outside server.swcOptions.rootDir/,
+        );
+    });
+
+    it('skips missing directories', () => {
+        expect(getOutputOptions('/dist', [path.join(root, 'missing')], '.').outDir).toBe('/dist');
     });
 });
