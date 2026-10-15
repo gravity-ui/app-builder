@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.55.0](https://github.com/gravity-ui/app-builder/compare/v0.54.0...v0.55.0) (2026-10-15)
+
+
+### Features
+
+* support custom dev middleware output file systems ([#379](https://github.com/gravity-ui/app-builder/issues/379)) ([883c2c7](https://github.com/gravity-ui/app-builder/commit/883c2c7410c0075a99217bc92d9b446909998cbf))
+
 ## [0.54.0](https://github.com/gravity-ui/app-builder/compare/v0.53.5...v0.54.0) (2026-10-06)
 
 
