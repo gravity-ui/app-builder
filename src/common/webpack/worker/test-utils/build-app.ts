@@ -10,7 +10,6 @@ import {WorkerPublicPathPlugin} from '../worker-public-path-plugin.js';
 // Jest does not provide `import.meta.dirname`, which @rspack/core 2 needs, so Rspack is loaded
 // by the Node.js loader instead of the Jest one (`createRequire` imported from `node:module`
 // is patched by Jest).
-// @ts-expect-error -- @types/node 18 does not know `process.getBuiltinModule` (Node.js 20.16+).
 const nodeRequire = process.getBuiltinModule('node:module').createRequire(import.meta.url);
 const {rspack}: typeof Rspack = nodeRequire('@rspack/core');
 
