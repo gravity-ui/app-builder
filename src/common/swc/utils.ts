@@ -1,5 +1,8 @@
+import fs from 'fs';
 import path from 'path';
-import {convert} from 'tsconfig-to-swcconfig';
+import fastGlob from 'fast-glob';
+import {getTsconfig} from 'get-tsconfig';
+import {convertTsConfig} from 'tsconfig-to-swcconfig';
 
 const DEFAULT_EXCLUDE = ['node_modules'];
 
@@ -20,6 +23,47 @@ function resolvePaths(paths: Record<string, string[]>, baseUrl: string) {
     return entries;
 }
 
+// SWC keeps output paths relative to cwd. With rootDir, shift outDir by cwd's place inside it to get tsc's layout.
+export function getOutputOptions(
+    outputPath: string,
+    directoriesToCompile: string[],
+    rootDir?: string,
+) {
+    if (!rootDir) {
+        return {outDir: outputPath, stripLeadingPaths: true};
+    }
+    const root = path.resolve(rootDir);
+    for (const dir of [process.cwd(), ...directoriesToCompile.filter((d) => fs.existsSync(d))]) {
+        const relative = path.relative(root, path.resolve(dir));
+        if (
+            relative === '..' ||
+            relative.startsWith(`..${path.sep}`) ||
+            path.isAbsolute(relative)
+        ) {
+            throw new Error(`${dir} is outside server.swcOptions.rootDir ${root}`);
+        }
+    }
+    return {
+        outDir: path.join(outputPath, path.relative(root, process.cwd())),
+        stripLeadingPaths: false,
+    };
+}
+
+// @swc/cli matches ignore globs against cwd-relative paths when globbing and against absolute paths when
+// watching; absolute globs work in both. Package manifests and dependencies are never compiled or copied.
+export function getIgnoreGlobs(directoriesToCompile: string[], ignore: string[] = []) {
+    const cwd = fastGlob.convertPathToPattern(process.cwd());
+    return [
+        ...ignore.map((pattern) =>
+            path.posix.isAbsolute(pattern) ? pattern : path.posix.join(cwd, pattern),
+        ),
+        ...directoriesToCompile.flatMap((dir) => {
+            const base = fastGlob.convertPathToPattern(path.resolve(dir));
+            return [`${base}/**/node_modules/**`, `${base}/**/package.json`];
+        }),
+    ];
+}
+
 export interface GetSwcOptionsParams {
     projectPath: string;
     filename?: string;
@@ -35,7 +79,8 @@ export function getSwcOptions({
     exclude,
     publicPath,
 }: GetSwcOptionsParams) {
-    const swcOptions = convert(filename, projectPath);
+    const compilerOptions = getTsconfig(projectPath, filename)?.config.compilerOptions ?? {};
+    const swcOptions = convertTsConfig(compilerOptions, undefined, projectPath);
     swcOptions.exclude = swcOptions.exclude || [];
     swcOptions.jsc = {
         ...swcOptions.jsc,
@@ -43,6 +88,8 @@ export function getSwcOptions({
         baseUrl: projectPath,
         transform: {
             ...swcOptions.jsc?.transform,
+            // TODO: tsconfig-to-swcconfig 2 drops this option; v3 maps it but needs Node 22 and @swc/core 1.16.2
+            useDefineForClassFields: compilerOptions.useDefineForClassFields ?? true,
             optimizer: {
                 ...swcOptions.jsc?.transform?.optimizer,
                 globals: {

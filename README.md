@@ -184,6 +184,9 @@ All server settings are used only in dev mode:
   If specified `true`, try to listen on `9229`.
 - `compiler` (`'typescript' | 'swc'`) — choose TypeScript compiler for server code compilation.
   Default is `'typescript'`. Set to `'swc'` for faster compilation with SWC.
+- `swcOptions.rootDir` (`string`) — like `rootDir` in tsconfig: compiled files keep their path relative to it, so the output matches `tsc`. Needed when tsconfig `paths` point outside the app. Relative to the app root (note that tsconfig `rootDir` is relative to the tsconfig file); it must contain the app root and all compiled directories. `outputPath` defaults to the server directory's path relative to `rootDir`. The application restarts only on changes in `outputPath`; add the output of other compiled directories to `watch`.
+- `swcOptions.copyFiles` (`boolean`) — copy every file SWC does not compile (JSON, but also e.g. `*.md` or `tsconfig.json`) from the compiled directories to the output; use `ignore` to skip unwanted ones. `package.json` and `node_modules` are never copied. Unlike `tsc`, files imported from outside the compiled directories (e.g. `../../package.json`) are not copied.
+- `swcOptions.ignore` (`string[]`) — globs of files to skip in compilation, copying and watching, relative to the app root. `**` does not cross `..`, so match directories outside the app with patterns like `../other/tests/**`. Applies to directories only: a tsconfig `paths` target that is a single file is always compiled.
 - `outputPath` (`string`) — custom output path for compiled server code relative to `dist` directory.
   Default: `server`. Use this when your `server` entrypoint changed from `dist/server` to a different location (e.g., `package/src/server` for path `dist/package/src/server` in monorepo setups).
 
@@ -266,6 +269,9 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 - `babel` (`(config: babel.TransformOptions, options: {configType: 'development' | 'production'; isSsr: boolean}) => babel.TransformOptions | Promise<babel.TransformOptions>`) - Allow override the default babel transform options.
 - `babelCacheDirectory` (`boolean | string`) — Set directory for babel-loader cache (`default: node_modules/.cache/babel-loader``)
 - `swc` (`(config: SwcConfig, options: {configType: 'development' | 'production'; isSsr: boolean}) => SwcConfig | Promise<SwcConfig>`) - Allow override the default swc configuration.
+
+  **Note**: if you add your own wasm plugins via `jsc.experimental.plugins`, their version must match the `swc_core` ABI of the bundler actually running the build — for `bundler: 'rspack'` that is the `swc_core` embedded in Rspack, not the `@swc/core` version. Use the [swc plugin compatibility table](https://plugins.swc.rs/) to pick a matching plugin version; a mismatched plugin fails to load at build time.
+
 - `webpack` (`(config: webpack.Configuration, options: {configType: 'development' | 'production'; isSsr: boolean}) => webpack.Configuration | Promise<webpack.Configuration>`) - Allow override the default webpack configuration.
 - `rspack` (`(config: rspack.Configuration, options: {configType: 'development' | 'production'; isSsr: boolean}) => rspack.Configuration | Promise<rspack.Configuration>`) - Allow override the default rspack configuration.
 - `ssr` - build SSR bundle. The SSR entries should be inside `src/ui/ssr` directory and match the client entries.
@@ -284,7 +290,8 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   - `webSocketClientPort` (`number`) - tells clients to connect to devServer using this port from a browser. Default is `${devServer.port}`
   - `type` (`'https'`) — allow to serve over HTTPS.
   - `options` (`import('https').ServerOptions`) — allow to provide your own certificate.
-  - `writeToDisk` (`boolean | (targetPath: string) => boolean`) — write dev middleware output to disk.
+  - `writeToDisk` (`boolean | (targetPath: string) => boolean`) — additionally write dev middleware output to disk; this does not replace its in-memory output file system.
+  - `outputFileSystem` — output file system used by dev middleware. Defaults to an in-memory file system. Pass the Node.js `fs` module to emit and serve dev assets directly from disk, without retaining them in memfs. Sourcemaps, HMR and lazy compilation remain configured as usual.
 
   Commonly used [webpack-dev-server](https://webpack.js.org/configuration/dev-server/) options:
 
@@ -297,11 +304,13 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   Example:
 
   ```typescript
+  import * as fs from 'node:fs';
   import {defineConfig} from '@gravity-ui/app-builder';
 
   export default defineConfig({
     client: {
       devServer: {
+        outputFileSystem: fs,
         port: true,
         host: 'localhost',
         historyApiFallback: true,
@@ -351,6 +360,19 @@ With this `{rootDir}/src/ui/tsconfig.json`:
     },
   });
   ```
+
+  For interactive analysis and the [Rsdoctor MCP server](https://rsdoctor.dev/guide/usage/mcp), set
+  `disableClientServer: false` and `output.mode: 'normal'`, then run:
+
+  ```sh
+  pnpm exec app-builder build --analyze-bundle rsdoctor --keep-alive
+  ```
+
+  The build-only `--keep-alive` flag (or `APP_BUILDER_KEEP_ALIVE=true`) lets active plugin services
+  keep the process running after a successful build. Stop it with Ctrl+C when finished. Without
+  the flag, app-builder exits after the build as before. Build failures still exit with an error.
+  Keep `CI` unset for interactive Rsdoctor runs; Rsdoctor disables its service in CI and disposes
+  it for JSON-only brief reports. Start the MCP server separately in your MCP client.
 
 - `cdn` (`CdnUploadConfig | CdnUploadConfig[]`) - upload bundled client files to CDN.
   - `bucket` (`string`) — bucket name
