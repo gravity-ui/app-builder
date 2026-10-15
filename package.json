@@ -183,7 +183,7 @@
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.2",
     "@types/mime-types": "^2.1.4",
-    "@types/node": "^18",
+    "@types/node": "^20.19.43",
     "@types/nodemon": "^1.19.6",
     "@types/react": "^18.3.2",
     "@types/react-dom": "^18.3.0",

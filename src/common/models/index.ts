@@ -86,6 +86,13 @@ export type DevServerConfig = Omit<
      * Write dev middleware output to disk.
      */
     writeToDisk?: boolean | ((targetPath: string) => boolean);
+    /**
+     * Output file system for dev middleware. Defaults to an in-memory file system.
+     * Use the Node.js fs module to emit and serve dev assets directly from disk.
+     */
+    outputFileSystem?: NonNullable<
+        WebpackDevServerConfiguration['devMiddleware']
+    >['outputFileSystem'];
 };
 
 interface ContextReplacement {
