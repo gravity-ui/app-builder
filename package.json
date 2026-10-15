@@ -90,7 +90,7 @@
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@rsdoctor/rspack-plugin": "^1.6.3",
     "@rsdoctor/webpack-plugin": "^1.6.3",
-    "@rspack/core": "2.2.1",
+    "@rspack/core": "2.2.8",
     "@rspack/dev-server": "^2.2.1",
     "@rspack/plugin-react-refresh": "^2.0.2",
     "@statoscope/stats": "^5.28.1",
