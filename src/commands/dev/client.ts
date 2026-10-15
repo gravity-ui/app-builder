@@ -141,7 +141,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         devMiddleware: {
             publicPath,
             stats: 'errors-warnings',
-            // Middleware's memfs types can use a different version of Node.js fs typings.
+            // Webpack's generated fs types accept encodings absent from older Node.js typings.
             outputFileSystem: outputFileSystem as NonNullable<
                 Configuration['devMiddleware']
             >['outputFileSystem'],
