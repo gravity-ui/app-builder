@@ -60,6 +60,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         webSocketPath = path.normalize(`/${publicPath}/sockjs-node`),
         webSocketClientPort,
         writeToDisk,
+        outputFileSystem,
         ...devServer
     } = config.client.devServer || {};
 
@@ -140,6 +141,10 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         devMiddleware: {
             publicPath,
             stats: 'errors-warnings',
+            // Middleware's memfs types can use a different version of Node.js fs typings.
+            outputFileSystem: outputFileSystem as NonNullable<
+                Configuration['devMiddleware']
+            >['outputFileSystem'],
             writeToDisk: (target) => {
                 if (writeToDisk === true) {
                     return true;

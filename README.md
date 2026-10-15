@@ -288,7 +288,8 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   - `webSocketClientPort` (`number`) - tells clients to connect to devServer using this port from a browser. Default is `${devServer.port}`
   - `type` (`'https'`) — allow to serve over HTTPS.
   - `options` (`import('https').ServerOptions`) — allow to provide your own certificate.
-  - `writeToDisk` (`boolean | (targetPath: string) => boolean`) — write dev middleware output to disk.
+  - `writeToDisk` (`boolean | (targetPath: string) => boolean`) — additionally write dev middleware output to disk; this does not replace its in-memory output file system.
+  - `outputFileSystem` — output file system used by dev middleware. Defaults to an in-memory file system. Pass the Node.js `fs` module to emit and serve dev assets directly from disk, without retaining them in memfs. Sourcemaps, HMR and lazy compilation remain configured as usual.
 
   Commonly used [webpack-dev-server](https://webpack.js.org/configuration/dev-server/) options:
 
@@ -301,11 +302,13 @@ With this `{rootDir}/src/ui/tsconfig.json`:
   Example:
 
   ```typescript
+  import * as fs from 'node:fs';
   import {defineConfig} from '@gravity-ui/app-builder';
 
   export default defineConfig({
     client: {
       devServer: {
+        outputFileSystem: fs,
         port: true,
         host: 'localhost',
         historyApiFallback: true,
