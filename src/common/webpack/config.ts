@@ -52,6 +52,7 @@ import type {moduleFederationPlugin} from '@module-federation/enhanced';
 import {hasMFAssetsIsolation} from '../utils.js';
 import {StatoscopePlugin} from './statoscope-plugin.js';
 import {getByDependencyResolveOptions} from './resolve.js';
+import {WorkerPublicPathPlugin} from './worker/worker-public-path-plugin.js';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -1257,6 +1258,10 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         ...(options.logger ? [new bundlerPlugins.ProgressPlugin({logger: options.logger})] : []),
         ...(forkTsCheckerOptions ? [new bundlerPlugins.TsCheckerPlugin(forkTsCheckerOptions)] : []),
     ];
+
+    if (options.webWorkerHandle === 'cdn-compat') {
+        plugins.push(new WorkerPublicPathPlugin());
+    }
 
     if (config.detectCircularDependencies) {
         if (config.bundler === 'webpack') {
