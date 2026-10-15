@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.55.1](https://github.com/gravity-ui/app-builder/compare/v0.55.0...v0.55.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* initialize worker public path before loading startup chunks ([#375](https://github.com/gravity-ui/app-builder/issues/375)) ([bf938f0](https://github.com/gravity-ui/app-builder/commit/bf938f0b59a29c4d6f80ece9d4a5e0a61cf33ba5))
+
 ## [0.55.0](https://github.com/gravity-ui/app-builder/compare/v0.54.0...v0.55.0) (2026-10-15)
 
 
