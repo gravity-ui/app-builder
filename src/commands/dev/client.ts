@@ -141,10 +141,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         devMiddleware: {
             publicPath,
             stats: 'errors-warnings',
-            // Webpack's generated fs types accept encodings absent from older Node.js typings.
-            outputFileSystem: outputFileSystem as NonNullable<
-                Configuration['devMiddleware']
-            >['outputFileSystem'],
+            outputFileSystem,
             writeToDisk: (target) => {
                 if (writeToDisk === true) {
                     return true;

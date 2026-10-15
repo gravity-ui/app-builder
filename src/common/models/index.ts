@@ -90,9 +90,9 @@ export type DevServerConfig = Omit<
      * Output file system for dev middleware. Defaults to an in-memory file system.
      * Use the Node.js fs module to emit and serve dev assets directly from disk.
      */
-    outputFileSystem?:
-        | typeof import('node:fs')
-        | NonNullable<WebpackDevServerConfiguration['devMiddleware']>['outputFileSystem'];
+    outputFileSystem?: NonNullable<
+        WebpackDevServerConfiguration['devMiddleware']
+    >['outputFileSystem'];
 };
 
 interface ContextReplacement {
