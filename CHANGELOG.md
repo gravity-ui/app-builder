@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.55.0](https://github.com/gravity-ui/app-builder/compare/v0.54.0...v0.55.0) (2026-10-15)
+
+
+### Features
+
+* support custom dev middleware output file systems ([#379](https://github.com/gravity-ui/app-builder/issues/379)) ([883c2c7](https://github.com/gravity-ui/app-builder/commit/883c2c7410c0075a99217bc92d9b446909998cbf))
+
+## [0.54.0](https://github.com/gravity-ui/app-builder/compare/v0.53.5...v0.54.0) (2026-10-06)
+
+
+### Features
+
+* **swc:** add rootDir, copyFiles and ignore server options ([#376](https://github.com/gravity-ui/app-builder/issues/376)) ([d100aa3](https://github.com/gravity-ui/app-builder/commit/d100aa3e00d57c885be9929d6d21b7ae96a5e5c6))
+
+## [0.53.5](https://github.com/gravity-ui/app-builder/compare/v0.53.4...v0.53.5) (2026-09-29)
+
+
+### Bug Fixes
+
+* respect explicit class field settings in the SWC server compiler ([#369](https://github.com/gravity-ui/app-builder/issues/369)) ([a19d1b8](https://github.com/gravity-ui/app-builder/commit/a19d1b8438957c2d6a6b3c3d6c36e976febf5bb6))
+
+## [0.53.4](https://github.com/gravity-ui/app-builder/compare/v0.53.3...v0.53.4) (2026-09-29)
+
+
+### Bug Fixes
+
+* rewrite path aliases on TypeScript watch rebuilds ([#368](https://github.com/gravity-ui/app-builder/issues/368)) ([3aadb47](https://github.com/gravity-ui/app-builder/commit/3aadb4748478fcb8d8ad766dcbc9a7933da4e06e))
+
 ## [0.53.3](https://github.com/gravity-ui/app-builder/compare/v0.53.2...v0.53.3) (2026-09-24)
 
 

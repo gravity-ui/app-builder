@@ -92,16 +92,19 @@ export function watch(
         );
     });
 
+    const transformPathsToLocalModules = createTransformPathsToLocalModules(ts);
+
+    // Rebuilds triggered by file changes take transformers from the host, not from build().
+    host.getCustomTransformers = () => ({
+        after: [transformPathsToLocalModules],
+        afterDeclarations: [transformPathsToLocalModules],
+    });
+
     // `createSolutionBuilderWithWatch` creates an initial program, watches files, and updates
     // the program over time.
     const solutionBuilder = ts.createSolutionBuilderWithWatch(host, [configPath], optionsToExtend);
 
-    const transformPathsToLocalModules = createTransformPathsToLocalModules(ts);
-
-    solutionBuilder.build(undefined, undefined, undefined, () => ({
-        after: [transformPathsToLocalModules],
-        afterDeclarations: [transformPathsToLocalModules],
-    }));
+    solutionBuilder.build();
 
     function reportDiagnostic(diagnostic: Typescript.Diagnostic) {
         const formatHost = {

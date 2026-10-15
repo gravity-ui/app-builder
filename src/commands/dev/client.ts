@@ -60,6 +60,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         webSocketPath = path.normalize(`/${publicPath}/sockjs-node`),
         webSocketClientPort,
         writeToDisk,
+        outputFileSystem,
         ...devServer
     } = config.client.devServer || {};
 
@@ -140,6 +141,7 @@ async function buildDevServer(config: NormalizedServiceConfig) {
         devMiddleware: {
             publicPath,
             stats: 'errors-warnings',
+            outputFileSystem,
             writeToDisk: (target) => {
                 if (writeToDisk === true) {
                     return true;

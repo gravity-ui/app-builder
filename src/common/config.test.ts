@@ -286,3 +286,29 @@ describe('cssLoader configuration', () => {
         });
     });
 });
+
+describe('server swcOptions.rootDir', () => {
+    it('resolves rootDir against the app root and moves the default outputPath under it', async () => {
+        const app = process.cwd();
+        const {server} = await normalizeConfig({
+            server: {compiler: 'swc', swcOptions: {rootDir: '..'}},
+        });
+
+        expect(server.swcOptions?.rootDir).toBe(path.dirname(app));
+        expect(server.outputPath).toBe(path.join(app, 'dist', path.basename(app), 'src/server'));
+    });
+
+    it('keeps an explicit outputPath', async () => {
+        const {server} = await normalizeConfig({
+            server: {compiler: 'swc', outputPath: 'custom', swcOptions: {rootDir: '..'}},
+        });
+
+        expect(server.outputPath).toBe(path.join(process.cwd(), 'dist/custom'));
+    });
+
+    it('fails when rootDir does not contain the app root', async () => {
+        await expect(
+            normalizeConfig({server: {compiler: 'swc', swcOptions: {rootDir: 'src'}}}),
+        ).rejects.toThrow(/must contain/);
+    });
+});

@@ -2,14 +2,16 @@ import type {Logger} from '../logger/index.js';
 import {elapsedTime} from '../logger/pretty-time.js';
 // @ts-ignore @swc/cli is not typed
 import {swcDir} from '@swc/cli';
-import {EXTENSIONS_TO_COMPILE, getSwcOptions} from './utils.js';
+import {EXTENSIONS_TO_COMPILE, getIgnoreGlobs, getOutputOptions, getSwcOptions} from './utils.js';
 import type {GetSwcOptionsParams} from './utils.js';
+import type {ServerConfig} from '../models/index.js';
 
-type SwcCompileOptions = Pick<GetSwcOptionsParams, 'additionalPaths' | 'exclude' | 'publicPath'> & {
-    projectPath: string;
-    outputPath: string;
-    logger: Logger;
-};
+type SwcCompileOptions = NonNullable<ServerConfig['swcOptions']> &
+    Pick<GetSwcOptionsParams, 'publicPath'> & {
+        projectPath: string;
+        outputPath: string;
+        logger: Logger;
+    };
 
 export async function compile({
     projectPath,
@@ -18,6 +20,9 @@ export async function compile({
     additionalPaths,
     exclude,
     publicPath,
+    rootDir,
+    copyFiles,
+    ignore,
 }: SwcCompileOptions): Promise<void> {
     const start = process.hrtime.bigint();
     logger.message('Start compilation');
@@ -31,10 +36,11 @@ export async function compile({
 
     const cliOptions = {
         filenames: directoriesToCompile,
-        outDir: outputPath,
+        ...getOutputOptions(outputPath, directoriesToCompile, rootDir),
+        copyFiles,
+        ignore: getIgnoreGlobs(directoriesToCompile, ignore),
         watch: false,
         extensions: EXTENSIONS_TO_COMPILE,
-        stripLeadingPaths: true,
         sync: false,
     };
 
@@ -57,11 +63,12 @@ export async function compile({
         };
 
         try {
+            // @swc/cli reports nothing when no files are found.
             swcDir({
                 cliOptions,
                 swcOptions,
                 callbacks,
-            });
+            }).then(() => reject(new Error('No server files were compiled')), reject);
         } catch (error) {
             logger.error(`Failed to start compilation: ${error}`);
             reject(error);

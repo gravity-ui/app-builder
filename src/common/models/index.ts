@@ -86,6 +86,13 @@ export type DevServerConfig = Omit<
      * Write dev middleware output to disk.
      */
     writeToDisk?: boolean | ((targetPath: string) => boolean);
+    /**
+     * Output file system for dev middleware. Defaults to an in-memory file system.
+     * Use the Node.js fs module to emit and serve dev assets directly from disk.
+     */
+    outputFileSystem?: NonNullable<
+        WebpackDevServerConfiguration['devMiddleware']
+    >['outputFileSystem'];
 };
 
 interface ContextReplacement {
@@ -512,6 +519,12 @@ export interface ServerConfig {
     swcOptions?: {
         additionalPaths?: string[];
         exclude?: string | string[];
+        /** Like tsc `rootDir`: output keeps paths relative to it. Relative to the app root. */
+        rootDir?: string;
+        /** Copy files SWC does not compile (e.g. imported JSON) to the output. */
+        copyFiles?: boolean;
+        /** Globs of files to skip in compilation, copying and watching. Relative to the app root. */
+        ignore?: string[];
     };
 
     /**
