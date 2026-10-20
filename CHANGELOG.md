@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.56.1](https://github.com/gravity-ui/app-builder/compare/v0.56.0...v0.56.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* increase public path fallback timeout to 30 second ([#383](https://github.com/gravity-ui/app-builder/issues/383)) ([2a0a6d7](https://github.com/gravity-ui/app-builder/commit/2a0a6d775730588f049f4b50a5e5686f00a7ac1c))
+
 ## [0.56.0](https://github.com/gravity-ui/app-builder/compare/v0.55.1...v0.56.0) (2026-10-20)
 
 
