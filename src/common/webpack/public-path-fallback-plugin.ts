@@ -1,5 +1,5 @@
 import type webpack from 'webpack';
-import {createFallbackController, installChunkFallback} from './fallback-controller.js';
+import {fallbackRuntimeSource} from './fallback-runtime-source.js';
 import type {NormalizedClientConfig} from '../models/index.js';
 import {hasMFAssetsIsolation} from '../utils.js';
 
@@ -18,17 +18,28 @@ export function getFallbackRuntimeConfig(config: NormalizedClientConfig) {
 
 export function createPublicPathFallbackPlugin(config: NormalizedClientConfig) {
     const runtimeConfig = getFallbackRuntimeConfig(config);
+
     return {
         apply(compiler: webpack.Compiler) {
             const {RuntimeModule, RuntimeGlobals} = compiler.webpack;
+
+            const {output} = compiler.options;
+            output.chunkLoadTimeout ??= 15000;
+
             class FallbackRuntimeModule extends RuntimeModule {
                 constructor() {
                     super('public path fallback', RuntimeModule.STAGE_TRIGGER);
                 }
+
                 generate() {
-                    return `var controller = (${createFallbackController.toString()})(${JSON.stringify(runtimeConfig)});\n(${installChunkFallback.toString()})(${RuntimeGlobals.require}, controller);`;
+                    return [
+                        `var fallback = ${fallbackRuntimeSource};`,
+                        `var controller = fallback.createFallbackController(${JSON.stringify(runtimeConfig)});`,
+                        `fallback.installChunkFallback(${RuntimeGlobals.require}, controller, ${JSON.stringify(compiler.options.output.chunkLoadTimeout)});`,
+                    ].join('\n');
                 }
             }
+
             compiler.hooks.thisCompilation.tap('PublicPathFallbackPlugin', (compilation) => {
                 compilation.hooks.additionalTreeRuntimeRequirements.tap(
                     'PublicPathFallbackPlugin',

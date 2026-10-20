@@ -24,6 +24,7 @@ declare global {
 }
 
 interface ChunkRuntime {
+    miniCssF?: (chunkId: string | number) => string;
     p: string;
     e?: (chunkId: string | number) => Promise<unknown>;
 }
@@ -201,6 +202,7 @@ export function createFallbackController(config: FallbackRuntimeConfig) {
 export function installChunkFallback(
     req: ChunkRuntime,
     controller: ReturnType<typeof createFallbackController>,
+    timeoutMs = 15000,
 ) {
     if (!controller || typeof req.e !== 'function') {
         return;
@@ -213,6 +215,7 @@ export function installChunkFallback(
 
     const ensure = req.e;
     const activeController = controller;
+    const stylesheets = createStylesheetMonitor(controller, timeoutMs);
 
     req.e = (chunkId) => load(chunkId, []);
 
@@ -229,7 +232,29 @@ export function installChunkFallback(
             .then(() => {
                 req.p = path;
 
-                return ensure.call(req, chunkId);
+                const cssFile = req.miniCssF?.(chunkId);
+                const release = cssFile ? stylesheets.track(path + cssFile) : () => {};
+
+                try {
+                    const result = ensure.call(req, chunkId);
+                    stylesheets.scan();
+
+                    return Promise.resolve(result).then(
+                        (value) => {
+                            release();
+
+                            return value;
+                        },
+                        (error) => {
+                            release();
+                            throw error;
+                        },
+                    );
+                } catch (error) {
+                    stylesheets.scan();
+                    release();
+                    throw error;
+                }
             })
             .then(
                 (result) => {
@@ -268,5 +293,88 @@ export function installChunkFallback(
                     return load(chunkId, attempted);
                 },
             );
+    }
+}
+
+export function createStylesheetMonitor(
+    controller: NonNullable<ReturnType<typeof createFallbackController>>,
+    timeoutMs: number,
+) {
+    const pendingUrls = new Map<string, number>();
+    const links = new Map<HTMLLinkElement, () => void>();
+    let observer: MutationObserver | undefined;
+
+    return {track, scan};
+
+    function track(url: string) {
+        const absoluteUrl = new URL(url, window.location.href).href;
+        pendingUrls.set(absoluteUrl, (pendingUrls.get(absoluteUrl) || 0) + 1);
+
+        if (!observer && document.head) {
+            observer = new MutationObserver(scan);
+            observer.observe(document.head, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['href', 'rel'],
+            });
+        }
+
+        return () => {
+            const remaining = (pendingUrls.get(absoluteUrl) || 1) - 1;
+
+            if (remaining) pendingUrls.set(absoluteUrl, remaining);
+            else pendingUrls.delete(absoluteUrl);
+
+            disconnectWhenIdle();
+        };
+    }
+
+    function scan() {
+        for (const [link, cleanup] of links) {
+            if (!link.isConnected) cleanup();
+        }
+
+        if (!document.head) return;
+
+        for (const link of document.head.querySelectorAll<HTMLLinkElement>(
+            'link[rel="stylesheet"]',
+        )) {
+            if (
+                pendingUrls.has(link.href) &&
+                controller.owns(link.href) &&
+                !link.sheet &&
+                !links.has(link)
+            ) {
+                watchLink(link);
+            }
+        }
+    }
+
+    function watchLink(link: HTMLLinkElement) {
+        const timer = setTimeout(() => {
+            cleanup();
+            link.remove();
+            link.dispatchEvent(new Event('error'));
+        }, timeoutMs);
+
+        links.set(link, cleanup);
+        link.addEventListener('load', cleanup);
+        link.addEventListener('error', cleanup);
+
+        function cleanup() {
+            clearTimeout(timer);
+            link.removeEventListener('load', cleanup);
+            link.removeEventListener('error', cleanup);
+            links.delete(link);
+            disconnectWhenIdle();
+        }
+    }
+
+    function disconnectWhenIdle() {
+        if (!pendingUrls.size && !links.size) {
+            observer?.disconnect();
+            observer = undefined;
+        }
     }
 }

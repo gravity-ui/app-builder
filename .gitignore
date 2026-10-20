@@ -10,3 +10,5 @@ dist
 
 examples/**/pnpm-lock.yaml
 .DS_Store
+
+src/common/webpack/fallback-runtime-source.ts

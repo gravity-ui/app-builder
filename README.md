@@ -414,6 +414,8 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 
   Supports lazy JS/CSS and Module Federation manifests and remote entries. Disabled in dev and SSR; worker scripts are not supported.
 
+  With fallbacks enabled, lazy JS/CSS loads time out after 15 seconds by default. An explicit `output.chunkLoadTimeout` in the bundler configuration overrides this value.
+
   With Module Federation asset isolation, pass shared CDN roots (`<backup>/`); each container appends its name. Set `window.__PUBLIC_PATH__` to the host's full path (`<primary>/<host>/`). Remotes follow runtime CDN changes without a rebuild; URLs outside the configured CDN roots stay unchanged.
 
   Handle initial JS/CSS separately with app-layout's `publicPathFallbacks`, using host paths (`<backup>/<host>/`) when asset isolation is enabled. For a local fallback, use `/build/` or the path configured by `publicPathPrefix`.
