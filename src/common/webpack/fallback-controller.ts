@@ -83,7 +83,7 @@ export function createFallbackController(config: FallbackRuntimeConfig) {
                         return new RegExp(host.source, host.flags).test(window.location.hostname);
                     }),
             )
-            .map((entry) => normalize(entry.publicPath));
+            .map((entry) => remember(entry.publicPath));
     }
 
     function getSharedState() {
