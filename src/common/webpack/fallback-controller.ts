@@ -36,6 +36,9 @@ export function createFallbackController(config: FallbackRuntimeConfig) {
     }
 
     const suffix = config.scope ? config.scope + '/' : '';
+    // Absolute URLs are used for matching; `forms` keeps the configured spelling
+    // (`/build/` vs `https://host/build/`) for what is written to __webpack_require__.p.
+    const forms = new Map<string, string>();
     const backups = getBackupPaths();
 
     if (!config.fallbacks.length) {
