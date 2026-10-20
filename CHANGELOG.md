@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.56.0](https://github.com/gravity-ui/app-builder/compare/v0.55.1...v0.56.0) (2026-10-20)
+
+
+### Features
+
+* public path fallbacks ([#358](https://github.com/gravity-ui/app-builder/issues/358)) ([d2a739e](https://github.com/gravity-ui/app-builder/commit/d2a739e02880704676a50545be3dab343cd8dc24))
+
 ## [0.55.1](https://github.com/gravity-ui/app-builder/compare/v0.55.0...v0.55.1) (2026-10-15)
 
 
