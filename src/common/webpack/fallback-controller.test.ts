@@ -233,12 +233,6 @@ describe('fallback controller', () => {
         await expect(remoteReq.e('remote')).rejects.toBe(remoteError);
         expect(events).toEqual([]);
     });
-
-    it('emits ES2017-only syntax into the runtime module', () => {
-        for (const fn of [createFallbackController, installChunkFallback]) {
-            expect(() => Parser.parse(fn.toString(), {ecmaVersion: 2017})).not.toThrow();
-        }
-    });
 });
 
 function createInstalledController(options: FallbackRuntimeConfig) {

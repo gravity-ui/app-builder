@@ -131,6 +131,16 @@ export function createFallbackController(config: FallbackRuntimeConfig) {
         return new URL(value, window.location.href).href.replace(/\/?$/, '/');
     }
 
+    function remember(value: string) {
+        const base = normalize(value);
+
+        if (!forms.has(base)) {
+            forms.set(base, value.replace(/\/?$/, '/'));
+        }
+
+        return base;
+    }
+
     function relative(url: string) {
         const base = baseOf(url);
 
