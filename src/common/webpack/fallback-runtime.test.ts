@@ -52,7 +52,7 @@ for (const [name, bundler] of [
             });
 
             try {
-                expect(compiler.options.output.chunkLoadTimeout).toBe(timeout ?? 15000);
+                expect(compiler.options.output.chunkLoadTimeout).toBe(timeout ?? 30000);
             } finally {
                 await new Promise<void>((resolve, reject) =>
                     compiler.close((error) => (error ? reject(error) : resolve())),

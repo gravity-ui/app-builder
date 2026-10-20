@@ -217,7 +217,7 @@ export function createFallbackController(config: FallbackRuntimeConfig) {
 export function installChunkFallback(
     req: ChunkRuntime,
     controller: ReturnType<typeof createFallbackController>,
-    timeoutMs = 15000,
+    timeoutMs = 30000,
 ) {
     if (!controller || typeof req.e !== 'function') {
         return;
