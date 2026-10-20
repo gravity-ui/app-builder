@@ -145,7 +145,8 @@ describe('fallback controller', () => {
             fallbacks: [{publicPath: '/build/'}],
         });
         controller.fail(controller.base(), 'chunk', failure());
-        expect(controller.path()).toBe('https://app.test/build/host/');
+        expect(controller.base()).toBe('https://app.test/build/');
+        expect(controller.path()).toBe('/build/host/');
         expect(controller.rewrite(config.root + 'remote/entry.js')).toBe(
             'https://app.test/build/remote/entry.js',
         );
