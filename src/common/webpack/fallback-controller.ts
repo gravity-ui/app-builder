@@ -122,7 +122,7 @@ export function createFallbackController(config: FallbackRuntimeConfig) {
     }
 
     function stripScope(value: string) {
-        const base = normalize(value);
+        const base = value.replace(/\/?$/, '/');
 
         return suffix && base.endsWith('/' + suffix) ? base.slice(0, -suffix.length) : base;
     }
