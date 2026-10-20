@@ -155,7 +155,7 @@ describe('fallback controller', () => {
     it('preserves the ordinary default /build/ path', () => {
         Reflect.deleteProperty(window, '__PUBLIC_PATH__');
         expect(createInstalledController({...config, scope: '', federated: false}).path()).toBe(
-            'https://app.test/build/',
+            '/build/',
         );
     });
 
