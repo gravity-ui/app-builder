@@ -49,7 +49,7 @@ export function createFallbackController(config: FallbackRuntimeConfig) {
     const bases = [...new Set([normalize(config.root), ...state.candidates])];
 
     return {
-        path: (base = state.active) => base + suffix,
+        path: (base = state.active) => (forms.get(base) || base) + suffix,
         owns: (url: string) => {
             const rest = relative(url);
 
