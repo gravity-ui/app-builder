@@ -114,9 +114,11 @@ export function createFallbackController(config: FallbackRuntimeConfig) {
         const hostPathMatchesScope =
             hostPublicPath && (!suffix || hostPublicPath.endsWith('/' + suffix));
 
-        return hostPathMatchesScope
-            ? stripScope(hostPublicPath)
-            : normalize(config.federated ? config.root : '/build/');
+        if (hostPathMatchesScope) {
+            return remember(stripScope(window.__PUBLIC_PATH__ as string));
+        }
+
+        return remember(config.federated ? config.root : '/build/');
     }
 
     function stripScope(value: string) {
