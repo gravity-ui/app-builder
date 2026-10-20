@@ -24,7 +24,7 @@ export function createPublicPathFallbackPlugin(config: NormalizedClientConfig) {
             const {RuntimeModule, RuntimeGlobals} = compiler.webpack;
 
             const {output} = compiler.options;
-            output.chunkLoadTimeout ??= 15000;
+            output.chunkLoadTimeout ??= 30000;
 
             class FallbackRuntimeModule extends RuntimeModule {
                 constructor() {
