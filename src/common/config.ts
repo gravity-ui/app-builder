@@ -74,17 +74,6 @@ function normalizePublicPathFallbacks(client: ClientConfig, mode?: string): Publ
         return [];
     }
 
-    if (client.moduleFederation) {
-        logger.warning(
-            stripIndent`
-                publicPathFallback option is disabled because moduleFederation is configured.
-                Module federation remotes load their entries and chunks through their own runtime,
-                which the fallback cannot reach.
-            `,
-        );
-        return [];
-    }
-
     const candidates: PublicPathFallback[] = [];
     for (const entry of client.publicPathFallback) {
         const candidate = normalizeFallbackEntry(entry);

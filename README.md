@@ -412,11 +412,11 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 
   Independent of `cdn`, which only handles uploading static — use this whether the upload is done by app-builder or by something else entirely.
 
-  If you add the local public path as a candidate, use whatever your build actually serves from — `/build/` by default, but `publicPathPrefix` and module federation asset isolation both change it.
+  Supports lazy JS/CSS and Module Federation manifests and remote entries. Disabled in dev and SSR; worker scripts are not supported.
 
-  Covers only lazy JS chunks and their async CSS. **Not covered**: initial `<script>`/`<link>` tags (they load before any bundle code runs — a primary outage there has to be handled in the page template) and worker scripts.
+  With Module Federation asset isolation, pass shared CDN roots (`<backup>/`); each container appends its name. Set `window.__PUBLIC_PATH__` to the host's full path (`<primary>/<host>/`). Remotes follow runtime CDN changes without a rebuild; URLs outside the configured CDN roots stay unchanged.
 
-  The option has no effect in dev mode, in SSR builds, or with `moduleFederation`.
+  Handle initial JS/CSS separately with app-layout's `publicPathFallbacks`, using host paths (`<backup>/<host>/`) when asset isolation is enabled. For a local fallback, use `/build/` or the path configured by `publicPathPrefix`.
 
   Every switch (or exhaustion) dispatches a `window` `CustomEvent` named `app-builder:public-path-fallback` with `detail` typed as the exported `PublicPathFallbackEventDetail` (`nextPath` is `null` when no candidate is left) — listen for it to report failures to your own monitoring.
 

@@ -393,7 +393,9 @@ export interface ClientCommonConfig {
      * `<link>` tags (they load before any bundle code runs - a primary outage there
      * has to be handled in the page template) and worker scripts.
      *
-     * Has no effect in dev mode, in SSR builds, or with `moduleFederation`.
+     * Also covers Module Federation manifests, remote entries and remote chunks.
+     * With asset isolation, use backup roots without the application name.
+     * Has no effect in dev mode or in SSR builds.
      *
      * @example [{publicPath: 'https://cdn.example.ru/build/', hosts: /\.ru$/}, '/build/']
      */

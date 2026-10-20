@@ -53,6 +53,10 @@ import {hasMFAssetsIsolation} from '../utils.js';
 import {StatoscopePlugin} from './statoscope-plugin.js';
 import {getByDependencyResolveOptions} from './resolve.js';
 import {WorkerPublicPathPlugin} from './worker/worker-public-path-plugin.js';
+import {
+    createPublicPathFallbackPlugin,
+    getFallbackRuntimeConfig,
+} from './public-path-fallback-plugin.js';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -467,11 +471,8 @@ export function configureResolve({isEnvProduction, config}: HelperOptions) {
 }
 
 function getRuntimeEntries({config, isSsr}: HelperOptions) {
-    const runtimeEntries = [require.resolve('./public-path.js')];
-
-    if (!isSsr && config.publicPathFallbacks.length > 0) {
-        runtimeEntries.push(require.resolve('./public-path-fallback.js'));
-    }
+    const runtimeEntries =
+        !isSsr && config.publicPathFallbacks.length ? [] : [require.resolve('./public-path.js')];
 
     return runtimeEntries;
 }
@@ -1141,7 +1142,7 @@ function getDefinitions({config, isSsr}: HelperOptions) {
         'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
         'process.env.IS_SSR': JSON.stringify(isSsr),
         'process.env.PUBLIC_PATH': JSON.stringify(config.browserPublicPath),
-        __PUBLIC_PATH_FALLBACKS__: JSON.stringify(isSsr ? [] : config.publicPathFallbacks),
+        __PUBLIC_PATH_FALLBACK_CONFIG__: JSON.stringify(getFallbackRuntimeConfig(config)),
         ...config.definitions,
     };
 }
@@ -1277,6 +1278,10 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         plugins.push(new WorkerPublicPathPlugin());
     }
 
+    if (!isSsr && config.publicPathFallbacks.length > 0) {
+        plugins.push(createPublicPathFallbackPlugin(config));
+    }
+
     if (config.detectCircularDependencies) {
         if (config.bundler === 'webpack') {
             let circularPluginOptions: CircularDependencyPlugin.Options = {
@@ -1405,6 +1410,10 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
 
             if (remotesRuntimeVersioning) {
                 actualRuntimePlugins.push(require.resolve('./runtime-versioning-plugin.js'));
+            }
+
+            if (!isSsr && config.publicPathFallbacks.length > 0) {
+                actualRuntimePlugins.push(require.resolve('./federation-fallback-plugin.js'));
             }
 
             plugins.push(
