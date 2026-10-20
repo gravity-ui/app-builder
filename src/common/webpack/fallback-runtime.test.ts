@@ -5,6 +5,7 @@ import path from 'node:path';
 import {runInNewContext} from 'node:vm';
 import {describe, expect, it} from '@jest/globals';
 import {Parser} from 'acorn';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import webpack from 'webpack';
 import type * as Rspack from '@rspack/core';
 
