@@ -312,3 +312,23 @@ describe('server swcOptions.rootDir', () => {
         ).rejects.toThrow(/must contain/);
     });
 });
+
+describe('publicPathFallback', () => {
+    it('normalizes backup roots with Module Federation enabled', async () => {
+        const result = await normalizeConfig(
+            {
+                client: {
+                    moduleFederation: {name: 'organization'},
+                    publicPathFallback: [
+                        'https://backup.test/center',
+                        'https://backup.test/center/',
+                    ],
+                },
+            },
+            'build',
+        );
+        expect(result.client.publicPathFallbacks).toEqual([
+            {publicPath: 'https://backup.test/center/'},
+        ]);
+    });
+});

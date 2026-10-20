@@ -53,6 +53,10 @@ import {hasMFAssetsIsolation} from '../utils.js';
 import {StatoscopePlugin} from './statoscope-plugin.js';
 import {getByDependencyResolveOptions} from './resolve.js';
 import {WorkerPublicPathPlugin} from './worker/worker-public-path-plugin.js';
+import {
+    createPublicPathFallbackPlugin,
+    getFallbackRuntimeConfig,
+} from './public-path-fallback-plugin.js';
 
 const imagesSizeLimit = 2048;
 const fontSizeLimit = 8192;
@@ -466,31 +470,41 @@ export function configureResolve({isEnvProduction, config}: HelperOptions) {
     } satisfies webpack.ResolveOptions;
 }
 
-function createEntryArray(entry: string | string[]) {
-    if (typeof entry === 'string') {
-        return [require.resolve('./public-path.js'), entry];
-    }
+function getRuntimeEntries({config, isSsr}: HelperOptions) {
+    const runtimeEntries =
+        !isSsr && config.publicPathFallbacks.length ? [] : [require.resolve('./public-path.js')];
 
-    return [require.resolve('./public-path.js'), ...entry];
+    return runtimeEntries;
 }
 
-function addEntry(entry: Record<string, string[]>, file: string) {
+function createEntryArray(entry: string | string[], runtimeEntries: string[]) {
+    if (typeof entry === 'string') {
+        return [...runtimeEntries, entry];
+    }
+
+    return [...runtimeEntries, ...entry];
+}
+
+function addEntry(entry: Record<string, string[]>, file: string, runtimeEntries: string[]) {
     return {
         ...entry,
-        [path.parse(file).name]: createEntryArray(file),
+        [path.parse(file).name]: createEntryArray(file, runtimeEntries),
     };
 }
 
-function configureEntry({config, entriesDirectory}: HelperOptions) {
+function configureEntry(options: HelperOptions) {
+    const {config, entriesDirectory} = options;
+    const runtimeEntries = getRuntimeEntries(options);
+
     if (typeof config.entry === 'string' || Array.isArray(config.entry)) {
-        return createEntryArray(config.entry);
+        return createEntryArray(config.entry, runtimeEntries);
     }
 
     if (typeof config.entry === 'object') {
         return Object.entries(config.entry).reduce<Record<string, string[]>>(
             (acc, [key, value]) => ({
                 ...acc,
-                [key]: createEntryArray(value),
+                [key]: createEntryArray(value, runtimeEntries),
             }),
             {},
         );
@@ -538,7 +552,7 @@ function configureEntry({config, entriesDirectory}: HelperOptions) {
     }
 
     return entryFiles.reduce<Record<string, string[]>>(
-        (acc, file) => addEntry(acc, path.resolve(entriesDirectory, file)),
+        (acc, file) => addEntry(acc, path.resolve(entriesDirectory, file), runtimeEntries),
         {},
     );
 }
@@ -1128,6 +1142,7 @@ function getDefinitions({config, isSsr}: HelperOptions) {
         'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
         'process.env.IS_SSR': JSON.stringify(isSsr),
         'process.env.PUBLIC_PATH': JSON.stringify(config.browserPublicPath),
+        __PUBLIC_PATH_FALLBACK_CONFIG__: JSON.stringify(getFallbackRuntimeConfig(config)),
         ...config.definitions,
     };
 }
@@ -1263,6 +1278,10 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         plugins.push(new WorkerPublicPathPlugin());
     }
 
+    if (!isSsr && config.publicPathFallbacks.length > 0) {
+        plugins.push(createPublicPathFallbackPlugin(config));
+    }
+
     if (config.detectCircularDependencies) {
         if (config.bundler === 'webpack') {
             let circularPluginOptions: CircularDependencyPlugin.Options = {
@@ -1391,6 +1410,10 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
 
             if (remotesRuntimeVersioning) {
                 actualRuntimePlugins.push(require.resolve('./runtime-versioning-plugin.js'));
+            }
+
+            if (!isSsr && config.publicPathFallbacks.length > 0) {
+                actualRuntimePlugins.push(require.resolve('./federation-fallback-plugin.js'));
             }
 
             plugins.push(
