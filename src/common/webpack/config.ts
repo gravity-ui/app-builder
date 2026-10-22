@@ -1704,7 +1704,7 @@ export function configureOptimization(helperOptions: HelperOptions): Optimizatio
     return optimization;
 }
 
-function configureRspackOptimization(
+export function configureRspackOptimization(
     helperOptions: HelperOptions,
 ): NonNullable<Rspack.Configuration['optimization']> {
     const {config, isSsr} = helperOptions;
