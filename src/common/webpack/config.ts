@@ -558,15 +558,14 @@ function configureEntry(options: HelperOptions) {
 }
 
 function getFileNames({isEnvProduction, isSsr, config}: HelperOptions) {
+    const useHash = isEnvProduction && !config.analyzeBundle;
     let ext = 'js';
     if (isSsr) {
         ext = config.ssr?.moduleType === 'esm' ? 'mjs' : 'cjs';
     }
     return {
-        filename: isEnvProduction ? `js/[name].[contenthash:8].${ext}` : `js/[name].${ext}`,
-        chunkFilename: isEnvProduction
-            ? 'js/[name].[contenthash:8].chunk.js'
-            : 'js/[name].chunk.js',
+        filename: useHash ? `js/[name].[contenthash:8].${ext}` : `js/[name].${ext}`,
+        chunkFilename: useHash ? 'js/[name].[contenthash:8].chunk.js' : 'js/[name].chunk.js',
     };
 }
 
@@ -1203,12 +1202,11 @@ function getForkTsCheckerOptions({
           };
 }
 
-function getCssExtractPluginOptions({isEnvProduction}: HelperOptions) {
+function getCssExtractPluginOptions({isEnvProduction, config}: HelperOptions) {
+    const useHash = isEnvProduction && !config.analyzeBundle;
     return {
-        filename: isEnvProduction ? 'css/[name].[contenthash:8].css' : 'css/[name].css',
-        chunkFilename: isEnvProduction
-            ? 'css/[name].[contenthash:8].chunk.css'
-            : 'css/[name].chunk.css',
+        filename: useHash ? 'css/[name].[contenthash:8].css' : 'css/[name].css',
+        chunkFilename: useHash ? 'css/[name].[contenthash:8].chunk.css' : 'css/[name].chunk.css',
         ignoreOrder: true,
     };
 }
