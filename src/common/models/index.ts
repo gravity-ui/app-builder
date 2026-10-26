@@ -323,6 +323,7 @@ export interface ClientCommonConfig {
     entry?: string | string[] | Record<string, string | string[]>;
     entryFilter?: string[];
     excludeFromClean?: string[];
+    /** Enable bundle analysis and omit hashes from JS and CSS entry and chunk filenames. */
     analyzeBundle?: 'true' | 'statoscope' | 'rsdoctor';
     statoscopeConfig?: Partial<StatoscopeOptions>;
     /** Rsdoctor plugin options. Requires `analyzeBundle: 'rsdoctor'`. */

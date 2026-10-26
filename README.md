@@ -336,6 +336,7 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 ##### Production build
 
 - `analyzeBundle` (`true | statoscope | rsdoctor`) — tools to analyze bundle.
+  Analysis builds omit hashes from JS and CSS entry and chunk filenames to make reports easier to compare. Use regular production builds for deployment with cache-busting filenames. Custom `webpack` and `rspack` callbacks can override these filenames.
   - `true` — enable [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) plugin. Report generated to `dist/public/build/stats.html`
   - `statoscope` — enable [statoscope](https://github.com/statoscope/statoscope) plugin. Reports generated to `dist/public/build/stats.json` and `dist/public/build/report.json`
   - `rsdoctor` — enable [Rsdoctor](https://rsdoctor.dev/) plugin (`@rsdoctor/webpack-plugin` or `@rsdoctor/rspack-plugin` depending on the chosen bundler). Defaults to `brief` mode.
