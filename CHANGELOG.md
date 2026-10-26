@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.57.0](https://github.com/gravity-ui/app-builder/compare/v0.56.1...v0.57.0) (2026-10-26)
+
+
+### Features
+
+* **rsdoctor:** disable chunk hashing for analysis bundles ([#385](https://github.com/gravity-ui/app-builder/issues/385)) ([40d71f2](https://github.com/gravity-ui/app-builder/commit/40d71f2a6b5dad4988e8a3973101e273d56d959b))
+
 ## [0.56.1](https://github.com/gravity-ui/app-builder/compare/v0.56.0...v0.56.1) (2026-10-20)
 
 
