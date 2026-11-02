@@ -6,6 +6,8 @@ export interface FallbackRuntimeConfig {
     scope: string;
     federated: boolean;
     fallbacks: {publicPath: string; hosts?: {source: string; flags: string}[]}[];
+    retries?: number;
+    retryDelay?: number;
 }
 
 interface FallbackState {
@@ -41,7 +43,7 @@ export function createFallbackController(config: FallbackRuntimeConfig) {
     const forms = new Map<string, string>();
     const backups = getBackupPaths();
 
-    if (!config.fallbacks.length) {
+    if (!config.fallbacks.length && !config.retries) {
         return null;
     }
 
@@ -70,6 +72,8 @@ export function createFallbackController(config: FallbackRuntimeConfig) {
                 state.recoveryAttempts = 0;
             }
         },
+        retries: config.retries || 0,
+        retryDelay: config.retryDelay || 0,
     };
 
     function getBackupPaths() {
@@ -234,10 +238,25 @@ export function installChunkFallback(
 
     req.e = (chunkId) => load(chunkId, []);
 
+    function wait(attempt: number) {
+        const base = activeController.retryDelay;
+
+        if (!base) {
+            return Promise.resolve();
+        }
+
+        const delay = Math.min(base * 2 ** attempt * (0.5 + Math.random()), 300000);
+
+        return new Promise<void>((resolve) => {
+            setTimeout(resolve, delay);
+        });
+    }
+
     function load(
         chunkId: string | number,
         attempted: string[],
         attemptedBase = activeController.base(),
+        sameBaseAttempt = 0,
     ): Promise<unknown> {
         const path = activeController.path(attemptedBase);
         attempted.push(attemptedBase);
@@ -298,7 +317,13 @@ export function installChunkFallback(
                         request && activeController.baseOf(request) !== attemptedBase;
 
                     if (isLateFailureFromPreviousBase) {
-                        return load(chunkId, attempted, attemptedBase);
+                        return load(chunkId, attempted, attemptedBase, sameBaseAttempt);
+                    }
+
+                    if (sameBaseAttempt < activeController.retries) {
+                        return wait(sameBaseAttempt).then(() =>
+                            load(chunkId, attempted, attemptedBase, sameBaseAttempt + 1),
+                        );
                     }
 
                     if (!activeController.fail(attemptedBase, chunkId, error, attempted)) {

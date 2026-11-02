@@ -14,6 +14,7 @@ import type {
     CdnHostPattern,
     ClientConfig,
     LibraryConfig,
+    NormalizedChunkRetry,
     NormalizedClientConfig,
     NormalizedClientRspackConfig,
     NormalizedClientWebpackConfig,
@@ -103,6 +104,24 @@ function normalizeFallbackEntry(
 
 function isDuplicatePublicPath(candidates: PublicPathFallback[], publicPath: string) {
     return candidates.some((candidate) => candidate.publicPath === publicPath);
+}
+
+function normalizeChunkRetry(
+    client: ClientConfig,
+    mode?: string,
+): NormalizedChunkRetry | undefined {
+    const retries = client.chunkRetry?.retries;
+
+    if (!retries || !Number.isFinite(retries) || retries < 1 || mode === 'dev') {
+        return undefined;
+    }
+
+    const delay = client.chunkRetry?.delay;
+
+    return {
+        retries: Math.floor(retries),
+        delay: Number.isFinite(delay) && (delay as number) > 0 ? (delay as number) : 0,
+    };
 }
 
 function omitUndefined<T extends object>(obj: T) {
@@ -350,6 +369,7 @@ async function normalizeClientConfig(client: ClientConfig, mode?: 'dev' | 'build
         cdnPublicPath: cdnConfig?.publicPath,
         browserPublicPath,
         publicPathFallbacks: normalizePublicPathFallbacks(client, mode),
+        chunkRetry: normalizeChunkRetry(client, mode),
         assetsManifestFile:
             client.assetsManifestFile ||
             (client.moduleFederation?.version

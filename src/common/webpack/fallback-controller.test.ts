@@ -221,6 +221,100 @@ describe('fallback controller', () => {
         expect(controller.base()).toBe('https://ru.test/backup/');
     });
 
+    it('retries the same base before failing over', async () => {
+        const controller = createInstalledController({...config, retries: 2});
+        const ensure = jest
+            .fn<TestRuntime['e']>()
+            .mockRejectedValueOnce(failure(config.root + 'host/chunk.js'))
+            .mockResolvedValue(undefined);
+        const req: TestRuntime = {p: '', e: ensure};
+        installChunkFallback(req, controller);
+        await req.e('chunk');
+        expect(ensure).toHaveBeenCalledTimes(2);
+        expect(controller.base()).toBe(config.root);
+        expect(events).toEqual([]);
+    });
+
+    it('falls over to the next base after same-base retries are exhausted', async () => {
+        const controller = createInstalledController({...config, retries: 1});
+        const ensure = jest
+            .fn<TestRuntime['e']>()
+            .mockRejectedValueOnce(failure(config.root + 'host/chunk.js'))
+            .mockRejectedValueOnce(failure(config.root + 'host/chunk.js'))
+            .mockResolvedValue(undefined);
+        const req: TestRuntime = {p: '', e: ensure};
+        installChunkFallback(req, controller);
+        await req.e('chunk');
+        expect(ensure).toHaveBeenCalledTimes(3);
+        expect(controller.base()).toBe('https://ru.test/backup/');
+        expect(events).toHaveLength(1);
+    });
+
+    it('retries without any configured fallbacks and gives up when exhausted', async () => {
+        const controller = createInstalledController({...config, fallbacks: [], retries: 2});
+        const error = failure(config.root + 'host/chunk.js');
+        const ensure = jest.fn<TestRuntime['e']>().mockRejectedValue(error);
+        const req: TestRuntime = {p: '', e: ensure};
+        installChunkFallback(req, controller);
+        await expect(req.e('chunk')).rejects.toBe(error);
+        expect(ensure).toHaveBeenCalledTimes(3);
+    });
+
+    it('waits for the configured delay before a same-base retry', async () => {
+        const controller = createInstalledController({...config, retries: 1, retryDelay: 200});
+        const ensure = jest
+            .fn<TestRuntime['e']>()
+            .mockRejectedValueOnce(failure(config.root + 'host/chunk.js'))
+            .mockResolvedValue(undefined);
+        const req: TestRuntime = {p: '', e: ensure};
+        installChunkFallback(req, controller);
+        const promise = req.e('chunk');
+        await jest.advanceTimersByTimeAsync(0);
+        expect(ensure).toHaveBeenCalledTimes(1);
+        await jest.advanceTimersByTimeAsync(400);
+        await promise;
+        expect(ensure).toHaveBeenCalledTimes(2);
+    });
+
+    it('installs with retries but no fallbacks, and stays disabled without either', () => {
+        expect(createFallbackController({...config, fallbacks: [], retries: 1})).not.toBeNull();
+        expect(createFallbackController({...config, fallbacks: []})).toBeNull();
+    });
+
+    it('gives each base its own retry budget on failover', async () => {
+        const controller = createInstalledController({...config, retries: 1});
+        const ensure = jest
+            .fn<TestRuntime['e']>()
+            .mockRejectedValueOnce(failure(config.root + 'host/chunk.js'))
+            .mockRejectedValueOnce(failure(config.root + 'host/chunk.js'))
+            .mockRejectedValueOnce(failure('https://ru.test/backup/host/chunk.js'))
+            .mockResolvedValue(undefined);
+        const req: TestRuntime = {p: '', e: ensure};
+        installChunkFallback(req, controller);
+        await req.e('chunk');
+        expect(ensure).toHaveBeenCalledTimes(4);
+        expect(controller.base()).toBe('https://ru.test/backup/');
+    });
+
+    it('caps the retry delay at five minutes including jitter', async () => {
+        jest.spyOn(Math, 'random').mockReturnValue(1);
+        const controller = createInstalledController({...config, retries: 1, retryDelay: 300000});
+        const ensure = jest
+            .fn<TestRuntime['e']>()
+            .mockRejectedValueOnce(failure(config.root + 'host/chunk.js'))
+            .mockResolvedValue(undefined);
+        const req: TestRuntime = {p: '', e: ensure};
+        installChunkFallback(req, controller);
+        const promise = req.e('chunk');
+        await jest.advanceTimersByTimeAsync(0);
+        expect(ensure).toHaveBeenCalledTimes(1);
+        await jest.advanceTimersByTimeAsync(299999);
+        expect(ensure).toHaveBeenCalledTimes(1);
+        await jest.advanceTimersByTimeAsync(1);
+        await promise;
+        expect(ensure).toHaveBeenCalledTimes(2);
+    });
+
     it('propagates execution errors and errors owned by another runtime', async () => {
         const controller = createInstalledController(config);
         const error = new Error('application error');
