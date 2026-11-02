@@ -5,6 +5,33 @@ import * as path from 'node:path';
 import {getProjectConfig, normalizeConfig} from './config.js';
 import type {ClientConfig, CssLoaderOptions} from './models/index.js';
 
+describe('server tsconfig', () => {
+    it.each(['dev', 'build'])(
+        'resolves the config relative to the app root in %s',
+        async (mode) => {
+            const {server} = await normalizeConfig(
+                {server: {tsconfig: 'tsconfig.server.json'}},
+                mode,
+            );
+
+            expect(server.tsconfig).toBe(path.resolve('tsconfig.server.json'));
+        },
+    );
+
+    it('preserves an absolute config path', async () => {
+        const tsconfig = path.resolve('configs/server.json');
+        const {server} = await normalizeConfig({server: {tsconfig}});
+
+        expect(server.tsconfig).toBe(tsconfig);
+    });
+
+    it('keeps default config discovery when omitted', async () => {
+        const {server} = await normalizeConfig({server: {}});
+
+        expect(server.tsconfig).toBeUndefined();
+    });
+});
+
 describe('configuration loading', () => {
     it('loads a conditional ESM config', async () => {
         const configDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'app-builder-config-'));

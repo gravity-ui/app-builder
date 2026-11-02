@@ -66,7 +66,7 @@ export function getIgnoreGlobs(directoriesToCompile: string[], ignore: string[] 
 
 export interface GetSwcOptionsParams {
     projectPath: string;
-    filename?: string;
+    configFileName?: string;
     additionalPaths?: string[];
     exclude?: string | string[];
     publicPath: string;
@@ -74,12 +74,12 @@ export interface GetSwcOptionsParams {
 
 export function getSwcOptions({
     projectPath,
-    filename = 'tsconfig.json',
+    configFileName = 'tsconfig.json',
     additionalPaths,
     exclude,
     publicPath,
 }: GetSwcOptionsParams) {
-    const compilerOptions = getTsconfig(projectPath, filename)?.config.compilerOptions ?? {};
+    const compilerOptions = getTsconfig(projectPath, configFileName)?.config.compilerOptions ?? {};
     const swcOptions = convertTsConfig(compilerOptions, undefined, projectPath);
     swcOptions.exclude = swcOptions.exclude || [];
     swcOptions.jsc = {

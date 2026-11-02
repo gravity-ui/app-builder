@@ -6,7 +6,7 @@ import type {GetSwcOptionsParams} from './utils.js';
 import type {ServerConfig} from '../models/index.js';
 
 type SwcWatchOptions = NonNullable<ServerConfig['swcOptions']> &
-    Pick<GetSwcOptionsParams, 'publicPath'> & {
+    Pick<GetSwcOptionsParams, 'publicPath' | 'configFileName'> & {
         outputPath: string;
         logger: Logger;
         onAfterFilesEmitted?: () => void;
@@ -16,6 +16,7 @@ export async function watch(
     projectPath: string,
     {
         outputPath,
+        configFileName,
         logger,
         onAfterFilesEmitted,
         additionalPaths,
@@ -29,6 +30,7 @@ export async function watch(
     logger.message('Start compilation in watch mode');
     const {swcOptions, directoriesToCompile} = getSwcOptions({
         projectPath,
+        configFileName,
         additionalPaths,
         exclude,
         publicPath,

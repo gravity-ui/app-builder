@@ -7,7 +7,7 @@ import type {GetSwcOptionsParams} from './utils.js';
 import type {ServerConfig} from '../models/index.js';
 
 type SwcCompileOptions = NonNullable<ServerConfig['swcOptions']> &
-    Pick<GetSwcOptionsParams, 'publicPath'> & {
+    Pick<GetSwcOptionsParams, 'publicPath' | 'configFileName'> & {
         projectPath: string;
         outputPath: string;
         logger: Logger;
@@ -15,6 +15,7 @@ type SwcCompileOptions = NonNullable<ServerConfig['swcOptions']> &
 
 export async function compile({
     projectPath,
+    configFileName,
     outputPath,
     logger,
     additionalPaths,
@@ -29,6 +30,7 @@ export async function compile({
 
     const {swcOptions, directoriesToCompile} = getSwcOptions({
         projectPath,
+        configFileName,
         additionalPaths,
         exclude,
         publicPath,
