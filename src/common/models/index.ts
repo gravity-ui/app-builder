@@ -558,6 +558,8 @@ export interface PublicPathFallbackEventDetail {
 }
 
 export interface ServerConfig {
+    /** Path to the server tsconfig, relative to the app root. Defaults to src/server/tsconfig.json. */
+    tsconfig?: string;
     port?: number | true;
     watch?: string[];
     watchThrottle?: number;

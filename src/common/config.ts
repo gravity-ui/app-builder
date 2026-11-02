@@ -252,6 +252,9 @@ export async function normalizeConfig(userConfig: ProjectConfig, mode?: 'dev' | 
         }
         const server: NormalizedServerConfig = {
             ...serverConfig,
+            tsconfig: serverConfig.tsconfig
+                ? path.resolve(paths.app, serverConfig.tsconfig)
+                : undefined,
             swcOptions: swcRootDir
                 ? {...serverConfig.swcOptions, rootDir: swcRootDir}
                 : serverConfig.swcOptions,

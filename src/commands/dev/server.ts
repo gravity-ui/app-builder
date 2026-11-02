@@ -41,6 +41,7 @@ await watch(
             process.send({type: 'Emitted'});
         },
         enableSourceMap: true,
+        configFileName: ${JSON.stringify(config.server.tsconfig)},
         tsBuildInfoFile: ${JSON.stringify(path.join(config.server.outputPath, '.tsbuildinfo'))}
     }
 );
@@ -65,6 +66,7 @@ await watch(
             process.send({type: 'Emitted'});
         },
         ...${JSON.stringify(config.server.swcOptions ?? {})},
+        configFileName: ${JSON.stringify(config.server.tsconfig)},
         publicPath: ${JSON.stringify(config.client.browserPublicPath)},
     }
 );

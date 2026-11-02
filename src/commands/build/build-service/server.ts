@@ -28,6 +28,7 @@ await compile({
     outputPath: ${JSON.stringify(paths.appDist)},
     projectPath: ${JSON.stringify(paths.appServer)},
     ...${JSON.stringify(config.server.swcOptions ?? {})},
+    configFileName: ${JSON.stringify(config.server.tsconfig)},
     publicPath: ${JSON.stringify(config.client.browserPublicPath)},
 });
 })();`;
@@ -51,7 +52,11 @@ const [{Logger}, {compile}] = await Promise.all([
 ]);
 
 const logger = new Logger('server', ${config.verbose});
-await compile(ts, {logger, projectPath: ${JSON.stringify(paths.appServer)}});
+await compile(ts, {
+    logger,
+    projectPath: ${JSON.stringify(paths.appServer)},
+    configFileName: ${JSON.stringify(config.server.tsconfig)},
+});
 })();`;
 }
 

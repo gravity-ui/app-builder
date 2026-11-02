@@ -19,16 +19,18 @@ export function watch(
         onAfterFilesEmitted,
         enableSourceMap,
         tsBuildInfoFile,
+        configFileName,
     }: {
         logger: Logger;
         onAfterFilesEmitted?: () => void;
         enableSourceMap?: boolean;
         tsBuildInfoFile?: string;
+        configFileName?: string;
     },
 ) {
     logger.message('Start compilation in watch mode');
     logger.message(`Typescript v${ts.version}`);
-    const configPath = getTsProjectConfigPath(ts, projectPath);
+    const configPath = getTsProjectConfigPath(ts, projectPath, configFileName);
     const optionsToExtend = {
         noEmit: false,
         noEmitOnError: false,

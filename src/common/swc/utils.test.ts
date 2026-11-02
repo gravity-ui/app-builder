@@ -43,6 +43,25 @@ describe('getSwcOptions', () => {
         return (await getOptions(compilerOptions)).jsc?.transform?.useDefineForClassFields;
     }
 
+    it('reads a custom config outside the server directory', async () => {
+        await getOptions({useDefineForClassFields: true});
+        const serverPath = path.join(projectPath, 'src/server');
+        await fs.promises.mkdir(serverPath, {recursive: true});
+        const configFileName = path.join(projectPath, 'tsconfig.server.json');
+        await fs.promises.writeFile(
+            configFileName,
+            JSON.stringify({compilerOptions: {useDefineForClassFields: false}}),
+        );
+
+        const {swcOptions} = getSwcOptions({
+            projectPath: serverPath,
+            configFileName,
+            publicPath: '/build/',
+        });
+
+        expect(swcOptions.jsc?.transform?.useDefineForClassFields).toBe(false);
+    });
+
     it.each([
         {},
         {target: 'es5'},
