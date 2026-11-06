@@ -332,3 +332,36 @@ describe('publicPathFallback', () => {
         ]);
     });
 });
+
+describe('chunkRetry', () => {
+    it('floors the retries count and keeps the delay', async () => {
+        const result = await normalizeConfig(
+            {client: {chunkRetry: {retries: 2.7, delay: 1000}}},
+            'build',
+        );
+        expect(result.client.chunkRetry).toEqual({retries: 2, delay: 1000});
+    });
+
+    it('defaults the delay to 0', async () => {
+        const result = await normalizeConfig({client: {chunkRetry: {retries: 1}}}, 'build');
+        expect(result.client.chunkRetry).toEqual({retries: 1, delay: 0});
+    });
+
+    it.each([0, -1, Infinity, NaN])('disables retrying for retries %p', async (retries) => {
+        const result = await normalizeConfig({client: {chunkRetry: {retries}}}, 'build');
+        expect(result.client.chunkRetry).toBeUndefined();
+    });
+
+    it.each([Infinity, NaN, -100])('clamps delay %p to 0', async (delay) => {
+        const result = await normalizeConfig({client: {chunkRetry: {retries: 2, delay}}}, 'build');
+        expect(result.client.chunkRetry).toEqual({retries: 2, delay: 0});
+    });
+
+    it('is disabled in dev mode', async () => {
+        const result = await normalizeConfig(
+            {client: {chunkRetry: {retries: 2, delay: 100}}},
+            'dev',
+        );
+        expect(result.client.chunkRetry).toBeUndefined();
+    });
+});

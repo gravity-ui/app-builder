@@ -402,6 +402,16 @@ export interface ClientCommonConfig {
      */
     publicPathFallback?: (string | PublicPathFallbackEntry)[];
     /**
+     * Retry a failed async chunk (lazy JS or its async CSS) from the same base before
+     * giving up or switching to the next `publicPathFallback` entry. Useful for an app
+     * on a single public path, where `publicPathFallback` has no backup to switch to.
+     *
+     * Module Federation manifests and remote entries are not covered. Disabled in dev and SSR.
+     *
+     * @example {retries: 2, delay: 300}
+     */
+    chunkRetry?: ChunkRetryConfig;
+    /**
      * use webpack 5 Web Workers [syntax](https://webpack.js.org/guides/web-workers/#syntax)
      *
      * @deprecated use `webWorkerHandle` instead
@@ -544,6 +554,18 @@ export interface PublicPathFallback {
     hosts?: {source: string; flags: string}[];
 }
 
+export interface ChunkRetryConfig {
+    /** Extra same-base attempts after the first failure. `0` (default) disables retrying. */
+    retries?: number;
+    /** Base delay (ms) before the first retry; grows exponentially with jitter, capped at 5 min. */
+    delay?: number;
+}
+
+export interface NormalizedChunkRetry {
+    retries: number;
+    delay: number;
+}
+
 /**
  * `detail` of the `app-builder:public-path-fallback` window `CustomEvent`,
  * dispatched on every switch or exhaustion. Cast to `CustomEvent<PublicPathFallbackEventDetail>`
@@ -638,6 +660,7 @@ export type NormalizedClientBaseConfig = Omit<
     | 'webpack'
     | 'rspack'
     | 'detectCircularDependencies'
+    | 'chunkRetry'
 > & {
     reactCompiler: boolean | ReactCompilerOptions;
     javaScriptLoader: JavaScriptLoader;
@@ -663,6 +686,7 @@ export type NormalizedClientBaseConfig = Omit<
      * derived from `publicPathFallback`. Empty if the fallback is disabled.
      */
     publicPathFallbacks: PublicPathFallback[];
+    chunkRetry?: NormalizedChunkRetry;
     assetsManifestFile: string;
     hiddenSourceMap: boolean;
     svgr: NonNullable<ClientConfig['svgr']>;

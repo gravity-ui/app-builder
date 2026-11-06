@@ -13,6 +13,8 @@ export function getFallbackRuntimeConfig(config: NormalizedClientConfig) {
         scope,
         federated: Boolean(config.moduleFederation),
         fallbacks: config.publicPathFallbacks,
+        retries: config.chunkRetry?.retries ?? 0,
+        retryDelay: config.chunkRetry?.delay ?? 0,
     };
 }
 
