@@ -13,6 +13,12 @@ type TestRuntime = {
     e: (chunkId: string | number) => Promise<unknown>;
 };
 
+type ResourceHandler = (chunkId: string | number, promises: Promise<unknown>[]) => void;
+
+type TestRuntimeWithHandlers = TestRuntime & {f: Record<string, ResourceHandler>};
+
+type HandlerOutcome = 'resolve' | 'skip' | {reject: Error};
+
 type PendingChunk = {
     resolve: () => void;
     reject: (error: Error) => void;
@@ -315,6 +321,125 @@ describe('fallback controller', () => {
         expect(ensure).toHaveBeenCalledTimes(2);
     });
 
+    it('retries every failed resource of an attempt together (JS + CSS)', async () => {
+        const controller = createInstalledController({...config, fallbacks: [], retries: 1});
+        const js = makeHandler([{reject: failure(config.root + 'host/chunk.js')}, 'resolve']);
+        const css = makeHandler([{reject: cssFailure(config.root + 'host/chunk.css')}, 'resolve']);
+        const ensure = jest.fn<TestRuntime['e']>();
+        const req: TestRuntimeWithHandlers = {
+            p: '',
+            e: ensure,
+            f: {j: js.handler, css: css.handler},
+        };
+        installChunkFallback(req, controller);
+        await req.e('chunk');
+        expect(js.calls()).toBe(2);
+        expect(css.calls()).toBe(2);
+        expect(ensure).not.toHaveBeenCalled();
+    });
+
+    it('waits for every resource of an attempt to settle before retrying', async () => {
+        const controller = createInstalledController({...config, fallbacks: [], retries: 1});
+        const js = makeHandler([{reject: failure(config.root + 'host/chunk.js')}, 'resolve']);
+        let rejectCss: (() => void) | undefined;
+        const cssCalls: number[] = [];
+        const req: TestRuntimeWithHandlers = {
+            p: '',
+            e: jest.fn<TestRuntime['e']>(),
+            f: {
+                j: js.handler,
+                css: (_chunkId, promises) => {
+                    cssCalls.push(1);
+
+                    if (cssCalls.length === 1) {
+                        promises.push(
+                            new Promise<void>((_resolve, reject) => {
+                                rejectCss = () =>
+                                    reject(cssFailure(config.root + 'host/chunk.css'));
+                            }),
+                        );
+                    } else {
+                        promises.push(Promise.resolve());
+                    }
+                },
+            },
+        };
+        installChunkFallback(req, controller);
+        const promise = req.e('chunk');
+        await jest.advanceTimersByTimeAsync(0);
+        expect(js.calls()).toBe(1);
+        expect(cssCalls).toHaveLength(1);
+        rejectCss?.();
+        await jest.advanceTimersByTimeAsync(0);
+        await promise;
+        expect(js.calls()).toBe(2);
+        expect(cssCalls).toHaveLength(2);
+    });
+
+    it('propagates a non-retryable error even when a sibling resource failed to load', async () => {
+        const controller = createInstalledController({...config, fallbacks: [], retries: 1});
+        const appError = new Error('application error');
+        const js = makeHandler([{reject: appError}]);
+        const css = makeHandler([{reject: cssFailure(config.root + 'host/chunk.css')}]);
+        const req: TestRuntimeWithHandlers = {
+            p: '',
+            e: jest.fn<TestRuntime['e']>(),
+            f: {j: js.handler, css: css.handler},
+        };
+        installChunkFallback(req, controller);
+        await expect(req.e('chunk')).rejects.toBe(appError);
+        expect(js.calls()).toBe(1);
+        expect(css.calls()).toBe(1);
+    });
+
+    it('keeps the first-rejection ensure path and never aggregates when retries are disabled', async () => {
+        const controller = createInstalledController(config);
+        const handlerCalls: string[] = [];
+        const ensure = jest
+            .fn<TestRuntime['e']>()
+            .mockRejectedValueOnce(failure(config.root + 'host/chunk.js'))
+            .mockResolvedValue(undefined);
+        const req: TestRuntimeWithHandlers = {
+            p: '',
+            e: ensure,
+            f: {
+                j: (_chunkId, promises) => {
+                    handlerCalls.push('j');
+                    promises.push(Promise.resolve());
+                },
+            },
+        };
+        installChunkFallback(req, controller);
+        await req.e('chunk');
+        expect(ensure).toHaveBeenCalledTimes(2);
+        expect(handlerCalls).toEqual([]);
+        expect(controller.base()).toBe('https://ru.test/backup/');
+        expect(events).toHaveLength(1);
+    });
+
+    it('propagates a non-retryable error immediately without waiting for a slow sibling', async () => {
+        const controller = createInstalledController({...config, fallbacks: [], retries: 1});
+        const appError = new Error('application error');
+        const req: TestRuntimeWithHandlers = {
+            p: '',
+            e: jest.fn<TestRuntime['e']>(),
+            f: {
+                j: (_chunkId, promises) => promises.push(Promise.reject(appError)),
+                css: (_chunkId, promises) => promises.push(new Promise<void>(() => {})),
+            },
+        };
+        installChunkFallback(req, controller);
+        await expect(req.e('chunk')).rejects.toBe(appError);
+    });
+
+    it('preserves the ensure fulfillment value on the fallback path', async () => {
+        const controller = createInstalledController({...config, retries: 1});
+        const value = {loaded: true};
+        const req: TestRuntime = {p: '', e: jest.fn<TestRuntime['e']>().mockResolvedValue(value)};
+        installChunkFallback(req, controller);
+        await expect(req.e('chunk')).resolves.toBe(value);
+    });
+
     it('propagates execution errors and errors owned by another runtime', async () => {
         const controller = createInstalledController(config);
         const error = new Error('application error');
@@ -341,6 +466,31 @@ function createInstalledController(options: FallbackRuntimeConfig) {
 
 function failure(request?: string) {
     return Object.assign(new Error('Loading chunk failed'), {name: 'ChunkLoadError', request});
+}
+
+function cssFailure(request?: string) {
+    return Object.assign(new Error('Loading CSS chunk failed'), {
+        code: 'CSS_CHUNK_LOAD_FAILED',
+        request,
+    });
+}
+
+function makeHandler(outcomes: HandlerOutcome[]) {
+    let call = 0;
+
+    return {
+        handler: (_chunkId: string | number, promises: Promise<unknown>[]) => {
+            const outcome = outcomes[call] ?? 'skip';
+            call += 1;
+
+            if (outcome === 'resolve') {
+                promises.push(Promise.resolve());
+            } else if (outcome !== 'skip') {
+                promises.push(Promise.reject(outcome.reject));
+            }
+        },
+        calls: () => call,
+    };
 }
 
 function restoreGlobal(name: 'window' | 'document', descriptor?: PropertyDescriptor) {

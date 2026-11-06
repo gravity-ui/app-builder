@@ -437,10 +437,12 @@ With this `{rootDir}/src/ui/tsconfig.json`:
 
   Targets transient network errors, where re-requesting the same URL succeeds — e.g. `Loading CSS chunk … failed`. Unlike `publicPathFallback`, which only switches to a backup base, this re-attempts the current one, so it is useful even for an app served from a single public path (no backups configured).
 
-  - `retries` (`number`) — number of extra attempts per base. `0` (default) disables retrying.
+  - `retries` (`number`) — number of extra attempts per base. `0` (default) disables retrying. When a chunk has both JS and CSS, an attempt waits for both to settle before the next one, and a retry re-requests only the resources that failed (loaded ones stay cached).
   - `delay` (`number`) — base delay in milliseconds before the first retry; each further retry waits exponentially longer (with jitter), capped at 5 minutes. `0` (default) retries immediately.
 
   Covers lazy JS and their async CSS, reusing the same runtime as `publicPathFallback`. Module Federation manifests and remote entries are not retried from the same base — only `publicPathFallback`'s base switching applies to them. It composes with `publicPathFallback`: each base is retried up to `retries` times before the runtime falls over to the next one. Every failover still dispatches the `app-builder:public-path-fallback` event. Disabled in dev and SSR; worker scripts are not supported.
+
+  The retry budget is per attempt, not per resource. If the same chunk is imported concurrently while a failover (triggered by a different chunk) is in flight, one import can adopt the other's in-flight request from a now-abandoned base; a transient failure of that resource may then exhaust that import's budget for the new base. The other in-flight import normally still recovers it, so the chunk loads.
 
   ```ts
   import {defineConfig} from '@gravity-ui/app-builder';
