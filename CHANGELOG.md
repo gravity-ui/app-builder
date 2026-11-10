@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.58.0](https://github.com/gravity-ui/app-builder/compare/v0.57.0...v0.58.0) (2026-11-10)
+
+
+### Features
+
+* retry failed async chunks from the same base ([#388](https://github.com/gravity-ui/app-builder/issues/388)) ([6a9e414](https://github.com/gravity-ui/app-builder/commit/6a9e414a24fa157c10c8b99ccc0d5b4f4e858fe6))
+
 ## [0.57.0](https://github.com/gravity-ui/app-builder/compare/v0.56.1...v0.57.0) (2026-10-26)
 
 
