@@ -1276,7 +1276,7 @@ function configureCommonPlugins<T extends 'rspack' | 'webpack'>(
         plugins.push(new WorkerPublicPathPlugin());
     }
 
-    if (!isSsr && config.publicPathFallbacks.length > 0) {
+    if (!isSsr && (config.publicPathFallbacks.length > 0 || config.chunkRetry)) {
         plugins.push(createPublicPathFallbackPlugin(config));
     }
 
